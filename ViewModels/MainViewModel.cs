@@ -64,9 +64,6 @@ namespace bankrupt_piterjust.ViewModels
         {
             LoadData(); // Загружаем начальные данные
 
-            // Инициализация команд
-            AddDebtorCommand = new RelayCommand(o => AddDebtor());
-
             // Инициализация коллекций для UI
             DebtorsView = new ObservableCollection<Debtor>();
             MainTabs = new ObservableCollection<TabItem>
@@ -88,8 +85,11 @@ namespace bankrupt_piterjust.ViewModels
             };
 
             // Устанавливаем начальные активные вкладки
-            SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты");
             SelectedFilterTab = FilterTabs.FirstOrDefault(t => t.Name == "Все");
+            SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты");
+
+            // Инициализация команд
+            AddDebtorCommand = new RelayCommand(o => AddDebtor());
 
             UpdateTabCounts();
             ApplyFilters();
@@ -129,7 +129,8 @@ namespace bankrupt_piterjust.ViewModels
 
         private void ApplyFilters()
         {
-            if (_allDebtors == null) return;
+            if (_allDebtors == null || SelectedMainTab == null || SelectedFilterTab == null)
+                return;
 
             // 1. Фильтруем по основной вкладке
             var filtered = _allDebtors.Where(d => d.MainCategory == SelectedMainTab.Name);
