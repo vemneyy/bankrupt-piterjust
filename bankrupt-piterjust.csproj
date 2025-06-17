@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
+    <RootNamespace>bankrupt_piterjust</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <Title>ПитерЮст. Банкротство.</Title>
+    <Authors>Сапрыкин Семён Максимович</Authors>
+    <Company>ПитерЮст</Company>
+    <Description>Программа-утилита для упрощённого ведения клиентов по банкротному процессу</Description>
+    <PackageIcon>fav.png</PackageIcon>
+    <NeutralLanguage>ru</NeutralLanguage>
+    <PackageProjectUrl>https://питерюст.рф/</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="fav.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="fav.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Images\fav.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
