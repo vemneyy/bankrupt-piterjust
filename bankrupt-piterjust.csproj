@@ -18,14 +18,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="fav.png" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Resource Include="fav.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="fav.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Update="Images\fav.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
