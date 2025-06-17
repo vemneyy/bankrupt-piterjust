@@ -166,8 +166,7 @@
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                              Padding="30,8,10,8" VerticalContentAlignment="Center"
                              BorderBrush="{StaticResource BorderGrayBrush}" FontSize="14" BorderThickness="1,1,0,1"/>
-                    <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{StaticResource TextGrayBrush}" VerticalAlignment="Center" Margin="10,0,0,0" IsHitTestVisible="False"/>
-                    <TextBlock IsHitTestVisible="False" Text="Введите ФИО должника" VerticalAlignment="Center" Margin="32,0,0,0" Foreground="{StaticResource TextGrayBrush}">
+                    <TextBlock IsHitTestVisible="False" Text="Введите ФИО должника" VerticalAlignment="Center" Foreground="{StaticResource TextGrayBrush}" Margin="5,0,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -180,10 +179,10 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </Grid>
-                <Button Content="Найти" Style="{StaticResource SecondaryButton}" Margin="0" BorderThickness="0,1,1,1"/>
+                <Button Content="Найти" Style="{StaticResource SecondaryButton}" BorderThickness="0,1,1,1" Width="55"/>
             </StackPanel>
 
-            <Button Grid.Column="1" Content="+ Добавить должника" Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}"/>
+            <Button Content="+ Добавить должника" Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" Grid.ColumnSpan="2" Margin="1185,0,0,0"/>
         </Grid>
 
         <!-- 3: Вкладки верхнего уровня -->
