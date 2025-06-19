@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:bankrupt_piterjust"
         xmlns:vm="clr-namespace:bankrupt_piterjust.ViewModels"
         mc:Ignorable="d"
-        Title="ПитерЮст. Банкротство" Height="900" Width="1400"
+        Title="ПитерЮст. Банкротство." Height="900" Width="1400"
         Background="#F8F9FA"
         FontFamily="Segoe UI"
         MinWidth="800" MinHeight="600" Icon="/fav.png">
@@ -149,6 +149,20 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- 0: Логотип -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,0,10,10" VerticalAlignment="Center">
+            <TextBlock Text="ПитерЮст " 
+           Foreground="{StaticResource DarkTextBrush}" 
+           FontSize="20" 
+           FontWeight="Bold" 
+           VerticalAlignment="Center" 
+           Margin="4,0,0,0"/>
+            <Border Background="{StaticResource PrimaryBlueBrush}" CornerRadius="8" Padding="12,6">
+                <TextBlock Text="Банкротство" Foreground="White" FontSize="20" FontWeight="Bold"/>
+            </Border>
+
+        </StackPanel>
+
         <!-- 1: Заголовок -->
         <TextBlock Grid.Row="1" Text="Должники" FontSize="28" FontWeight="Bold" Margin="10,20,10,10" Foreground="{StaticResource DarkTextBrush}"/>
 
@@ -166,7 +180,7 @@
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                              Padding="30,8,10,8" VerticalContentAlignment="Center"
                              BorderBrush="{StaticResource BorderGrayBrush}" FontSize="14" BorderThickness="1,1,0,1"/>
-                    <TextBlock IsHitTestVisible="False" Text="Введите ФИО должника" VerticalAlignment="Center" Foreground="{StaticResource TextGrayBrush}" Margin="5,0,0,0">
+                    <TextBlock IsHitTestVisible="False" Text="Введите ФИО должника" VerticalAlignment="Center" Foreground="{StaticResource TextGrayBrush}" Margin="30,0,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -182,7 +196,7 @@
                 <Button Content="Найти" Style="{StaticResource SecondaryButton}" BorderThickness="0,1,1,1" Width="55"/>
             </StackPanel>
 
-            <Button Content="+ Добавить должника" Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" Grid.ColumnSpan="2" Margin="1185,0,0,0"/>
+            <Button Content="+ Добавить должника" Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" Margin="1162,0,0,0"/>
         </Grid>
 
         <!-- 3: Вкладки верхнего уровня -->
