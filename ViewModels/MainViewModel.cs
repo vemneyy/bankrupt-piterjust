@@ -22,7 +22,7 @@ namespace bankrupt_piterjust.ViewModels
             set { _count = value; OnPropertyChanged(nameof(Count)); }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -32,23 +32,53 @@ namespace bankrupt_piterjust.ViewModels
     public class MainViewModel : INotifyPropertyChanged
     {
         private List<Debtor> _allDebtors; // Полный список всех должников
+        private readonly Dictionary<string, ObservableCollection<TabItem>> _filterTabsByCategory;
 
         public ObservableCollection<Debtor> DebtorsView { get; set; } // Отображаемый список
         public ObservableCollection<TabItem> MainTabs { get; set; }
-        public ObservableCollection<TabItem> FilterTabs { get; set; }
+
+        private ObservableCollection<TabItem> _currentFilterTabs;
+        public ObservableCollection<TabItem> CurrentFilterTabs
+        {
+            get => _currentFilterTabs;
+            set { _currentFilterTabs = value; OnPropertyChanged(nameof(CurrentFilterTabs)); }
+        }
 
         private TabItem _selectedMainTab;
         public TabItem SelectedMainTab
         {
             get => _selectedMainTab;
-            set { _selectedMainTab = value; OnPropertyChanged(nameof(SelectedMainTab)); ApplyFilters(); }
+            set
+            {
+                if (_selectedMainTab != value && value != null)
+                {
+                    _selectedMainTab = value;
+                    OnPropertyChanged(nameof(SelectedMainTab));
+
+                    // Обновляем список вкладок фильтров
+                    CurrentFilterTabs = _filterTabsByCategory[_selectedMainTab.Name];
+                    // Устанавливаем "Все" как активный фильтр по умолчанию
+                    SelectedFilterTab = CurrentFilterTabs.FirstOrDefault();
+
+                    UpdateTabCounts();
+                    ApplyFilters(); // Apply filters when main tab changes
+                }
+            }
         }
 
         private TabItem _selectedFilterTab;
         public TabItem SelectedFilterTab
         {
             get => _selectedFilterTab;
-            set { _selectedFilterTab = value; OnPropertyChanged(nameof(SelectedFilterTab)); ApplyFilters(); }
+            set
+            {
+                if (_selectedFilterTab != value)
+                {
+                    _selectedFilterTab = value;
+                    OnPropertyChanged(nameof(SelectedFilterTab));
+                    ApplyFilters();
+                }
+            }
         }
 
         private string _searchText;
@@ -59,6 +89,8 @@ namespace bankrupt_piterjust.ViewModels
         }
 
         public ICommand AddDebtorCommand { get; }
+        public ICommand ArchiveDebtorCommand { get; }
+        public ICommand RestoreDebtorCommand { get; }
 
         public MainViewModel()
         {
@@ -73,26 +105,52 @@ namespace bankrupt_piterjust.ViewModels
                 new TabItem { Name = "Отказ" },
                 new TabItem { Name = "Архив" }
             };
-            FilterTabs = new ObservableCollection<TabItem>
-            {
-                new TabItem { Name = "Все" },
-                new TabItem { Name = "Сбор документов" },
-                new TabItem { Name = "Подготовка заявления" },
-                new TabItem { Name = "На рассмотрении" },
-                new TabItem { Name = "Ходатайство" },
-                new TabItem { Name = "Заседание" },
-                new TabItem { Name = "Процедура введена" }
-            };
 
-            // Устанавливаем начальные активные вкладки
-            SelectedFilterTab = FilterTabs.FirstOrDefault(t => t.Name == "Все");
-            SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты");
+            _filterTabsByCategory = new Dictionary<string, ObservableCollection<TabItem>>
+            {
+                { "Лиды", new ObservableCollection<TabItem>
+                    {
+                        new TabItem { Name = "Все" },
+                        new TabItem { Name = "Консультация не назначена" },
+                        new TabItem { Name = "Консультация назначена" },
+                        new TabItem { Name = "Повторная консультация" }
+                    }
+                },
+                { "Клиенты", new ObservableCollection<TabItem>
+                    {
+                        new TabItem { Name = "Все" },
+                        new TabItem { Name = "Сбор документов" },
+                        new TabItem { Name = "Подготовка заявления" },
+                        new TabItem { Name = "На рассмотрении" },
+                        new TabItem { Name = "Ходатайство" },
+                        new TabItem { Name = "Заседание" },
+                        new TabItem { Name = "Процедура введена" }
+                    }
+                },
+                { "Отказ", new ObservableCollection<TabItem>
+                    {
+                        new TabItem { Name = "Все" },
+                        new TabItem { Name = "Мой отказ" },
+                        new TabItem { Name = "Отказ должника" }
+                    }
+                },
+                { "Архив", new ObservableCollection<TabItem>
+                    {
+                        new TabItem { Name = "Все" }
+                    }
+                }
+            };
 
             // Инициализация команд
             AddDebtorCommand = new RelayCommand(o => AddDebtor());
+            ArchiveDebtorCommand = new RelayCommand(ArchiveDebtor);
+            RestoreDebtorCommand = new RelayCommand(RestoreDebtor);
 
+            // Устанавливаем начальные активные вкладки
+            SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты");
+            
+            // Обновляем счетчики на всех вкладках
             UpdateTabCounts();
-            ApplyFilters();
         }
 
         private void LoadData()
@@ -106,7 +164,8 @@ namespace bankrupt_piterjust.ViewModels
                     Region = "Ленинградская область",
                     Status = "Подать заявление",
                     MainCategory = "Клиенты",
-                    FilterCategory = "Подготовка заявления"
+                    FilterCategory = "Подготовка заявления",
+                    PreviousMainCategory = null
                 },
                 new Debtor
                 {
@@ -114,7 +173,8 @@ namespace bankrupt_piterjust.ViewModels
                     Region = "г. Санкт-Петербург",
                     Status = "Собрать документы",
                     MainCategory = "Клиенты",
-                    FilterCategory = "Сбор документов"
+                    FilterCategory = "Сбор документов",
+                    PreviousMainCategory = null
                 },
                 new Debtor
                 {
@@ -122,21 +182,22 @@ namespace bankrupt_piterjust.ViewModels
                     Region = "Московская область",
                     Status = "В архив",
                     MainCategory = "Архив",
-                    FilterCategory = "Все"
+                    FilterCategory = "Все",
+                    PreviousMainCategory = "Клиенты"
                 }
             };
         }
 
         private void ApplyFilters()
         {
-            if (_allDebtors == null || SelectedMainTab == null || SelectedFilterTab == null)
+            if (_allDebtors == null || SelectedMainTab == null)
                 return;
 
             // 1. Фильтруем по основной вкладке
             var filtered = _allDebtors.Where(d => d.MainCategory == SelectedMainTab.Name);
 
             // 2. Фильтруем по вкладке-фильтру (кроме "Все")
-            if (SelectedFilterTab.Name != "Все")
+            if (SelectedFilterTab != null && SelectedFilterTab.Name != "Все")
             {
                 filtered = filtered.Where(d => d.FilterCategory == SelectedFilterTab.Name);
             }
@@ -153,6 +214,7 @@ namespace bankrupt_piterjust.ViewModels
             {
                 DebtorsView.Add(debtor);
             }
+            OnPropertyChanged(nameof(DebtorsView)); // For empty message trigger
         }
 
         private void UpdateTabCounts()
@@ -162,9 +224,11 @@ namespace bankrupt_piterjust.ViewModels
                 tab.Count = _allDebtors.Count(d => d.MainCategory == tab.Name);
             }
 
+            if (CurrentFilterTabs == null) return;
+
             // Для фильтров считаем внутри выбранной основной категории
             var debtorsInCurrentMainTab = _allDebtors.Where(d => d.MainCategory == SelectedMainTab.Name).ToList();
-            foreach (var tab in FilterTabs)
+            foreach (var tab in CurrentFilterTabs)
             {
                 if (tab.Name == "Все")
                     tab.Count = debtorsInCurrentMainTab.Count;
@@ -186,10 +250,42 @@ namespace bankrupt_piterjust.ViewModels
 
                 // Переключаемся на вкладку, куда добавили должника
                 SelectedMainTab = MainTabs.First(t => t.Name == newDebtor.MainCategory);
-                SelectedFilterTab = FilterTabs.First(t => t.Name == newDebtor.FilterCategory);
+                SelectedFilterTab = CurrentFilterTabs.First(t => t.Name == newDebtor.FilterCategory);
 
                 UpdateTabCounts();
                 ApplyFilters(); // Применяем фильтры, чтобы сразу увидеть нового должника
+            }
+        }
+
+        private void ArchiveDebtor(object parameter)
+        {
+            if (parameter is Debtor debtor && debtor.MainCategory != "Архив")
+            {
+                // Сохраняем текущую категорию перед архивацией
+                debtor.PreviousMainCategory = debtor.MainCategory;
+                debtor.PreviousFilterCategory = debtor.FilterCategory;
+                
+                // Перемещаем в архив
+                debtor.MainCategory = "Архив";
+                debtor.FilterCategory = "Все";
+                debtor.Status = "В архив";
+                
+                UpdateTabCounts();
+                ApplyFilters();
+            }
+        }
+
+        private void RestoreDebtor(object parameter)
+        {
+            if (parameter is Debtor debtor && debtor.MainCategory == "Архив")
+            {
+                // Восстанавливаем из предыдущей категории, если есть
+                debtor.MainCategory = debtor.PreviousMainCategory ?? "Клиенты";
+                debtor.FilterCategory = debtor.PreviousFilterCategory ?? "Подготовка заявления";
+                debtor.Status = "Восстановлен";
+                
+                UpdateTabCounts();
+                ApplyFilters();
             }
         }
 

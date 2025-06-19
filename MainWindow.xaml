@@ -22,6 +22,12 @@
         <SolidColorBrush x:Key="TextGrayBrush" Color="#6C757D"/>
         <SolidColorBrush x:Key="BorderGrayBrush" Color="#DEE2E6"/>
         <SolidColorBrush x:Key="DarkTextBrush" Color="#212529"/>
+        <SolidColorBrush x:Key="SlightlyDarkerGrayBrush" Color="#E9ECEF"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#212529"/>
+
+        <!-- Конвертеры -->
+        <local:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter"/>
+        <local:StringNotEqualsToVisibilityConverter x:Key="StringNotEqualsToVisibilityConverter"/>
 
         <!-- Стили кнопок -->
         <Style x:Key="PrimaryButton" TargetType="Button">
@@ -69,6 +75,35 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="SearchFindButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+            <Setter Property="BorderThickness" Value="1,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="0,5,5,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="StatusButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource SlightlyDarkerGrayBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <!-- Стиль для всех вкладок -->
         <Style x:Key="TabRadioButton" TargetType="RadioButton">
@@ -100,27 +135,35 @@
 
         <!-- Стиль для фильтров -->
         <Style x:Key="FilterRadioButton" TargetType="RadioButton">
-            <Setter Property="Background" Value="#F8F9FA"/>
-            <!-- Фон как у окна -->
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Padding" Value="12,6"/>
-            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Margin" Value="0,0,1,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" CornerRadius="3">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border x:Name="backgroundBorder" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}" BorderBrush="Transparent" BorderThickness="1">
+                            <ContentPresenter/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="backgroundBorder" Property="Background" Value="White"/>
+                                <Setter TargetName="backgroundBorder" Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- Hyperlink Style -->
+        <Style TargetType="Hyperlink">
+            <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+            <Setter Property="TextDecorations" Value="None"/>
             <Style.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Background" Value="White"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="TextDecorations" Value="Underline"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -135,6 +178,29 @@
             <Setter Property="FontWeight" Value="Normal"/>
             <Setter Property="Padding" Value="10,12"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+
+        <!-- Стиль для кнопок действий в DataGrid -->
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E9ECEF"/>
+                    <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -174,104 +240,306 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Horizontal">
-                <!-- Поле поиска с плейсхолдером -->
-                <Grid Width="400">
-                    <TextBox x:Name="SearchTextBox"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             Padding="30,8,10,8" VerticalContentAlignment="Center"
-                             BorderBrush="{StaticResource BorderGrayBrush}" FontSize="14" BorderThickness="1,1,0,1"/>
-                    <TextBlock IsHitTestVisible="False" Text="Введите ФИО должника" VerticalAlignment="Center" Foreground="{StaticResource TextGrayBrush}" Margin="30,0,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Text, ElementName=SearchTextBox}" Value="">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </Grid>
-                <Button Content="Найти" Style="{StaticResource SecondaryButton}" BorderThickness="0,1,1,1" Width="55"/>
+                <Border BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="5" Background="White">
+                    <StackPanel Orientation="Horizontal">
+                        <Grid Width="350">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="10,0" Foreground="{StaticResource TextGrayBrush}"/>
+                            <TextBox Grid.Column="1" x:Name="SearchTextBox"
+                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="5,8" VerticalContentAlignment="Center" FontSize="14" BorderThickness="0"/>
+                            <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Введите ФИО должника" VerticalAlignment="Center" Foreground="{StaticResource TextGrayBrush}" Margin="5,0,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=SearchTextBox}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <Button Content="Найти" Style="{StaticResource SearchFindButton}" Width="70"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
-            <Button Content="+ Добавить должника" Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" Margin="1162,0,0,0"/>
+            <Button Content="+ Добавить должника" Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" HorizontalAlignment="Right"/>
         </Grid>
 
         <!-- 3: Вкладки верхнего уровня -->
         <Border Grid.Row="3" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="0,0,0,1" Margin="10,0">
-            <ItemsControl ItemsSource="{Binding MainTabs}">
-                <ItemsControl.ItemsPanel>
+            <ListBox ItemsSource="{Binding MainTabs}" 
+                     SelectedItem="{Binding SelectedMainTab}" 
+                     BorderThickness="0" 
+                     Background="Transparent"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <RadioButton GroupName="MainTabs" 
+                                                 Style="{StaticResource TabRadioButton}"
+                                                 IsChecked="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <RadioButton.Content>
+                                            <ContentPresenter />
+                                        </RadioButton.Content>
+                                    </RadioButton>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <RadioButton GroupName="MainTabs" Style="{StaticResource TabRadioButton}"
-                                     IsChecked="{Binding IsSelected, Mode=TwoWay}">
-                            <RadioButton.Content>
-                                <TextBlock>
-                                    <Run Text="{Binding Name}"/>
-                                    <Run Text="{Binding Count}" Foreground="{StaticResource TextGrayBrush}"/>
-                                </TextBlock>
-                            </RadioButton.Content>
-                        </RadioButton>
+                        <TextBlock>
+                            <Run Text="{Binding Name}"/>
+                            <Run x:Name="CountRun" Text="{Binding Count}" Foreground="{StaticResource TextGrayBrush}"/>
+                        </TextBlock>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                <Setter TargetName="CountRun" Property="Foreground" Value="{StaticResource PrimaryBlueBrush}"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </Border>
 
         <!-- 4: Вкладки нижнего уровня (фильтры) -->
-        <ItemsControl Grid.Row="4" ItemsSource="{Binding FilterTabs}" Margin="10,20,10,10">
-            <ItemsControl.ItemsPanel>
+        <ListBox Grid.Row="4" ItemsSource="{Binding CurrentFilterTabs}" 
+                 SelectedItem="{Binding SelectedFilterTab}"
+                 BorderThickness="0" 
+                 Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 Margin="10,20,10,10">
+            <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel Orientation="Horizontal"/>
                 </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <RadioButton GroupName="FilterTabs" 
+                                             Style="{StaticResource FilterRadioButton}"
+                                             IsChecked="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <RadioButton.Content>
+                                        <ContentPresenter />
+                                    </RadioButton.Content>
+                                </RadioButton>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <RadioButton GroupName="FilterTabs" Style="{StaticResource FilterRadioButton}"
-                                 IsChecked="{Binding IsSelected, Mode=TwoWay}">
-                        <RadioButton.Content>
-                            <TextBlock>
-                                <Run Text="{Binding Name}"/>
-                                <Run Text="{Binding Count}" Foreground="{StaticResource TextGrayBrush}"/>
-                            </TextBlock>
-                        </RadioButton.Content>
-                    </RadioButton>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                        <Border Background="{StaticResource SlightlyDarkerGrayBrush}" CornerRadius="10" Margin="8,0,0,0" Padding="7,3" MinWidth="20">
+                            <TextBlock Text="{Binding Count}" Foreground="{StaticResource TextGrayBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                        </Border>
+                    </StackPanel>
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
         <!-- 5: Таблица с данными -->
-        <DataGrid Grid.Row="5" Margin="10,0,10,10"
-                  ItemsSource="{Binding DebtorsView}"
-                  AutoGenerateColumns="False" CanUserAddRows="False" GridLinesVisibility="Horizontal"
-                  HorizontalGridLinesBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderGrayBrush}"
-                  Background="White" HeadersVisibility="Column" VerticalContentAlignment="Center">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ФИО должника" Binding="{Binding FullName}" Width="2.5*"/>
-                <DataGridTextColumn Header="Субъект РФ" Binding="{Binding Region}" Width="2*"/>
-                <DataGridTemplateColumn Header="Статус" Width="1.5*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="{Binding Status}" Style="{StaticResource SecondaryButton}" Margin="5,2" Padding="10,5"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Дата" Binding="{Binding Date}" Width="*"/>
-            </DataGrid.Columns>
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="Padding" Value="0,5"/>
-                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                    <Setter Property="FontSize" Value="14"/>
-                </Style>
-            </DataGrid.RowStyle>
-        </DataGrid>
+        <Grid Grid.Row="5" Margin="10,0,10,10">
+            <DataGrid ItemsSource="{Binding DebtorsView}"
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True"
+                  CanUserResizeRows="False"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="0"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  Background="Transparent" 
+                  HeadersVisibility="Column"
+                  HorizontalGridLinesBrush="{StaticResource BorderGrayBrush}"
+                  VerticalContentAlignment="Center"
+                  RowHeight="44">
+                <DataGrid.Resources>
+                    <!-- Убираем фокусный прямоугольник и стандартное выделение строки -->
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#212529"/>
+                </DataGrid.Resources>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="Padding" Value="0,5"/>
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="FontSize" Value="14"/>
+                        <!-- Отменяем стандартное выделение строки -->
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#F8F9FA"/>
+                                <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F8F9FA"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <!-- Добавляем стиль для ячеек, чтобы убрать рамку выделения -->
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <Border Background="{TemplateBinding Background}" BorderThickness="0">
+                                        <ContentPresenter VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="ФИО должника" Width="2.5*">
+                        <DataGridTemplateColumn.HeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                            </Style>
+                        </DataGridTemplateColumn.HeaderStyle>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <Hyperlink>
+                                        <TextBlock Text="{Binding FullName}" Foreground="{StaticResource DarkTextBrush}"/>
+                                    </Hyperlink>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Субъект РФ" Width="2*">
+                        <DataGridTemplateColumn.HeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                            </Style>
+                        </DataGridTemplateColumn.HeaderStyle>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Region}" Margin="10,0" VerticalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Статус" Width="1.5*">
+                        <DataGridTemplateColumn.HeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                            </Style>
+                        </DataGridTemplateColumn.HeaderStyle>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Status}" Style="{StaticResource StatusButton}" Margin="5,2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Дата" Width="*">
+                        <DataGridTemplateColumn.HeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                            </Style>
+                        </DataGridTemplateColumn.HeaderStyle>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Date}" Margin="10,0" VerticalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Кнопка архивации видна для неархивных должников -->
+                                <Button 
+                                    Style="{StaticResource ActionButton}"
+                                    Margin="5,0" 
+                                    Width="32" Height="32"
+                                    Command="{Binding DataContext.ArchiveDebtorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="Добавить в архив"
+                                    Visibility="{Binding MainCategory, Converter={StaticResource StringNotEqualsToVisibilityConverter}, ConverterParameter=Архив}">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8F2;" FontSize="16"/>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Кнопка восстановления видна только для архивных должников -->
+                                <Button 
+                                    Style="{StaticResource ActionButton}"
+                                    Margin="5,0" 
+                                    Width="32" Height="32"
+                                    Command="{Binding DataContext.RestoreDebtorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="Восстановить из архива"
+                                    Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив}">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EE;" FontSize="16"/>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            
+            <!-- Сообщение при отсутствии должников -->
+            <TextBlock Text="Пока здесь нет ни одного должника." 
+                       FontSize="16" 
+                       Foreground="{StaticResource TextGrayBrush}"
+                       HorizontalAlignment="Center" 
+                       VerticalAlignment="Center" 
+                       Margin="0,50,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding DebtorsView.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Grid>
 
         <!-- 6: Пагинация -->
         <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="10,10,10,0">

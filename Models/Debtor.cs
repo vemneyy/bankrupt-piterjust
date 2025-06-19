@@ -9,5 +9,9 @@ namespace bankrupt_piterjust.Models
         public string MainCategory { get; set; } // "Клиенты", "Лиды" и т.д.
         public string FilterCategory { get; set; } // "Подготовка заявления", "Сбор документов" и т.д.
         public string Date { get; set; }
+        
+        // Сохраняем предыдущую категорию для возможности восстановления из архива
+        public string PreviousMainCategory { get; set; }
+        public string PreviousFilterCategory { get; set; }
     }
 }
