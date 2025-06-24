@@ -1,6 +1,7 @@
 using bankrupt_piterjust.Services;
 using bankrupt_piterjust.Views;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -24,6 +25,9 @@ namespace bankrupt_piterjust
 
             try
             {
+                // Ensure document directories are created
+                EnsureDocumentDirectoriesExist();
+                
                 // Initialize database service
                 _databaseService = new DatabaseService();
                 
@@ -40,6 +44,23 @@ namespace bankrupt_piterjust
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 Shutdown(1);
+            }
+        }
+
+        private void EnsureDocumentDirectoriesExist()
+        {
+            // Create Documents directory for templates if it doesn't exist
+            string documentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents");
+            if (!Directory.Exists(documentsPath))
+            {
+                Directory.CreateDirectory(documentsPath);
+            }
+
+            // Create Generated directory for output files if it doesn't exist
+            string generatedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Generated");
+            if (!Directory.Exists(generatedPath))
+            {
+                Directory.CreateDirectory(generatedPath);
             }
         }
 

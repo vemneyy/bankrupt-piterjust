@@ -2,7 +2,9 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using bankrupt_piterjust.Models;
@@ -35,39 +37,33 @@ namespace bankrupt_piterjust.Services
                 if (registrationAddress == null)
                     throw new Exception("Адрес регистрации должника не найден.");
 
+                // Get representative (authorized employee) information
+                var representative = UserSessionService.Instance.CurrentEmployee;
+                if (representative == null)
+                    throw new Exception("Информация об авторизованном сотруднике не найдена.");
+
                 // Get contract template path
-                string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents", "Договор_Юридических_Услуг.docx");
-                if (!File.Exists(templatePath))
+                string templatePath = FindTemplateFile();
+                if (string.IsNullOrEmpty(templatePath))
+                    throw new Exception("Шаблон договора не найден по пути: Documents/Договор_Юридических_Услуг.docx");
+                
+                // Create Generated directory if it doesn't exist
+                var documentsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Generated");
+                if (!Directory.Exists(documentsDir))
                 {
-                    // Try looking in the solution directory structure
-                    string solutionDir = AppDomain.CurrentDomain.BaseDirectory;
-                    string[] possiblePaths = new string[]
-                    {
-                        Path.Combine(solutionDir, "Documents", "Договор_Юридических_Услуг.docx"),
-                        Path.Combine(solutionDir, "..", "Documents", "Договор_Юридических_Услуг.docx"),
-                        Path.Combine(solutionDir, "..", "..", "Documents", "Договор_Юридических_Услуг.docx"),
-                        Path.Combine(solutionDir, "..", "..", "..", "Documents", "Договор_Юридических_Услуг.docx")
-                    };
-                    
-                    foreach (var path in possiblePaths)
-                    {
-                        if (File.Exists(path))
-                        {
-                            templatePath = path;
-                            break;
-                        }
-                    }
-                    
-                    if (!File.Exists(templatePath))
-                        throw new Exception("Шаблон договора не найден по пути: Documents/Договор_Юридических_Услуг.docx");
+                    Directory.CreateDirectory(documentsDir);
                 }
+                
+                // Default filename for the generated document
+                string defaultFileName = $"Договор_{person.LastName}_{DateTime.Now:dd.MM.yyyy}.docx";
                 
                 // Show save dialog to select output location
                 var saveDialog = new SaveFileDialog
                 {
+                    InitialDirectory = documentsDir,
                     Filter = "Документ Word (*.docx)|*.docx",
                     Title = "Сохранить договор",
-                    FileName = $"Договор_{person.LastName}_{DateTime.Now:dd.MM.yyyy}.docx"
+                    FileName = defaultFileName
                 };
                 
                 if (saveDialog.ShowDialog() != true)
@@ -91,6 +87,10 @@ namespace bankrupt_piterjust.Services
                 string contractTotalCostWords = NumberToWordsConverter.ConvertToWords(contractTotalCost);
                 string mandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(mandatoryExpenses);
                 
+                // Representative information
+                string representativeName = representative.FullName;
+                string representativeBasis = $"Доверенность № {new Random().Next(100, 999)} от {DateTime.Now.AddMonths(-1):dd.MM.yyyy}";
+                
                 // Prepare replacement data
                 var replacements = new Dictionary<string, string>
                 {
@@ -103,8 +103,8 @@ namespace bankrupt_piterjust.Services
                     { "<кем_выдан_паспорт>", passport.IssuedBy },
                     { "<дата_выдачи>", passport.IssueDate.ToString("dd.MM.yyyy") },
                     { "<адрес_регистрации_заказчика>", registrationAddress.AddressText },
-                    { "<фио_представителя_исполнителя>", "Иванов Иван Иванович" }, // Placeholder, should be retrieved from company data
-                    { "<основание_действий_представителя>", "Доверенность №123 от 01.01.2023" }, // Placeholder, should be retrieved from company data
+                    { "<фио_представителя_исполнителя>", representativeName },
+                    { "<основание_действий_представителя>", representativeBasis },
                     { "<cтоимость_договора>", contractTotalCost.ToString("#,##0.00") },
                     { "<стоимость_договора_прописью>", contractTotalCostWords },
                     { "<сумма_обязательных_расходов>", mandatoryExpenses.ToString("#,##0.00") },
@@ -118,9 +118,23 @@ namespace bankrupt_piterjust.Services
                 // Replace tags in document
                 using (WordprocessingDocument document = WordprocessingDocument.Open(outputPath, true))
                 {
+                    bool anyTagsFound = false;
+                    
                     foreach (var replacement in replacements)
                     {
-                        ReplaceTextInDocument(document, replacement.Key, replacement.Value);
+                        bool tagFound = ReplaceTextInDocument(document, replacement.Key, replacement.Value);
+                        if (tagFound)
+                            anyTagsFound = true;
+                    }
+                    
+                    if (!anyTagsFound)
+                    {
+                        // If no tags were found, the template might not be set up correctly
+                        MessageBox.Show(
+                            "В шаблоне договора не найдены теги для замены. Проверьте, что шаблон содержит необходимые теги для заполнения.",
+                            "Предупреждение",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
                     }
                 }
                 
@@ -133,60 +147,87 @@ namespace bankrupt_piterjust.Services
             }
         }
         
-        private void ReplaceTextInDocument(WordprocessingDocument document, string searchText, string replaceText)
+        /// <summary>
+        /// Searches for the contract template file in multiple possible locations
+        /// </summary>
+        /// <returns>The path to the template file, or null if not found</returns>
+        private string FindTemplateFile()
         {
-            var body = document.MainDocumentPart.Document.Body;
-            if (body == null) return;
-
-            // Iterate through all paragraphs
-            foreach (var paragraph in body.Descendants<Paragraph>())
+            string templateName = "Договор_Юридических_Услуг.docx";
+            
+            // First check in the application directory
+            string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents", templateName);
+            if (File.Exists(templatePath))
+                return templatePath;
+            
+            // Try looking in the solution directory structure
+            string solutionDir = AppDomain.CurrentDomain.BaseDirectory;
+            string[] possiblePaths = new string[]
             {
-                foreach (var run in paragraph.Descendants<Run>())
+                Path.Combine(solutionDir, "Documents", templateName),
+                Path.Combine(solutionDir, "..", "Documents", templateName),
+                Path.Combine(solutionDir, "..", "..", "Documents", templateName),
+                Path.Combine(solutionDir, "..", "..", "..", "Documents", templateName)
+            };
+            
+            foreach (var path in possiblePaths)
+            {
+                if (File.Exists(path))
                 {
-                    foreach (var text in run.Descendants<Text>())
-                    {
-                        if (text.Text.Contains(searchText))
-                        {
-                            text.Text = text.Text.Replace(searchText, replaceText);
-                        }
-                    }
+                    return path;
                 }
             }
-
-            // Check headers and footers
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// Replaces a specific text tag in a Word document with a replacement value.
+        /// Handles cases where the tag might be split across multiple text runs.
+        /// </summary>
+        /// <returns>True if the tag was found and replaced, false otherwise</returns>
+        private bool ReplaceTextInDocument(WordprocessingDocument document, string searchText, string replaceText)
+        {
+            bool tagFound = false;
+            
+            // Process the main document body
+            if (document.MainDocumentPart?.Document?.Body != null)
+            {
+                tagFound |= ProcessTextElements(document.MainDocumentPart.Document.Body, searchText, replaceText);
+            }
+            
+            // Process headers
             foreach (var headerPart in document.MainDocumentPart.HeaderParts)
             {
-                foreach (var paragraph in headerPart.Header.Descendants<Paragraph>())
-                {
-                    foreach (var run in paragraph.Descendants<Run>())
-                    {
-                        foreach (var text in run.Descendants<Text>())
-                        {
-                            if (text.Text.Contains(searchText))
-                            {
-                                text.Text = text.Text.Replace(searchText, replaceText);
-                            }
-                        }
-                    }
-                }
+                tagFound |= ProcessTextElements(headerPart.Header, searchText, replaceText);
             }
-
+            
+            // Process footers
             foreach (var footerPart in document.MainDocumentPart.FooterParts)
             {
-                foreach (var paragraph in footerPart.Footer.Descendants<Paragraph>())
-                {
-                    foreach (var run in paragraph.Descendants<Run>())
-                    {
-                        foreach (var text in run.Descendants<Text>())
-                        {
-                            if (text.Text.Contains(searchText))
-                            {
-                                text.Text = text.Text.Replace(searchText, replaceText);
-                            }
-                        }
-                    }
-                }
+                tagFound |= ProcessTextElements(footerPart.Footer, searchText, replaceText);
             }
+            
+            // Process any other document parts that might contain text
+            if (document.MainDocumentPart.FootnotesPart != null)
+            {
+                tagFound |= ProcessTextElements(document.MainDocumentPart.FootnotesPart.Footnotes, searchText, replaceText);
+            }
+            
+            if (document.MainDocumentPart.EndnotesPart != null)
+            {
+                tagFound |= ProcessTextElements(document.MainDocumentPart.EndnotesPart.Endnotes, searchText, replaceText);
+            }
+            
+            return tagFound;
         }
-    }
-}
+        
+        /// <summary>
+        /// Processes all text elements in a given OpenXML element and replaces the search text
+        /// </summary>
+        private bool ProcessTextElements(OpenXmlElement element, string searchText, string replaceText)
+        {
+            bool tagFound = false;
+            
+            // First attempt: Simple replacement within each Text element
+            foreach (var text in element.Descendants<Text>())
