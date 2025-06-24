@@ -270,7 +270,7 @@
                 </Border>
             </StackPanel>
 
-            <Button Content="+ Добавить должника" Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" HorizontalAlignment="Right"/>
+            <Button Content=" + Добавить должника " Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" HorizontalAlignment="Right"/>
         </Grid>
 
         <!-- 3: Вкладки верхнего уровня -->
