@@ -14,6 +14,112 @@ namespace bankrupt_piterjust.Services
         public DebtorRepository()
         {
             _databaseService = new DatabaseService();
+            // Ensure tables exist when repository is initialized
+            _ = EnsureTablesExistAsync();
+        }
+
+        /// <summary>
+        /// Ensures that all necessary tables exist in the database
+        /// </summary>
+        private async Task EnsureTablesExistAsync()
+        {
+            // Ensure person table exists with all necessary columns
+            await EnsurePersonTableExistsAsync();
+            
+            // Ensure passport table exists
+            await EnsurePassportTableExistsAsync();
+            
+            // Ensure address table exists with address_type enum
+            await EnsureAddressTableExistsAsync();
+        }
+        
+        /// <summary>
+        /// Ensures that the person table exists with all required columns
+        /// </summary>
+        private async Task EnsurePersonTableExistsAsync()
+        {
+            // First, check if the person table exists
+            string createPersonTableSql = @"
+                CREATE TABLE IF NOT EXISTS person (
+                    person_id SERIAL PRIMARY KEY,
+                    last_name VARCHAR(100) NOT NULL,
+                    first_name VARCHAR(100) NOT NULL,
+                    middle_name VARCHAR(100),
+                    phone VARCHAR(20),
+                    email VARCHAR(100)
+                )";
+                
+            await _databaseService.ExecuteNonQueryAsync(createPersonTableSql);
+            
+            // Then check if phone and email columns exist, and add them if they don't
+            string checkColumnsSql = @"
+                DO $$
+                BEGIN
+                    -- Check if phone column exists
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='person' AND column_name='phone'
+                    ) THEN
+                        ALTER TABLE person ADD COLUMN phone VARCHAR(20);
+                    END IF;
+                    
+                    -- Check if email column exists
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='person' AND column_name='email'
+                    ) THEN
+                        ALTER TABLE person ADD COLUMN email VARCHAR(100);
+                    END IF;
+                END $$;";
+                
+            await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
+        }
+        
+        /// <summary>
+        /// Ensures that the passport table exists
+        /// </summary>
+        private async Task EnsurePassportTableExistsAsync()
+        {
+            string createPassportTableSql = @"
+                CREATE TABLE IF NOT EXISTS passport (
+                    passport_id SERIAL PRIMARY KEY,
+                    person_id INTEGER NOT NULL REFERENCES person(person_id),
+                    series VARCHAR(10) NOT NULL,
+                    number VARCHAR(20) NOT NULL,
+                    issued_by TEXT NOT NULL,
+                    division_code VARCHAR(20),
+                    issue_date DATE NOT NULL
+                )";
+                
+            await _databaseService.ExecuteNonQueryAsync(createPassportTableSql);
+        }
+        
+        /// <summary>
+        /// Ensures that the address table exists with address_type enum
+        /// </summary>
+        private async Task EnsureAddressTableExistsAsync()
+        {
+            // First create the address_type_enum if it doesn't exist
+            string createEnumSql = @"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'address_type_enum') THEN
+                        CREATE TYPE address_type_enum AS ENUM ('registration', 'residence', 'mailing');
+                    END IF;
+                END$$;";
+                
+            await _databaseService.ExecuteNonQueryAsync(createEnumSql);
+            
+            // Then create the address table
+            string createAddressTableSql = @"
+                CREATE TABLE IF NOT EXISTS address (
+                    address_id SERIAL PRIMARY KEY,
+                    person_id INTEGER NOT NULL REFERENCES person(person_id),
+                    address_type address_type_enum NOT NULL,
+                    address_text TEXT NOT NULL
+                )";
+                
+            await _databaseService.ExecuteNonQueryAsync(createAddressTableSql);
         }
 
         /// <summary>
@@ -21,7 +127,7 @@ namespace bankrupt_piterjust.Services
         /// </summary>
         public async Task<List<Debtor>> GetAllDebtorsAsync()
         {
-            string sql = "SELECT p.person_id, p.last_name, p.first_name, p.middle_name, " +
+            string sql = "SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email, " +
                          "a.address_text as region " +
                          "FROM person p " +
                          "LEFT JOIN address a ON p.person_id = a.person_id AND a.address_type = 'registration'";
@@ -92,6 +198,9 @@ namespace bankrupt_piterjust.Services
             Passport passport, 
             IEnumerable<Address> addresses)
         {
+            // Ensure tables exist before trying to insert data
+            await EnsureTablesExistAsync();
+            
             // Check for duplicate passport
             if (passport != null && !string.IsNullOrWhiteSpace(passport.Series) && !string.IsNullOrWhiteSpace(passport.Number))
             {
