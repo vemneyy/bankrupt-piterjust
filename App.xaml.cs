@@ -25,6 +25,7 @@ namespace bankrupt_piterjust
                 UserSessionService.Instance.SetCurrentEmployee(loginWindow.AuthenticatedEmployee);
                 
                 var mainWindow = new MainWindow();
+                mainWindow.Title = $"ПитерЮст. Банкротство. - {loginWindow.AuthenticatedEmployee.FullName}, {loginWindow.AuthenticatedEmployee.Position}";
                 mainWindow.Show();
             }
             else

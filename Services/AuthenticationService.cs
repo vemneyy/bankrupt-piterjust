@@ -25,15 +25,50 @@ namespace bankrupt_piterjust.Services
                 throw new ArgumentException("Фамилия, имя и должность обязательны для заполнения");
             }
             
-            // First try to find an existing employee
-            var employee = await FindEmployeeAsync(lastName, firstName, middleName, position);
-            if (employee != null)
+            try
             {
-                return employee;
+                // Test database connection first
+                bool isConnected = await _databaseService.TestConnectionAsync();
+                
+                if (!isConnected)
+                {
+                    // In offline mode, return a temporary employee for this session
+                    return new Employee
+                    {
+                        EmployeeId = -1, // Temporary ID for offline mode
+                        LastName = lastName,
+                        FirstName = firstName,
+                        MiddleName = middleName,
+                        Position = position,
+                        CreatedDate = DateTime.Now,
+                        IsActive = true
+                    };
+                }
+                
+                // First try to find an existing employee
+                var employee = await FindEmployeeAsync(lastName, firstName, middleName, position);
+                if (employee != null)
+                {
+                    return employee;
+                }
+                
+                // Create a new employee
+                return await CreateEmployeeAsync(lastName, firstName, middleName, position);
             }
-            
-            // Create a new employee
-            return await CreateEmployeeAsync(lastName, firstName, middleName, position);
+            catch (Exception ex)
+            {
+                // If database operations fail, still allow user to log in with a temporary account
+                return new Employee
+                {
+                    EmployeeId = -1, // Temporary ID for offline mode
+                    LastName = lastName,
+                    FirstName = firstName,
+                    MiddleName = middleName,
+                    Position = position,
+                    CreatedDate = DateTime.Now,
+                    IsActive = true
+                };
+            }
         }
 
         /// <summary>

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -37,6 +38,7 @@ namespace bankrupt_piterjust.ViewModels
         private List<Debtor> _allDebtors; // Полный список всех должников
         private readonly Dictionary<string, ObservableCollection<TabItem>> _filterTabsByCategory;
         private readonly DebtorRepository _debtorRepository;
+        private readonly DocumentGenerationService _documentGenerationService;
 
         public ObservableCollection<Debtor> DebtorsView { get; set; } // Отображаемый список
         public ObservableCollection<TabItem> MainTabs { get; set; }
@@ -92,15 +94,36 @@ namespace bankrupt_piterjust.ViewModels
             set { _searchText = value; OnPropertyChanged(nameof(SearchText)); ApplyFilters(); }
         }
 
+        private Debtor? _selectedDebtor;
+        public Debtor? SelectedDebtor
+        {
+            get => _selectedDebtor;
+            set
+            {
+                _selectedDebtor = value;
+                OnPropertyChanged(nameof(SelectedDebtor));
+                OnPropertyChanged(nameof(CanGenerateContract));
+                OnPropertyChanged(nameof(IsDebtorSelected));
+            }
+        }
+
+        // Свойство для отображения/скрытия деталей должника
+        public bool IsDebtorSelected => SelectedDebtor != null;
+
+        public bool CanGenerateContract => SelectedDebtor?.PersonId != null;
+
         public ICommand AddDebtorCommand { get; }
         public ICommand ArchiveDebtorCommand { get; }
         public ICommand RestoreDebtorCommand { get; }
         public ICommand RefreshDataCommand { get; }
+        public ICommand GenerateContractCommand { get; }
+        public ICommand ShowLoginWindowCommand { get; }
 
         public MainViewModel()
         {
             _debtorRepository = new DebtorRepository();
-            
+            _documentGenerationService = new DocumentGenerationService();
+
             // Инициализация коллекций для UI
             DebtorsView = new ObservableCollection<Debtor>();
             MainTabs = new ObservableCollection<TabItem>
@@ -151,12 +174,63 @@ namespace bankrupt_piterjust.ViewModels
             ArchiveDebtorCommand = new RelayCommand(ArchiveDebtor);
             RestoreDebtorCommand = new RelayCommand(RestoreDebtor);
             RefreshDataCommand = new RelayCommand(async o => await LoadDataAsync());
+            GenerateContractCommand = new RelayCommand(async o => await GenerateContractAsync(), o => CanGenerateContract);
+            ShowLoginWindowCommand = new RelayCommand(o => ShowLoginWindow());
 
             // Устанавливаем начальные активные вкладки
             SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты");
-            
+
             // Загружаем данные асинхронно
             _ = LoadDataAsync();
+        }
+
+        private void ShowLoginWindow()
+        {
+            var loginWindow = new LoginWindow();
+            loginWindow.Owner = Application.Current?.MainWindow;
+            
+            if (loginWindow.ShowDialog() == true && loginWindow.AuthenticatedEmployee != null)
+            {
+                UserSessionService.Instance.SetCurrentEmployee(loginWindow.AuthenticatedEmployee);
+                
+                if (Application.Current?.MainWindow != null)
+                {
+                    Application.Current.MainWindow.Title = $"ПитерЮст. Банкротство. - {loginWindow.AuthenticatedEmployee.FullName}, {loginWindow.AuthenticatedEmployee.Position}";
+                }
+            }
+        }
+
+        private async Task GenerateContractAsync()
+        {
+            if (SelectedDebtor?.PersonId == null)
+                return;
+
+            try
+            {
+                var outputPath = await _documentGenerationService.GenerateContractAsync(SelectedDebtor.PersonId.Value);
+
+                if (!string.IsNullOrEmpty(outputPath))
+                {
+                    var result = MessageBox.Show(
+                        $"Договор успешно создан и сохранен по пути:\n{outputPath}\n\nОткрыть документ?",
+                        "Успех",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Information);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = outputPath,
+                            UseShellExecute = true
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при генерации договора: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private async Task LoadDataAsync()
@@ -166,7 +240,7 @@ namespace bankrupt_piterjust.ViewModels
                 // Загрузка данных из базы через репозиторий
                 var debtors = await _debtorRepository.GetAllDebtorsAsync();
                 _allDebtors = debtors.ToList();
-                
+
                 // Обновляем счетчики на всех вкладках
                 UpdateTabCounts();
                 ApplyFilters();
@@ -174,7 +248,7 @@ namespace bankrupt_piterjust.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                
+
                 // Если база недоступна, используем тестовые данные
                 LoadDummyData();
             }
@@ -187,6 +261,7 @@ namespace bankrupt_piterjust.ViewModels
             {
                 new Debtor
                 {
+                    PersonId = 1,
                     FullName = "Лисина Ирина Викторовна",
                     Region = "Ленинградская область",
                     Status = "Подать заявление",
@@ -197,6 +272,7 @@ namespace bankrupt_piterjust.ViewModels
                 },
                 new Debtor
                 {
+                    PersonId = 2,
                     FullName = "Петров Петр Петрович",
                     Region = "г. Санкт-Петербург",
                     Status = "Собрать документы",
@@ -207,6 +283,7 @@ namespace bankrupt_piterjust.ViewModels
                 },
                 new Debtor
                 {
+                    PersonId = 3,
                     FullName = "Иванов Иван Иванович",
                     Region = "Московская область",
                     Status = "В архив",
@@ -216,7 +293,7 @@ namespace bankrupt_piterjust.ViewModels
                     Date = DateTime.Now.ToString("dd.MM.yyyy")
                 }
             };
-            
+
             UpdateTabCounts();
             ApplyFilters();
         }
@@ -254,7 +331,7 @@ namespace bankrupt_piterjust.ViewModels
         {
             if (_allDebtors == null)
                 return;
-                
+
             foreach (var tab in MainTabs)
             {
                 tab.Count = _allDebtors.Count(d => d.MainCategory == tab.Name);
@@ -300,12 +377,12 @@ namespace bankrupt_piterjust.ViewModels
                 // Сохраняем текущую категорию перед архивацией
                 debtor.PreviousMainCategory = debtor.MainCategory;
                 debtor.PreviousFilterCategory = debtor.FilterCategory;
-                
+
                 // Перемещаем в архив
                 debtor.MainCategory = "Архив";
                 debtor.FilterCategory = "Все";
                 debtor.Status = "В архив";
-                
+
                 UpdateTabCounts();
                 ApplyFilters();
             }
@@ -319,7 +396,7 @@ namespace bankrupt_piterjust.ViewModels
                 debtor.MainCategory = debtor.PreviousMainCategory ?? "Клиенты";
                 debtor.FilterCategory = debtor.PreviousFilterCategory ?? "Подготовка заявления";
                 debtor.Status = "Восстановлен";
-                
+
                 UpdateTabCounts();
                 ApplyFilters();
             }

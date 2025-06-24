@@ -28,6 +28,7 @@
         <!-- Конвертеры -->
         <local:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter"/>
         <local:StringNotEqualsToVisibilityConverter x:Key="StringNotEqualsToVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <!-- Стили кнопок -->
         <Style x:Key="PrimaryButton" TargetType="Button">
@@ -203,83 +204,169 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        
+        <!-- Стиль для полей в деталях должника -->
+        <Style x:Key="DetailLabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,10,0,2"/>
+        </Style>
+        <Style x:Key="DetailValueStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Основная область таблицы -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- 0: Логотип -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,0,10,10" VerticalAlignment="Center">
-            <TextBlock Text="ПитерЮст " 
-           Foreground="{StaticResource DarkTextBrush}" 
-           FontSize="20" 
-           FontWeight="Bold" 
-           VerticalAlignment="Center" 
-           Margin="4,0,0,0"/>
-            <Border Background="{StaticResource PrimaryBlueBrush}" CornerRadius="8" Padding="12,6">
-                <TextBlock Text="Банкротство" Foreground="White" FontSize="20" FontWeight="Bold"/>
-            </Border>
+            <!-- 0: Логотип и кнопки действий -->
+            <Grid Grid.Row="0" Margin="10,0,10,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-        </StackPanel>
+                <!-- Логотип -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="ПитерЮст " 
+                              Foreground="{StaticResource DarkTextBrush}" 
+                              FontSize="20" 
+                              FontWeight="Bold" 
+                              VerticalAlignment="Center" 
+                              Margin="4,0,0,0"/>
+                    <Border Background="{StaticResource PrimaryBlueBrush}" CornerRadius="8" Padding="12,6">
+                        <TextBlock Text="Банкротство" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                    </Border>
+                </StackPanel>
+            
+                <!-- Кнопки действий -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Авторизация" 
+                            Command="{Binding ShowLoginWindowCommand}" 
+                            Style="{StaticResource SecondaryButton}" 
+                            Margin="0,0,10,0" 
+                            ToolTip="Сменить пользователя системы"/>
 
-        <!-- 1: Заголовок -->
-        <TextBlock Grid.Row="1" Text="Должники" FontSize="28" FontWeight="Bold" Margin="10,20,10,10" Foreground="{StaticResource DarkTextBrush}"/>
+                    <Button Content="Сгенерировать договор" 
+                            Command="{Binding GenerateContractCommand}" 
+                            Style="{StaticResource PrimaryButton}" 
+                            ToolTip="Создать договор юридических услуг для выбранного должника"
+                            IsEnabled="{Binding CanGenerateContract}"/>
+                </StackPanel>
+            </Grid>
 
-        <!-- 2: Панель поиска и действий -->
-        <Grid Grid.Row="2" Margin="10,10,10,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+            <!-- 1: Заголовок -->
+            <TextBlock Grid.Row="1" Text="Должники" FontSize="28" FontWeight="Bold" Margin="10,20,10,10" Foreground="{StaticResource DarkTextBrush}"/>
 
-            <StackPanel Orientation="Horizontal">
-                <Border BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="5" Background="White">
-                    <StackPanel Orientation="Horizontal">
-                        <Grid Width="350">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="10,0" Foreground="{StaticResource TextGrayBrush}"/>
-                            <TextBox Grid.Column="1" x:Name="SearchTextBox"
+            <!-- 2: Панель поиска и действий -->
+            <Grid Grid.Row="2" Margin="10,10,10,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <Border BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="5" Background="White">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="350">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="10,0" Foreground="{StaticResource TextGrayBrush}"/>
+                                <TextBox Grid.Column="1" x:Name="SearchTextBox"
                                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                      Padding="5,8" VerticalContentAlignment="Center" FontSize="14" BorderThickness="0"/>
-                            <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Введите ФИО должника" VerticalAlignment="Center" Foreground="{StaticResource TextGrayBrush}" Margin="5,0,0,0">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Text, ElementName=SearchTextBox}" Value="">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Grid>
-                        <Button Content="Найти" Style="{StaticResource SearchFindButton}" Width="70"/>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
+                                <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Введите ФИО должника" VerticalAlignment="Center" Foreground="{StaticResource TextGrayBrush}" Margin="5,0,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text, ElementName=SearchTextBox}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                            <Button Content="Найти" Style="{StaticResource SearchFindButton}" Width="70"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
 
-            <Button Content=" + Добавить должника " Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" HorizontalAlignment="Right"/>
-        </Grid>
+                <Button Grid.Column="1" Content=" + Добавить должника " Style="{StaticResource PrimaryButton}" Command="{Binding AddDebtorCommand}" HorizontalAlignment="Right"/>
+            </Grid>
 
-        <!-- 3: Вкладки верхнего уровня -->
-        <Border Grid.Row="3" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="0,0,0,1" Margin="10,0">
-            <ListBox ItemsSource="{Binding MainTabs}" 
+            <!-- 3: Вкладки верхнего уровня -->
+            <Border Grid.Row="3" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="0,0,0,1" Margin="10,0">
+                <ListBox ItemsSource="{Binding MainTabs}" 
                      SelectedItem="{Binding SelectedMainTab}" 
                      BorderThickness="0" 
                      Background="Transparent"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <RadioButton GroupName="MainTabs" 
+                                                 Style="{StaticResource TabRadioButton}"
+                                                 IsChecked="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}">
+                                            <RadioButton.Content>
+                                                <ContentPresenter />
+                                            </RadioButton.Content>
+                                        </RadioButton>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <Run Text="{Binding Name}"/>
+                                <Run x:Name="CountRun" Text="{Binding Count}" Foreground="{StaticResource TextGrayBrush}"/>
+                            </TextBlock>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                    <Setter TargetName="CountRun" Property="Foreground" Value="{StaticResource PrimaryBlueBrush}"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- 4: Вкладки нижнего уровня (фильтры) -->
+            <ListBox Grid.Row="4" ItemsSource="{Binding CurrentFilterTabs}" 
+                 SelectedItem="{Binding SelectedFilterTab}"
+                 BorderThickness="0" 
+                 Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 Margin="10,20,10,10">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal"/>
@@ -290,9 +377,9 @@
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
-                                    <RadioButton GroupName="MainTabs" 
-                                                 Style="{StaticResource TabRadioButton}"
-                                                 IsChecked="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <RadioButton GroupName="FilterTabs" 
+                                             Style="{StaticResource FilterRadioButton}"
+                                             IsChecked="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}">
                                         <RadioButton.Content>
                                             <ContentPresenter />
                                         </RadioButton.Content>
@@ -304,192 +391,159 @@
                 </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock>
-                            <Run Text="{Binding Name}"/>
-                            <Run x:Name="CountRun" Text="{Binding Count}" Foreground="{StaticResource TextGrayBrush}"/>
-                        </TextBlock>
-                        <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                <Setter TargetName="CountRun" Property="Foreground" Value="{StaticResource PrimaryBlueBrush}"/>
-                            </DataTrigger>
-                        </DataTemplate.Triggers>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                            <Border Background="{StaticResource SlightlyDarkerGrayBrush}" CornerRadius="10" Margin="8,0,0,0" Padding="7,3" MinWidth="20">
+                                <TextBlock Text="{Binding Count}" Foreground="{StaticResource TextGrayBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-        </Border>
 
-        <!-- 4: Вкладки нижнего уровня (фильтры) -->
-        <ListBox Grid.Row="4" ItemsSource="{Binding CurrentFilterTabs}" 
-                 SelectedItem="{Binding SelectedFilterTab}"
-                 BorderThickness="0" 
-                 Background="Transparent"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 Margin="10,20,10,10">
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-            <ListBox.ItemContainerStyle>
-                <Style TargetType="ListBoxItem">
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="ListBoxItem">
-                                <RadioButton GroupName="FilterTabs" 
-                                             Style="{StaticResource FilterRadioButton}"
-                                             IsChecked="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}">
-                                    <RadioButton.Content>
-                                        <ContentPresenter />
-                                    </RadioButton.Content>
-                                </RadioButton>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ListBox.ItemContainerStyle>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                        <Border Background="{StaticResource SlightlyDarkerGrayBrush}" CornerRadius="10" Margin="8,0,0,0" Padding="7,3" MinWidth="20">
-                            <TextBlock Text="{Binding Count}" Foreground="{StaticResource TextGrayBrush}" FontSize="12" HorizontalAlignment="Center"/>
-                        </Border>
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-
-        <!-- 5: Таблица с данными -->
-        <Grid Grid.Row="5" Margin="10,0,10,10">
-            <DataGrid ItemsSource="{Binding DebtorsView}"
-                  AutoGenerateColumns="False" 
-                  CanUserAddRows="False" 
-                  CanUserDeleteRows="False"
-                  IsReadOnly="True"
-                  CanUserResizeRows="False"
-                  GridLinesVisibility="Horizontal"
-                  BorderThickness="0"
-                  SelectionMode="Single"
-                  SelectionUnit="FullRow"
-                  Background="Transparent" 
-                  HeadersVisibility="Column"
-                  HorizontalGridLinesBrush="{StaticResource BorderGrayBrush}"
-                  VerticalContentAlignment="Center"
-                  RowHeight="44">
-                <DataGrid.Resources>
-                    <!-- Убираем фокусный прямоугольник и стандартное выделение строки -->
-                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#212529"/>
-                </DataGrid.Resources>
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <Setter Property="Background" Value="White"/>
-                        <Setter Property="Padding" Value="0,5"/>
-                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                        <Setter Property="FontSize" Value="14"/>
-                        <!-- Отменяем стандартное выделение строки -->
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#F8F9FA"/>
-                                <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#F8F9FA"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.RowStyle>
-                <!-- Добавляем стиль для ячеек, чтобы убрать рамку выделения -->
-                <DataGrid.CellStyle>
-                    <Style TargetType="DataGridCell">
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="DataGridCell">
-                                    <Border Background="{TemplateBinding Background}" BorderThickness="0">
-                                        <ContentPresenter VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="BorderBrush" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.CellStyle>
-                <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="ФИО должника" Width="2.5*">
-                        <DataGridTemplateColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="HorizontalAlignment" Value="Left"/>
-                            </Style>
-                        </DataGridTemplateColumn.HeaderStyle>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
-                                    <Hyperlink>
-                                        <TextBlock Text="{Binding FullName}" Foreground="{StaticResource DarkTextBrush}"/>
-                                    </Hyperlink>
-                                </TextBlock>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Субъект РФ" Width="2*">
-                        <DataGridTemplateColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="HorizontalAlignment" Value="Left"/>
-                            </Style>
-                        </DataGridTemplateColumn.HeaderStyle>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Region}" Margin="10,0" VerticalAlignment="Center" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Статус" Width="1.5*">
-                        <DataGridTemplateColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="HorizontalAlignment" Value="Left"/>
-                            </Style>
-                        </DataGridTemplateColumn.HeaderStyle>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Content="{Binding Status}" Style="{StaticResource StatusButton}" Margin="5,2"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Дата" Width="*">
-                        <DataGridTemplateColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="HorizontalAlignment" Value="Left"/>
-                            </Style>
-                        </DataGridTemplateColumn.HeaderStyle>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Date}" Margin="10,0" VerticalAlignment="Center" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <!-- Кнопка архивации видна для неархивных должников -->
-                                <Button 
+            <!-- 5: Таблица с данными -->
+            <Grid Grid.Row="5" Margin="10,0,10,10">
+                <DataGrid ItemsSource="{Binding DebtorsView}"
+                      SelectedItem="{Binding SelectedDebtor}"
+                      AutoGenerateColumns="False" 
+                      CanUserAddRows="False" 
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True"
+                      CanUserResizeRows="False"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="0"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      Background="Transparent" 
+                      HeadersVisibility="Column"
+                      HorizontalGridLinesBrush="{StaticResource BorderGrayBrush}"
+                      VerticalContentAlignment="Center"
+                      RowHeight="44">
+                    <DataGrid.Resources>
+                        <!-- Убираем фокусный прямоугольник и стандартное выделение строки -->
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#212529"/>
+                    </DataGrid.Resources>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="Padding" Value="0,5"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="FontSize" Value="14"/>
+                            <!-- Отменяем стандартное выделение строки -->
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#F8F9FA"/>
+                                    <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F8F9FA"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <!-- Добавляем стиль для ячеек, чтобы убрать рамку выделения -->
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="DataGridCell">
+                                        <Border Background="{TemplateBinding Background}" BorderThickness="0">
+                                            <ContentPresenter VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.CellStyle>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="ФИО должника" Width="2.5*">
+                            <DataGridTemplateColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                    <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                </Style>
+                            </DataGridTemplateColumn.HeaderStyle>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding FullName}" Foreground="{StaticResource DarkTextBrush}" Cursor="Hand"/>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Субъект РФ" Width="2*">
+                            <DataGridTemplateColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                    <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                </Style>
+                            </DataGridTemplateColumn.HeaderStyle>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Region}" Margin="10,0" VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Статус" Width="1.5*">
+                            <DataGridTemplateColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                    <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                </Style>
+                            </DataGridTemplateColumn.HeaderStyle>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Status}" Style="{StaticResource StatusButton}" Margin="5,2"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Дата" Width="*">
+                            <DataGridTemplateColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                    <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                </Style>
+                            </DataGridTemplateColumn.HeaderStyle>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Date}" Margin="10,0" VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource ActionButton}"
+                                        Margin="5,0" 
+                                        Width="32" Height="32"
+                                        Command="{Binding DataContext.GenerateContractCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        ToolTip="Сгенерировать договор">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE1A5;" FontSize="16"/>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <!-- Кнопка архивации видна для неархивных должников -->
+                                    <Button 
                                     Style="{StaticResource ActionButton}"
                                     Margin="5,0" 
                                     Width="32" Height="32"
@@ -497,16 +551,16 @@
                                     CommandParameter="{Binding}"
                                     ToolTip="Добавить в архив"
                                     Visibility="{Binding MainCategory, Converter={StaticResource StringNotEqualsToVisibilityConverter}, ConverterParameter=Архив}">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8F2;" FontSize="16"/>
-                                </Button>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <!-- Кнопка восстановления видна только для архивных должников -->
-                                <Button 
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8F2;" FontSize="16"/>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <!-- Кнопка восстановления видна только для архивных должников -->
+                                    <Button 
                                     Style="{StaticResource ActionButton}"
                                     Margin="5,0" 
                                     Width="32" Height="32"
@@ -514,38 +568,100 @@
                                     CommandParameter="{Binding}"
                                     ToolTip="Восстановить из архива"
                                     Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив}">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EE;" FontSize="16"/>
-                                </Button>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EE;" FontSize="16"/>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
             
-            <!-- Сообщение при отсутствии должников -->
-            <TextBlock Text="Пока здесь нет ни одного должника." 
+                <!-- Сообщение при отсутствии должников -->
+                <TextBlock Text="Пока здесь нет ни одного должника." 
                        FontSize="16" 
                        Foreground="{StaticResource TextGrayBrush}"
                        HorizontalAlignment="Center" 
                        VerticalAlignment="Center" 
                        Margin="0,50,0,0">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding DebtorsView.Count}" Value="0">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DebtorsView.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+
+            <!-- 6: Пагинация -->
+            <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="10,10,10,0">
+                <Button Content="1" Width="35" Height="35" Style="{StaticResource SecondaryButton}" IsEnabled="False" Background="#E9ECEF"/>
+            </StackPanel>
         </Grid>
+        
+        <!-- Правая панель с деталями должника -->
+        <Border Grid.Column="1" 
+                Visibility="{Binding IsDebtorSelected, Converter={StaticResource BoolToVisConverter}}"
+                Background="White" 
+                BorderBrush="{StaticResource BorderGrayBrush}" 
+                BorderThickness="1" 
+                CornerRadius="5" 
+                Margin="10,0,0,0" 
+                Padding="20" 
+                Width="320">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Заголовок -->
+                    <TextBlock Text="Информация о должнике" 
+                              FontSize="18" 
+                              FontWeight="Bold" 
+                              Foreground="{StaticResource DarkTextBrush}"
+                              Margin="0,0,0,20"/>
 
-        <!-- 6: Пагинация -->
-        <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="10,10,10,0">
-            <Button Content="1" Width="35" Height="35" Style="{StaticResource SecondaryButton}" IsEnabled="False" Background="#E9ECEF"/>
-        </StackPanel>
+                    <!-- Основные данные -->
+                    <TextBlock Text="ФИО" Style="{StaticResource DetailLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedDebtor.FullName}" Style="{StaticResource DetailValueStyle}"/>
 
+                    <TextBlock Text="Регион" Style="{StaticResource DetailLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedDebtor.Region}" Style="{StaticResource DetailValueStyle}"/>
+
+                    <TextBlock Text="Статус" Style="{StaticResource DetailLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedDebtor.Status}" Style="{StaticResource DetailValueStyle}"/>
+
+                    <TextBlock Text="Категория" Style="{StaticResource DetailLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedDebtor.MainCategory}" Style="{StaticResource DetailValueStyle}"/>
+
+                    <TextBlock Text="Подкатегория" Style="{StaticResource DetailLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedDebtor.FilterCategory}" Style="{StaticResource DetailValueStyle}"/>
+
+                    <TextBlock Text="Дата" Style="{StaticResource DetailLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedDebtor.Date}" Style="{StaticResource DetailValueStyle}"/>
+
+                    <!-- Кнопки действий -->
+                    <Button Content="Сгенерировать договор" 
+                            Command="{Binding GenerateContractCommand}" 
+                            Style="{StaticResource PrimaryButton}" 
+                            IsEnabled="{Binding CanGenerateContract}"
+                            Margin="0,30,0,0"/>
+
+                    <Button Content="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив, FallbackValue=Добавить в архив, TargetNullValue=Добавить в архив}"
+                            Command="{Binding ArchiveDebtorCommand}" 
+                            CommandParameter="{Binding SelectedDebtor}"
+                            Style="{StaticResource SecondaryButton}" 
+                            Margin="0,10,0,0"
+                            Visibility="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringNotEqualsToVisibilityConverter}, ConverterParameter=Архив}"/>
+
+                    <Button Content="Восстановить из архива"
+                            Command="{Binding RestoreDebtorCommand}" 
+                            CommandParameter="{Binding SelectedDebtor}"
+                            Style="{StaticResource SecondaryButton}" 
+                            Margin="0,10,0,0"
+                            Visibility="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
     </Grid>
 </Window>

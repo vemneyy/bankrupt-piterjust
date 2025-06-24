@@ -6,7 +6,7 @@
         xmlns:vm="clr-namespace:bankrupt_piterjust.ViewModels"
         xmlns:conv="clr-namespace:bankrupt_piterjust.Converters"
         mc:Ignorable="d"
-        Title="Авторизация" Height="450" Width="400"
+        Title="Авторизация" Height="645" Width="400"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#F8F9FA">
     
@@ -113,10 +113,23 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="White" Margin="20" CornerRadius="6" Padding="25">
-        <Grid>
-            <StackPanel>
-                <TextBlock Text="Авторизация" Style="{StaticResource HeaderTextBlock}"/>
+    <Border Background="White" Margin="0,0,0,4" CornerRadius="6" Padding="25">
+        <Grid Margin="0,0,0,-39">
+            <StackPanel Margin="0,0,0,21">
+                <!-- Logo and heading section -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,15">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="ПитерЮст " 
+                                  Foreground="#212529" 
+                                  FontSize="20" 
+                                  FontWeight="Bold" 
+                                  VerticalAlignment="Center"/>
+                        <Border Background="#007BFF" CornerRadius="6" Padding="12,6">
+                            <TextBlock Text="Банкротство" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Text="Авторизация" Style="{StaticResource HeaderTextBlock}" TextAlignment="Center"/>
+                </StackPanel>
                 
                 <TextBlock Text="Фамилия *" Style="{StaticResource FormTextBlock}"/>
                 <TextBox Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
@@ -132,22 +145,19 @@
                 
                 <TextBlock Text="* Обязательные поля" Foreground="#6C757D" Margin="0,10,0,20"/>
                 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <Button Grid.Column="0" Content="Отмена" Height="42" Margin="0,0,5,0" 
-                            Command="{Binding CancelCommand}" 
-                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                            Style="{StaticResource SecondaryButton}"/>
-                    
-                    <Button Grid.Column="1" Content="Войти" Height="42" Margin="5,0,0,0" 
-                            Command="{Binding LoginCommand}" 
-                            Style="{StaticResource PrimaryButton}"
-                            IsEnabled="{Binding CanLogin}"/>
-                </Grid>
+                <!-- Enhanced login button -->
+                <Button Content="Войти в систему" Height="46" 
+                        Command="{Binding LoginCommand}" 
+                        Style="{StaticResource PrimaryButton}"
+                        IsEnabled="{Binding CanLogin}" 
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Margin="0,0,0,15"/>
+                
+                <Button Content="Отмена" Height="42" 
+                        Command="{Binding CancelCommand}" 
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                        Style="{StaticResource SecondaryButton}"/>
             </StackPanel>
             
             <!-- Busy indicator -->
