@@ -17,6 +17,11 @@ namespace bankrupt_piterjust
         {
             base.OnStartup(e);
 
+            // Prevent the application from shutting down when the login window
+            // is closed. We'll switch to the default behaviour once the main
+            // window is shown.
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
             try
             {
                 // Initialize database service
@@ -55,9 +60,13 @@ namespace bankrupt_piterjust
                     // Reset database connection before showing main window
                     await _databaseService.ResetConnectionAsync();
 
-                    // Create main window
+                    // Create main window and make it the application's main window
                     var mainWindow = new MainWindow();
                     mainWindow.Title = $"ПитерЮст. Банкротство. - {loginWindow.AuthenticatedEmployee.FullName}, {loginWindow.AuthenticatedEmployee.Position}";
+
+                    // Assign the main window and restore normal shutdown behaviour
+                    MainWindow = mainWindow;
+                    ShutdownMode = ShutdownMode.OnMainWindowClose;
 
                     // Show main window
                     mainWindow.Show();
