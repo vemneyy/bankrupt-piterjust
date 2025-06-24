@@ -12,6 +12,7 @@ namespace bankrupt_piterjust.ViewModels
     public class LoginViewModel : INotifyPropertyChanged
     {
         private readonly AuthenticationService _authService;
+        private readonly DatabaseService _databaseService;
         
         private string _lastName = string.Empty;
         private string _firstName = string.Empty;
@@ -46,7 +47,7 @@ namespace bankrupt_piterjust.ViewModels
         public bool IsBusy
         {
             get => _isBusy;
-            set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); }
+            set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); OnPropertyChanged(nameof(CanLogin)); }
         }
         
         public bool CanLogin => !string.IsNullOrWhiteSpace(LastName) && 
@@ -63,15 +64,32 @@ namespace bankrupt_piterjust.ViewModels
         public LoginViewModel()
         {
             _authService = new AuthenticationService();
+            _databaseService = new DatabaseService();
             LoginCommand = new RelayCommand(async o => await LoginAsync(), o => CanLogin);
             CancelCommand = new RelayCommand(o => CancelLogin(o as Window));
         }
         
         private async Task LoginAsync()
         {
+            if (!CanLogin) return;
+
             try
             {
                 IsBusy = true;
+                
+                // Test database connection first
+                if (!await _databaseService.TestConnectionAsync())
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(
+                            "Не удалось подключиться к базе данных. Пожалуйста, проверьте подключение к сети.",
+                            "Ошибка подключения",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                    });
+                    return;
+                }
                 
                 // Authentication logic
                 AuthenticatedEmployee = await _authService.GetOrCreateEmployeeAsync(
@@ -81,16 +99,39 @@ namespace bankrupt_piterjust.ViewModels
                     Position.Trim()
                 );
                 
-                // Close the login window with success
-                var window = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
-                if (window != null)
+                if (AuthenticatedEmployee == null)
                 {
-                    window.DialogResult = true;
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(
+                            "Не удалось выполнить вход. Пожалуйста, проверьте введенные данные.",
+                            "Ошибка входа",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                    });
+                    return;
                 }
+                
+                // Close the login window with success
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var window = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
+                    if (window != null)
+                    {
+                        window.DialogResult = true;
+                    }
+                });
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при входе: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(
+                        $"Ошибка при входе: {ex.Message}",
+                        "Ошибка",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                });
                 AuthenticatedEmployee = null;
             }
             finally
@@ -104,6 +145,7 @@ namespace bankrupt_piterjust.ViewModels
             if (window != null)
             {
                 window.DialogResult = false;
+                window.Close();
             }
         }
         

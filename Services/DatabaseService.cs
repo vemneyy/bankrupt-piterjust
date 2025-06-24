@@ -14,6 +14,7 @@ namespace bankrupt_piterjust.Services
         private readonly string _connectionString;
         private bool _connectionTested = false;
         private bool _connectionAvailable = false;
+        private readonly object _connectionLock = new object();
         
         public DatabaseService()
         {
@@ -27,28 +28,44 @@ namespace bankrupt_piterjust.Services
         /// </summary>
         public async Task<bool> TestConnectionAsync()
         {
-            if (_connectionTested)
-                return _connectionAvailable;
+            // Use a lock to prevent multiple concurrent connection tests
+            lock (_connectionLock)
+            {
+                if (_connectionTested && _connectionAvailable)
+                    return true;
+            }
 
             try
             {
                 using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
+                await using var cmd = new NpgsqlCommand("SELECT 1", connection);
+                await cmd.ExecuteScalarAsync(); // Ensure we can actually execute commands
                 
-                _connectionAvailable = true;
-                _connectionTested = true;
+                lock (_connectionLock)
+                {
+                    _connectionAvailable = true;
+                    _connectionTested = true;
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                _connectionAvailable = false;
-                _connectionTested = true;
+                lock (_connectionLock)
+                {
+                    _connectionAvailable = false;
+                    _connectionTested = true;
+                }
                 
-                MessageBox.Show(
-                    $"Не удалось подключиться к базе данных. Программа будет работать в автономном режиме.\n\nПодробности: {ex.Message}", 
-                    "Ошибка подключения", 
-                    MessageBoxButton.OK, 
-                    MessageBoxImage.Warning);
+                // Show message box on UI thread to prevent cross-thread operation issues
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(
+                        $"Не удалось подключиться к базе данных. Программа будет работать в автономном режиме.\n\nПодробности: {ex.Message}", 
+                        "Ошибка подключения", 
+                        MessageBoxButton.OK, 
+                        MessageBoxImage.Warning);
+                });
                 
                 return false;
             }
@@ -64,10 +81,10 @@ namespace bankrupt_piterjust.Services
             
             try
             {
-                using var connection = new NpgsqlConnection(_connectionString);
+                await using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
                 
-                using var command = new NpgsqlCommand(sql, connection);
+                await using var command = new NpgsqlCommand(sql, connection);
                 
                 if (parameters != null)
                 {
@@ -81,8 +98,11 @@ namespace bankrupt_piterjust.Services
             }
             catch (Exception ex)
             {
-                _connectionAvailable = false; // Reset status for next attempt
-                _connectionTested = false; // Force retest on next connection attempt
+                lock (_connectionLock)
+                {
+                    _connectionAvailable = false;
+                    _connectionTested = false;
+                }
                 
                 // Log the error but don't throw it - allow offline mode operation
                 Console.WriteLine($"Database error: {ex.Message}");
@@ -100,10 +120,10 @@ namespace bankrupt_piterjust.Services
             
             try
             {
-                using var connection = new NpgsqlConnection(_connectionString);
+                await using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
                 
-                using var command = new NpgsqlCommand(sql, connection);
+                await using var command = new NpgsqlCommand(sql, connection);
                 
                 if (parameters != null)
                 {
@@ -128,8 +148,11 @@ namespace bankrupt_piterjust.Services
             }
             catch (Exception ex)
             {
-                _connectionAvailable = false; // Reset status for next attempt
-                _connectionTested = false; // Force retest on next connection attempt
+                lock (_connectionLock)
+                {
+                    _connectionAvailable = false;
+                    _connectionTested = false;
+                }
                 
                 // Log the error but don't throw it - allow offline mode operation
                 Console.WriteLine($"Database error: {ex.Message}");
@@ -147,10 +170,10 @@ namespace bankrupt_piterjust.Services
             
             try
             {
-                using var connection = new NpgsqlConnection(_connectionString);
+                await using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
                 
-                using var command = new NpgsqlCommand(sql, connection);
+                await using var command = new NpgsqlCommand(sql, connection);
                 
                 if (parameters != null)
                 {
@@ -160,7 +183,7 @@ namespace bankrupt_piterjust.Services
                     }
                 }
                 
-                using var reader = await command.ExecuteReaderAsync();
+                await using var reader = await command.ExecuteReaderAsync();
                 var dataTable = new DataTable();
                 dataTable.Load(reader);
                 
@@ -168,13 +191,26 @@ namespace bankrupt_piterjust.Services
             }
             catch (Exception ex)
             {
-                _connectionAvailable = false; // Reset status for next attempt
-                _connectionTested = false; // Force retest on next connection attempt
+                lock (_connectionLock)
+                {
+                    _connectionAvailable = false;
+                    _connectionTested = false;
+                }
                 
                 // Log the error but don't throw it - allow offline mode operation
                 Console.WriteLine($"Database error: {ex.Message}");
                 return new DataTable(); // Return empty table on error
             }
+        }
+
+        public async Task<bool> ResetConnectionAsync()
+        {
+            lock (_connectionLock)
+            {
+                _connectionTested = false;
+                _connectionAvailable = false;
+            }
+            return await TestConnectionAsync();
         }
     }
 }

@@ -1,7 +1,7 @@
 using bankrupt_piterjust.Services;
 using bankrupt_piterjust.Views;
-using System.Configuration;
-using System.Data;
+using System;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace bankrupt_piterjust
@@ -11,22 +11,66 @@ namespace bankrupt_piterjust
     /// </summary>
     public partial class App : Application
     {
-        protected override void OnStartup(StartupEventArgs e)
+        private DatabaseService _databaseService;
+
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            
-            // Show login window
+
+            try
+            {
+                // Initialize database service
+                _databaseService = new DatabaseService();
+                
+                // Attempt initial database connection
+                await _databaseService.TestConnectionAsync();
+                
+                await ShowLoginWindow();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Произошла ошибка при запуске приложения: {ex.Message}",
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown(1);
+            }
+        }
+
+        private async Task ShowLoginWindow()
+        {
+            // Create and show login window
             var loginWindow = new LoginWindow();
             bool? result = loginWindow.ShowDialog();
-            
+
             // If login was successful, store the user and show main window
             if (result == true && loginWindow.AuthenticatedEmployee != null)
             {
-                UserSessionService.Instance.SetCurrentEmployee(loginWindow.AuthenticatedEmployee);
-                
-                var mainWindow = new MainWindow();
-                mainWindow.Title = $"ПитерЮст. Банкротство. - {loginWindow.AuthenticatedEmployee.FullName}, {loginWindow.AuthenticatedEmployee.Position}";
-                mainWindow.Show();
+                try
+                {
+                    // Set current employee in session
+                    UserSessionService.Instance.SetCurrentEmployee(loginWindow.AuthenticatedEmployee);
+
+                    // Reset database connection before showing main window
+                    await _databaseService.ResetConnectionAsync();
+
+                    // Create main window
+                    var mainWindow = new MainWindow();
+                    mainWindow.Title = $"ПитерЮст. Банкротство. - {loginWindow.AuthenticatedEmployee.FullName}, {loginWindow.AuthenticatedEmployee.Position}";
+
+                    // Show main window
+                    mainWindow.Show();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"Ошибка при открытии главного окна: {ex.Message}",
+                        "Ошибка",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    Shutdown(1);
+                }
             }
             else
             {
