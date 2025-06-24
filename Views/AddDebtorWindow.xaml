@@ -5,8 +5,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:bankrupt_piterjust.ViewModels"
+        xmlns:conv="clr-namespace:bankrupt_piterjust.Converters"
+        xmlns:local="clr-namespace:bankrupt_piterjust"
         mc:Ignorable="d"
-        Title="Добавить нового должника" Height="700" Width="800"
+        Title="Добавить нового должника" Height="700" Width="900"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
         Background="#F8F9FA">
     
@@ -15,96 +17,197 @@
     </Window.DataContext>
     
     <Window.Resources>
+        <!-- Converters -->
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conv:BooleanToInverseConverter x:Key="BooleanToInverseConverter"/>
+        <conv:StringEqualsConverter x:Key="StringEqualsConverter"/>
+        <conv:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter"/>
+        <conv:BoolToValueConverter x:Key="BoolToColorConverter"/>
+        
         <!-- Styles -->
         <Style x:Key="HeaderTextBlock" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,10,0,5"/>
+            <Setter Property="Margin" Value="0,15,0,10"/>
+            <Setter Property="Foreground" Value="#212529"/>
         </Style>
         
         <Style x:Key="FormTextBlock" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,5,0,2"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#495057"/>
         </Style>
         
         <Style x:Key="FormTextBox" TargetType="TextBox">
-            <Setter Property="Margin" Value="0,2,0,5"/>
-            <Setter Property="Padding" Value="5,3"/>
-            <Setter Property="Height" Value="30"/>
+            <Setter Property="Margin" Value="0,2,0,10"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#CED4DA"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#A9A9A9"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#007BFF"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
         
         <Style x:Key="FormDatePicker" TargetType="DatePicker">
-            <Setter Property="Margin" Value="0,2,0,5"/>
-            <Setter Property="Height" Value="30"/>
+            <Setter Property="Margin" Value="0,2,0,10"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#CED4DA"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         
         <Style x:Key="FormCheckBox" TargetType="CheckBox">
-            <Setter Property="Margin" Value="0,5,0,5"/>
+            <Setter Property="Margin" Value="0,5,0,10"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#495057"/>
         </Style>
 
         <Style x:Key="TabButton" TargetType="RadioButton">
             <Setter Property="Margin" Value="0,0,5,0"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="#DEE2E6"/>
             <Setter Property="Background" Value="White"/>
-            <Style.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Background" Value="#007BFF"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Foreground" Value="#495057"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#007BFF"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#0069D9"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#B8DAFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="#007BFF"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Padding" Value="15,10"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="4">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0069D9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0062CC"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#6C757D"/>
+                                <Setter Property="Opacity" Value="0.65"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#0056b3"/>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="#B0C4DE"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
         
         <Style x:Key="SecondaryButton" TargetType="Button">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#212529"/>
-            <Setter Property="BorderBrush" Value="#DEE2E6"/>
+            <Setter Property="Foreground" Value="#495057"/>
+            <Setter Property="BorderBrush" Value="#CED4DA"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Padding" Value="15,9"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="4">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F8F9FA"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#A9A9A9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#E2E6EA"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#A9A9A9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F8F9FA"/>
-                </Trigger>
-            </Style.Triggers>
+        </Style>
+        
+        <!-- Style for Tab Control -->
+        <Style x:Key="ModernTabControl" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="TabStripPlacement" Value="Top"/>
+        </Style>
+        
+        <Style x:Key="ModernTabItem" TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border" BorderThickness="0,0,0,2" BorderBrush="Transparent"
+                                Padding="15,10" Background="Transparent">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" 
+                                              HorizontalAlignment="Center"
+                                              ContentSource="Header"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#007BFF"/>
+                                <Setter TargetName="ContentSite" Property="TextBlock.Foreground" Value="#007BFF"/>
+                                <Setter TargetName="ContentSite" Property="TextBlock.FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter TargetName="ContentSite" Property="TextBlock.Foreground" Value="#6C757D"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ContentSite" Property="TextBlock.Foreground" Value="#007BFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" FontSize="16"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -116,300 +219,309 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <TextBlock Text="Добавление нового должника" 
-                   Margin="20,15" 
-                   FontSize="22" 
-                   FontWeight="Bold"/>
+        <Border Grid.Row="0" Background="White" BorderThickness="0,0,0,1" BorderBrush="#DEE2E6">
+            <TextBlock Text="Добавление нового должника" 
+                      Margin="25,20" 
+                      FontSize="22" 
+                      FontWeight="Bold"
+                      Foreground="#212529"/>
+        </Border>
 
         <!-- Main Content Area -->
-        <ScrollViewer Grid.Row="1" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <TabControl Background="Transparent" BorderThickness="0,1,0,0" BorderBrush="#DEE2E6">
+        <ScrollViewer Grid.Row="1" Margin="0" VerticalScrollBarVisibility="Auto">
+            <Border Background="White" Margin="25,15,25,15">
+                <TabControl Style="{StaticResource ModernTabControl}" BorderThickness="0,1,0,0" BorderBrush="#DEE2E6">
                     <!-- Личные данные -->
-                    <TabItem Header="Личные данные">
-                        <StackPanel Margin="0,15,0,0">
+                    <TabItem Header="Личные данные" Style="{StaticResource ModernTabItem}">
+                        <Grid Margin="15,20,15,10">
                             <!-- ФИО -->
-                            <TextBlock Text="ФИО должника" Style="{StaticResource HeaderTextBlock}"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="ФИО должника" Style="{StaticResource HeaderTextBlock}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="Фамилия *" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1" Margin="0,0,15,0">
+                                        <TextBlock Text="Имя *" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Отчество" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                </Grid>
                                 
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Фамилия *" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
+                                <!-- Контактные данные -->
+                                <TextBlock Text="Контактные данные" Style="{StaticResource HeaderTextBlock}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="Телефон" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="E-mail" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                </Grid>
                                 
-                                <StackPanel Grid.Column="1" Margin="0,0,10,0">
-                                    <TextBlock Text="Имя *" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
+                                <!-- Паспортные данные -->
+                                <TextBlock Text="Паспортные данные" Style="{StaticResource HeaderTextBlock}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="0.5*"/>
+                                        <ColumnDefinition Width="0.5*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="Серия" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding PassportSeries, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1" Margin="0,0,15,0">
+                                        <TextBlock Text="Номер" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding PassportNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Дата выдачи" Style="{StaticResource FormTextBlock}"/>
+                                        <DatePicker SelectedDate="{Binding PassportIssueDate}" Style="{StaticResource FormDatePicker}"/>
+                                    </StackPanel>
+                                </Grid>
                                 
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Отчество" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                            </Grid>
-                            
-                            <!-- Контактные данные -->
-                            <TextBlock Text="Контактные данные" Style="{StaticResource HeaderTextBlock}"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="Кем выдан" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding PassportIssuedBy, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Код подразделения" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding PassportDivisionCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                </Grid>
                                 
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Телефон" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
+                                <!-- Адреса -->
+                                <TextBlock Text="Адреса" Style="{StaticResource HeaderTextBlock}"/>
                                 
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="E-mail" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                            </Grid>
-                            
-                            <!-- Паспортные данные -->
-                            <TextBlock Text="Паспортные данные" Style="{StaticResource HeaderTextBlock}"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Адрес регистрации *" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                 
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Серия" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding PassportSeries, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
+                                <CheckBox Content="Адрес проживания совпадает с адресом регистрации" 
+                                          IsChecked="{Binding SameAsRegistration}" 
+                                          Style="{StaticResource FormCheckBox}"/>
                                 
-                                <StackPanel Grid.Column="1" Margin="0,0,10,0">
-                                    <TextBlock Text="Номер" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding PassportNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
+                                <TextBlock Text="Адрес проживания" Style="{StaticResource FormTextBlock}"
+                                           IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
+                                <TextBox Text="{Binding ResidenceAddress, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource FormTextBox}"
+                                         IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
                                 
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Дата выдачи" Style="{StaticResource FormTextBlock}"/>
-                                    <DatePicker SelectedDate="{Binding PassportIssueDate}" Style="{StaticResource FormDatePicker}"/>
-                                </StackPanel>
-                            </Grid>
-                            
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                                <CheckBox Content="Почтовый адрес совпадает с адресом проживания" 
+                                          IsChecked="{Binding SameAsResidence}" 
+                                          Style="{StaticResource FormCheckBox}"/>
                                 
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Кем выдан" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding PassportIssuedBy, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                                
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Код подразделения" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding PassportDivisionCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                            </Grid>
-                            
-                            <!-- Адреса -->
-                            <TextBlock Text="Адреса" Style="{StaticResource HeaderTextBlock}"/>
-                            
-                            <TextBlock Text="Адрес регистрации *" Style="{StaticResource FormTextBlock}"/>
-                            <TextBox Text="{Binding RegistrationAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                            
-                            <CheckBox Content="Адрес проживания совпадает с адресом регистрации" 
-                                      IsChecked="{Binding SameAsRegistration}" 
-                                      Style="{StaticResource FormCheckBox}"/>
-                            
-                            <TextBlock Text="Адрес проживания" Style="{StaticResource FormTextBlock}"
-                                       IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
-                            <TextBox Text="{Binding ResidenceAddress, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource FormTextBox}"
-                                     IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
-                            
-                            <CheckBox Content="Почтовый адрес совпадает с адресом проживания" 
-                                      IsChecked="{Binding SameAsResidence}" 
-                                      Style="{StaticResource FormCheckBox}"/>
-                            
-                            <TextBlock Text="Почтовый адрес" Style="{StaticResource FormTextBlock}"
-                                       IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}"/>
-                            <TextBox Text="{Binding MailingAddress, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource FormTextBox}"
-                                     IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}"/>
-                        </StackPanel>
+                                <TextBlock Text="Почтовый адрес" Style="{StaticResource FormTextBlock}"
+                                           IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}"/>
+                                <TextBox Text="{Binding MailingAddress, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource FormTextBox}"
+                                         IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}"/>
+                            </StackPanel>
+                        </Grid>
                     </TabItem>
                     
                     <!-- Договор -->
-                    <TabItem Header="Договор">
-                        <StackPanel Margin="0,15,0,0">
-                            <!-- Основные данные договора -->
-                            <TextBlock Text="Основные данные договора" Style="{StaticResource HeaderTextBlock}"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                    <TabItem Header="Договор" Style="{StaticResource ModernTabItem}">
+                        <Grid Margin="15,20,15,10">
+                            <StackPanel>
+                                <!-- Основные данные договора -->
+                                <TextBlock Text="Основные данные договора" Style="{StaticResource HeaderTextBlock}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="Номер договора" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding ContractNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1" Margin="0,0,15,0">
+                                        <TextBlock Text="Город" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding ContractCity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Дата договора" Style="{StaticResource FormTextBlock}"/>
+                                        <DatePicker SelectedDate="{Binding ContractDate}" Style="{StaticResource FormDatePicker}"/>
+                                    </StackPanel>
+                                </Grid>
                                 
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Номер договора" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding ContractNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
+                                <!-- Финансовые условия -->
+                                <TextBlock Text="Финансовые условия" Style="{StaticResource HeaderTextBlock}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="Общая стоимость договора (руб.)" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding TotalCost, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <Button Grid.Column="1" Content="Сумма прописью" 
+                                            Command="{Binding CalculateTotalWordsCommand}"
+                                            Style="{StaticResource SecondaryButton}"
+                                            VerticalAlignment="Bottom" Margin="0,0,0,10" Height="36" Width="150"/>
+                                </Grid>
                                 
-                                <StackPanel Grid.Column="1" Margin="0,0,10,0">
-                                    <TextBlock Text="Город" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding ContractCity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
+                                <TextBlock Text="Сумма прописью" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding TotalCostWords, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource FormTextBox}" 
+                                         TextWrapping="Wrap" 
+                                         AcceptsReturn="True" 
+                                         Height="60" Padding="10"/>
                                 
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Дата договора" Style="{StaticResource FormTextBlock}"/>
-                                    <DatePicker SelectedDate="{Binding ContractDate}" Style="{StaticResource FormDatePicker}"/>
-                                </StackPanel>
-                            </Grid>
-                            
-                            <!-- Финансовые условия -->
-                            <TextBlock Text="Финансовые условия" Style="{StaticResource HeaderTextBlock}"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="Сумма обязательных расходов (руб.)" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding MandatoryExpenses, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <Button Grid.Column="1" Content="Сумма прописью" 
+                                            Command="{Binding CalculateMandatoryWordsCommand}"
+                                            Style="{StaticResource SecondaryButton}"
+                                            VerticalAlignment="Bottom" Margin="0,0,0,10" Height="36" Width="150"/>
+                                </Grid>
                                 
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Общая стоимость договора (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding TotalCost, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
+                                <TextBlock Text="Сумма прописью" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding MandatoryExpensesWords, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource FormTextBox}" 
+                                         TextWrapping="Wrap" 
+                                         AcceptsReturn="True" 
+                                         Height="60" Padding="10"/>
                                 
-                                <Button Grid.Column="1" Content="Сумма прописью" 
-                                        Command="{Binding CalculateTotalWordsCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        VerticalAlignment="Bottom" Margin="0,0,0,5"/>
-                            </Grid>
-                            
-                            <TextBlock Text="Сумма прописью" Style="{StaticResource FormTextBlock}"/>
-                            <TextBox Text="{Binding TotalCostWords, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource FormTextBox}" 
-                                     TextWrapping="Wrap" 
-                                     AcceptsReturn="True" 
-                                     Height="60"/>
-                            
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Сумма обязательных расходов (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding MandatoryExpenses, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                                
-                                <Button Grid.Column="1" Content="Сумма прописью" 
-                                        Command="{Binding CalculateMandatoryWordsCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        VerticalAlignment="Bottom" Margin="0,0,0,5"/>
-                            </Grid>
-                            
-                            <TextBlock Text="Сумма прописью" Style="{StaticResource FormTextBlock}"/>
-                            <TextBox Text="{Binding MandatoryExpensesWords, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource FormTextBox}" 
-                                     TextWrapping="Wrap" 
-                                     AcceptsReturn="True" 
-                                     Height="60"/>
-                            
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Размер вознаграждения фин. управляющего (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding ManagerFee, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                                
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Прочие расходы банкротства (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding OtherExpenses, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                        <TextBlock Text="Размер вознаграждения фин. управляющего (руб.)" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding ManagerFee, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Прочие расходы банкротства (руб.)" Style="{StaticResource FormTextBlock}"/>
+                                        <TextBox Text="{Binding OtherExpenses, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
                     </TabItem>
                     
                     <!-- Статус -->
-                    <TabItem Header="Статус">
-                        <StackPanel Margin="0,15,0,0">
-                            <TextBlock Text="Статус в программе" Style="{StaticResource HeaderTextBlock}"/>
-                            
-                            <TextBlock Text="Текст кнопки статуса" Style="{StaticResource FormTextBlock}"/>
-                            <TextBox Text="{Binding Status, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                            
-                            <TextBlock Text="Основная категория" Style="{StaticResource HeaderTextBlock}"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,5,0,10">
-                                <RadioButton Content="Лиды" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Лиды}" Style="{StaticResource TabButton}"/>
-                                <RadioButton Content="Клиенты" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Клиенты}" Style="{StaticResource TabButton}"/>
-                                <RadioButton Content="Отказ" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Отказ}" Style="{StaticResource TabButton}"/>
-                            </StackPanel>
-                            
-                            <TextBlock Text="Фильтр" Style="{StaticResource HeaderTextBlock}"/>
-                            
-                            <!-- Фильтры для Лиды -->
-                            <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Лиды}">
-                                <StackPanel Orientation="Horizontal" Margin="0,5,0,10">
-                                    <RadioButton Content="Консультация не назначена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Консультация не назначена}" Style="{StaticResource TabButton}"/>
-                                    <RadioButton Content="Консультация назначена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Консультация назначена}" Style="{StaticResource TabButton}"/>
-                                    <RadioButton Content="Повторная консультация" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Повторная консультация}" Style="{StaticResource TabButton}"/>
+                    <TabItem Header="Статус" Style="{StaticResource ModernTabItem}">
+                        <Grid Margin="15,20,15,10">
+                            <StackPanel>
+                                <TextBlock Text="Статус в программе" Style="{StaticResource HeaderTextBlock}"/>
+                                
+                                <TextBlock Text="Текст кнопки статуса" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding Status, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                
+                                <TextBlock Text="Основная категория" Style="{StaticResource HeaderTextBlock}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,15">
+                                    <RadioButton Content="Лиды" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Лиды}" Style="{StaticResource TabButton}"/>
+                                    <RadioButton Content="Клиенты" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Клиенты}" Style="{StaticResource TabButton}"/>
+                                    <RadioButton Content="Отказ" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Отказ}" Style="{StaticResource TabButton}"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Фильтр" Style="{StaticResource HeaderTextBlock}"/>
+                                
+                                <!-- Фильтры для Лиды -->
+                                <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Лиды}">
+                                    <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
+                                        <RadioButton Content="Консультация не назначена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Консультация не назначена}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                        <RadioButton Content="Консультация назначена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Консультация назначена}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                        <RadioButton Content="Повторная консультация" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Повторная консультация}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                    </WrapPanel>
+                                </StackPanel>
+                                
+                                <!-- Фильтры для Клиенты -->
+                                <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Клиенты}">
+                                    <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
+                                        <RadioButton Content="Сбор документов" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Сбор документов}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                        <RadioButton Content="Подготовка заявления" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Подготовка заявления}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                        <RadioButton Content="На рассмотрении" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=На рассмотрении}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                        <RadioButton Content="Ходатайство" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Ходатайство}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                        <RadioButton Content="Заседание" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Заседание}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                        <RadioButton Content="Процедура введена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Процедура введена}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                    </WrapPanel>
+                                </StackPanel>
+                                
+                                <!-- Фильтры для Отказ -->
+                                <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Отказ}">
+                                    <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
+                                        <RadioButton Content="Мой отказ" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Мой отказ}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                        <RadioButton Content="Отказ должника" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Отказ должника}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
+                                    </WrapPanel>
                                 </StackPanel>
                             </StackPanel>
-                            
-                            <!-- Фильтры для Клиенты -->
-                            <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Клиенты}">
-                                <StackPanel Orientation="Horizontal" Margin="0,5,0,10">
-                                    <RadioButton Content="Сбор документов" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Сбор документов}" Style="{StaticResource TabButton}"/>
-                                    <RadioButton Content="Подготовка заявления" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Подготовка заявления}" Style="{StaticResource TabButton}"/>
-                                    <RadioButton Content="На рассмотрении" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=На рассмотрении}" Style="{StaticResource TabButton}"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <RadioButton Content="Ходатайство" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Ходатайство}" Style="{StaticResource TabButton}"/>
-                                    <RadioButton Content="Заседание" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Заседание}" Style="{StaticResource TabButton}"/>
-                                    <RadioButton Content="Процедура введена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Процедура введена}" Style="{StaticResource TabButton}"/>
-                                </StackPanel>
-                            </StackPanel>
-                            
-                            <!-- Фильтры для Отказ -->
-                            <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Отказ}">
-                                <StackPanel Orientation="Horizontal" Margin="0,5,0,10">
-                                    <RadioButton Content="Мой отказ" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Мой отказ}" Style="{StaticResource TabButton}"/>
-                                    <RadioButton Content="Отказ должника" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Отказ должника}" Style="{StaticResource TabButton}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </StackPanel>
+                        </Grid>
                     </TabItem>
                 </TabControl>
-            </StackPanel>
+            </Border>
         </ScrollViewer>
 
         <!-- Bottom action area -->
-        <Grid Grid.Row="2" Background="White" Margin="20,15,20,15">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" Text="* Обязательные поля" VerticalAlignment="Center" Foreground="#6C757D"/>
-            <Button Grid.Column="1" Content="Отмена" Width="100" Margin="0,0,10,0" Command="{Binding CancelCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Style="{StaticResource SecondaryButton}"/>
-            <Button Grid.Column="2" Content="Сохранить" Width="120" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}"/>
-        </Grid>
+        <Border Grid.Row="2" Background="White" BorderBrush="#DEE2E6" BorderThickness="0,1,0,0">
+            <Grid Margin="25,15">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0" Text="* Обязательные поля" VerticalAlignment="Center" Foreground="#6C757D"/>
+                <Button Grid.Column="1" Content="Отмена" Width="120" Height="42" Margin="0,0,15,0" Command="{Binding CancelCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Style="{StaticResource SecondaryButton}"/>
+                <Button Grid.Column="2" Content="Сохранить" Width="140" Height="42" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}"/>
+            </Grid>
+        </Border>
         
         <!-- Busy indicator -->
         <Grid Grid.RowSpan="3" Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="Сохранение данных..." Foreground="White" FontSize="16" Margin="0,0,0,10"/>
-                <ProgressBar IsIndeterminate="True" Width="200" Height="10"/>
+                <TextBlock Text="Сохранение данных..." Foreground="White" FontSize="18" FontWeight="Medium" Margin="0,0,0,15"/>
+                <ProgressBar IsIndeterminate="True" Width="250" Height="8"/>
             </StackPanel>
         </Grid>
     </Grid>

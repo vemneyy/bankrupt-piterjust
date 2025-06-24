@@ -31,12 +31,17 @@ namespace bankrupt_piterjust.Services
 
             foreach (DataRow row in dataTable.Rows)
             {
+                // Fix Int64 to Int32 conversion
+                int personId = row["person_id"] is Int64 value ? (int)value : Convert.ToInt32(row["person_id"]);
+
                 var person = new Person
                 {
-                    PersonId = Convert.ToInt32(row["person_id"]),
-                    LastName = row["last_name"].ToString(),
-                    FirstName = row["first_name"].ToString(),
-                    MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null
+                    PersonId = personId,
+                    LastName = row["last_name"].ToString() ?? string.Empty,
+                    FirstName = row["first_name"].ToString() ?? string.Empty,
+                    MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
+                    Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
+                    Email = row["email"] != DBNull.Value ? row["email"].ToString() : null
                 };
 
                 var debtor = Debtor.FromPerson(person);
@@ -44,7 +49,7 @@ namespace bankrupt_piterjust.Services
                 // Set the region if available
                 if (row["region"] != DBNull.Value)
                 {
-                    debtor.Region = row["region"].ToString();
+                    debtor.Region = row["region"].ToString() ?? string.Empty;
                 }
 
                 // Default values for UI display
@@ -60,6 +65,26 @@ namespace bankrupt_piterjust.Services
         }
 
         /// <summary>
+        /// Check if passport with given series and number already exists
+        /// </summary>
+        public async Task<bool> IsPassportExistsAsync(string series, string number)
+        {
+            if (string.IsNullOrWhiteSpace(series) || string.IsNullOrWhiteSpace(number))
+                return false;
+                
+            string sql = "SELECT COUNT(*) FROM passport WHERE series = @series AND number = @number";
+            
+            var parameters = new Dictionary<string, object>
+            {
+                { "@series", series },
+                { "@number", number }
+            };
+
+            int count = await _databaseService.ExecuteScalarAsync<int>(sql, parameters);
+            return count > 0;
+        }
+
+        /// <summary>
         /// Insert a new person with their passport and address information
         /// </summary>
         public async Task<int> AddPersonWithDetailsAsync(
@@ -67,6 +92,16 @@ namespace bankrupt_piterjust.Services
             Passport passport, 
             IEnumerable<Address> addresses)
         {
+            // Check for duplicate passport
+            if (passport != null && !string.IsNullOrWhiteSpace(passport.Series) && !string.IsNullOrWhiteSpace(passport.Number))
+            {
+                bool passportExists = await IsPassportExistsAsync(passport.Series, passport.Number);
+                if (passportExists)
+                {
+                    throw new Exception("Паспорт с такими серией и номером уже существует в базе данных.");
+                }
+            }
+            
             // Insert person first to get the person_id
             string insertPersonSql = @"
                 INSERT INTO person (last_name, first_name, middle_name, phone, email)
@@ -77,15 +112,17 @@ namespace bankrupt_piterjust.Services
             {
                 { "@lastName", person.LastName },
                 { "@firstName", person.FirstName },
-                { "@middleName", person.MiddleName },
-                { "@phone", person.Phone },
-                { "@email", person.Email }
+                { "@middleName", person.MiddleName != null ? person.MiddleName : DBNull.Value },
+                { "@phone", person.Phone != null ? person.Phone : DBNull.Value },
+                { "@email", person.Email != null ? person.Email : DBNull.Value }
             };
 
-            int personId = await _databaseService.ExecuteScalarAsync<int>(insertPersonSql, personParams);
+            // Fix Int64 to Int32 conversion
+            object scalarResult = await _databaseService.ExecuteScalarAsync<object>(insertPersonSql, personParams);
+            int personId = scalarResult is Int64 value ? (int)value : Convert.ToInt32(scalarResult);
 
             // Insert passport data
-            if (passport != null)
+            if (passport != null && !string.IsNullOrWhiteSpace(passport.Series) && !string.IsNullOrWhiteSpace(passport.Number))
             {
                 string insertPassportSql = @"
                     INSERT INTO passport (person_id, series, number, issued_by, division_code, issue_date)
@@ -97,7 +134,7 @@ namespace bankrupt_piterjust.Services
                     { "@series", passport.Series },
                     { "@number", passport.Number },
                     { "@issuedBy", passport.IssuedBy },
-                    { "@divisionCode", passport.DivisionCode },
+                    { "@divisionCode", passport.DivisionCode != null ? passport.DivisionCode : DBNull.Value },
                     { "@issueDate", passport.IssueDate }
                 };
 
@@ -109,14 +146,23 @@ namespace bankrupt_piterjust.Services
             {
                 foreach (var address in addresses)
                 {
+                    // Convert AddressType enum to PostgreSQL enum value
+                    string addressTypeValue = address.AddressType switch
+                    {
+                        AddressType.Registration => "registration",
+                        AddressType.Residence => "residence",
+                        AddressType.Mailing => "mailing",
+                        _ => throw new ArgumentOutOfRangeException(nameof(address.AddressType), $"Unexpected address type: {address.AddressType}")
+                    };
+
                     string insertAddressSql = @"
                         INSERT INTO address (person_id, address_type, address_text)
-                        VALUES (@personId, @addressType, @addressText)";
+                        VALUES (@personId, @addressType::address_type_enum, @addressText)";
 
                     var addressParams = new Dictionary<string, object>
                     {
                         { "@personId", personId },
-                        { "@addressType", address.AddressType.ToString().ToLower() },
+                        { "@addressType", addressTypeValue },
                         { "@addressText", address.AddressText }
                     };
 
@@ -130,7 +176,7 @@ namespace bankrupt_piterjust.Services
         /// <summary>
         /// Get person details by ID
         /// </summary>
-        public async Task<Person> GetPersonByIdAsync(int personId)
+        public async Task<Person?> GetPersonByIdAsync(int personId)
         {
             string sql = "SELECT * FROM person WHERE person_id = @personId";
 
@@ -145,11 +191,15 @@ namespace bankrupt_piterjust.Services
                 return null;
 
             var row = dataTable.Rows[0];
+            
+            // Fix Int64 to Int32 conversion
+            int id = row["person_id"] is Int64 value ? (int)value : Convert.ToInt32(row["person_id"]);
+            
             return new Person
             {
-                PersonId = Convert.ToInt32(row["person_id"]),
-                LastName = row["last_name"].ToString(),
-                FirstName = row["first_name"].ToString(),
+                PersonId = id,
+                LastName = row["last_name"].ToString() ?? string.Empty,
+                FirstName = row["first_name"].ToString() ?? string.Empty,
                 MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                 Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
                 Email = row["email"] != DBNull.Value ? row["email"].ToString() : null
@@ -159,7 +209,7 @@ namespace bankrupt_piterjust.Services
         /// <summary>
         /// Get passport details by person ID
         /// </summary>
-        public async Task<Passport> GetPassportByPersonIdAsync(int personId)
+        public async Task<Passport?> GetPassportByPersonIdAsync(int personId)
         {
             string sql = "SELECT * FROM passport WHERE person_id = @personId";
 
@@ -174,13 +224,18 @@ namespace bankrupt_piterjust.Services
                 return null;
 
             var row = dataTable.Rows[0];
+            
+            // Fix Int64 to Int32 conversion for both IDs
+            int passportId = row["passport_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["passport_id"]);
+            int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
+            
             return new Passport
             {
-                PassportId = Convert.ToInt32(row["passport_id"]),
-                PersonId = Convert.ToInt32(row["person_id"]),
-                Series = row["series"].ToString(),
-                Number = row["number"].ToString(),
-                IssuedBy = row["issued_by"].ToString(),
+                PassportId = passportId,
+                PersonId = pId,
+                Series = row["series"].ToString() ?? string.Empty,
+                Number = row["number"].ToString() ?? string.Empty,
+                IssuedBy = row["issued_by"].ToString() ?? string.Empty,
                 DivisionCode = row["division_code"] != DBNull.Value ? row["division_code"].ToString() : null,
                 IssueDate = Convert.ToDateTime(row["issue_date"])
             };
@@ -205,14 +260,18 @@ namespace bankrupt_piterjust.Services
             {
                 // Parse the address type from string to enum
                 AddressType addressType;
-                Enum.TryParse(row["address_type"].ToString(), true, out addressType);
+                Enum.TryParse(row["address_type"].ToString() ?? string.Empty, true, out addressType);
 
+                // Fix Int64 to Int32 conversion for both IDs
+                int addressId = row["address_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["address_id"]);
+                int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
+                
                 addresses.Add(new Address
                 {
-                    AddressId = Convert.ToInt32(row["address_id"]),
-                    PersonId = Convert.ToInt32(row["person_id"]),
+                    AddressId = addressId,
+                    PersonId = pId,
                     AddressType = addressType,
-                    AddressText = row["address_text"].ToString()
+                    AddressText = row["address_text"].ToString() ?? string.Empty
                 });
             }
 

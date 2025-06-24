@@ -89,4 +89,19 @@ namespace bankrupt_piterjust.Models
         public string AmountWords { get; set; } = string.Empty;
         public DateTime? DueDate { get; set; }
     }
+
+    // Модель для сотрудников
+    public class Employee
+    {
+        public int EmployeeId { get; set; }
+        public string LastName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string? MiddleName { get; set; }
+        public string Position { get; set; } = string.Empty;
+        public DateTime? CreatedDate { get; set; }
+        public bool IsActive { get; set; } = true;
+
+        // Helper property to get full name
+        public string FullName => $"{LastName} {FirstName} {MiddleName ?? ""}".Trim();
+    }
 }

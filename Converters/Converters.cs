@@ -105,4 +105,29 @@ namespace bankrupt_piterjust.Converters
             return false;
         }
     }
+
+    /// <summary>
+    /// Converts a boolean value to different values depending on true or false condition
+    /// </summary>
+    public class BoolToValueConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue && parameter is string paramString)
+            {
+                string[] options = paramString.Split('|');
+                if (options.Length == 2)
+                {
+                    return boolValue ? options[0] : options[1];
+                }
+            }
+            
+            return value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

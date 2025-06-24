@@ -59,7 +59,17 @@ namespace bankrupt_piterjust.Services
             }
             
             var result = await command.ExecuteScalarAsync();
-            return result == DBNull.Value ? default : (T)result;
+            
+            // Handle DBNull
+            if (result == DBNull.Value)
+                return default;
+            
+            // Handle type conversion for Int64 to Int32
+            if (typeof(T) == typeof(int) && result is Int64 longValue)
+                return (T)(object)(int)longValue;
+            
+            // General case
+            return (T)Convert.ChangeType(result, typeof(T));
         }
 
         /// <summary>
