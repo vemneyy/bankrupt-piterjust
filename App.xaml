@@ -1,9 +1,15 @@
-﻿<Application x:Class="bankrupt_piterjust.App"
+<Application x:Class="bankrupt_piterjust.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:bankrupt_piterjust"
+             xmlns:converters="clr-namespace:bankrupt_piterjust.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <!-- Converters -->
+        <converters:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter"/>
+        <converters:StringNotEqualsToVisibilityConverter x:Key="StringNotEqualsToVisibilityConverter"/>
+        <converters:StringEqualsConverter x:Key="StringEqualsConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BooleanToInverseConverter x:Key="BooleanToInverseConverter"/>
     </Application.Resources>
 </Application>

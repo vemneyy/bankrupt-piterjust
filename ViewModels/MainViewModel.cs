@@ -1,13 +1,16 @@
 // ViewModels/MainViewModel.cs
 using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Models;
+using bankrupt_piterjust.Services;
 using bankrupt_piterjust.Views;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Windows.Input;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 
 namespace bankrupt_piterjust.ViewModels
 {
@@ -33,6 +36,7 @@ namespace bankrupt_piterjust.ViewModels
     {
         private List<Debtor> _allDebtors; // Полный список всех должников
         private readonly Dictionary<string, ObservableCollection<TabItem>> _filterTabsByCategory;
+        private readonly DebtorRepository _debtorRepository;
 
         public ObservableCollection<Debtor> DebtorsView { get; set; } // Отображаемый список
         public ObservableCollection<TabItem> MainTabs { get; set; }
@@ -91,11 +95,12 @@ namespace bankrupt_piterjust.ViewModels
         public ICommand AddDebtorCommand { get; }
         public ICommand ArchiveDebtorCommand { get; }
         public ICommand RestoreDebtorCommand { get; }
+        public ICommand RefreshDataCommand { get; }
 
         public MainViewModel()
         {
-            LoadData(); // Загружаем начальные данные
-
+            _debtorRepository = new DebtorRepository();
+            
             // Инициализация коллекций для UI
             DebtorsView = new ObservableCollection<Debtor>();
             MainTabs = new ObservableCollection<TabItem>
@@ -145,17 +150,39 @@ namespace bankrupt_piterjust.ViewModels
             AddDebtorCommand = new RelayCommand(o => AddDebtor());
             ArchiveDebtorCommand = new RelayCommand(ArchiveDebtor);
             RestoreDebtorCommand = new RelayCommand(RestoreDebtor);
+            RefreshDataCommand = new RelayCommand(async o => await LoadDataAsync());
 
             // Устанавливаем начальные активные вкладки
             SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты");
             
-            // Обновляем счетчики на всех вкладках
-            UpdateTabCounts();
+            // Загружаем данные асинхронно
+            _ = LoadDataAsync();
         }
 
-        private void LoadData()
+        private async Task LoadDataAsync()
         {
-            // Здесь в реальном приложении была бы загрузка из базы данных
+            try
+            {
+                // Загрузка данных из базы через репозиторий
+                var debtors = await _debtorRepository.GetAllDebtorsAsync();
+                _allDebtors = debtors.ToList();
+                
+                // Обновляем счетчики на всех вкладках
+                UpdateTabCounts();
+                ApplyFilters();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                
+                // Если база недоступна, используем тестовые данные
+                LoadDummyData();
+            }
+        }
+
+        private void LoadDummyData()
+        {
+            // Тестовые данные для отладки
             _allDebtors = new List<Debtor>
             {
                 new Debtor
@@ -165,7 +192,8 @@ namespace bankrupt_piterjust.ViewModels
                     Status = "Подать заявление",
                     MainCategory = "Клиенты",
                     FilterCategory = "Подготовка заявления",
-                    PreviousMainCategory = null
+                    PreviousMainCategory = null,
+                    Date = DateTime.Now.ToString("dd.MM.yyyy")
                 },
                 new Debtor
                 {
@@ -174,7 +202,8 @@ namespace bankrupt_piterjust.ViewModels
                     Status = "Собрать документы",
                     MainCategory = "Клиенты",
                     FilterCategory = "Сбор документов",
-                    PreviousMainCategory = null
+                    PreviousMainCategory = null,
+                    Date = DateTime.Now.ToString("dd.MM.yyyy")
                 },
                 new Debtor
                 {
@@ -183,9 +212,13 @@ namespace bankrupt_piterjust.ViewModels
                     Status = "В архив",
                     MainCategory = "Архив",
                     FilterCategory = "Все",
-                    PreviousMainCategory = "Клиенты"
+                    PreviousMainCategory = "Клиенты",
+                    Date = DateTime.Now.ToString("dd.MM.yyyy")
                 }
             };
+            
+            UpdateTabCounts();
+            ApplyFilters();
         }
 
         private void ApplyFilters()
@@ -219,6 +252,9 @@ namespace bankrupt_piterjust.ViewModels
 
         private void UpdateTabCounts()
         {
+            if (_allDebtors == null)
+                return;
+                
             foreach (var tab in MainTabs)
             {
                 tab.Count = _allDebtors.Count(d => d.MainCategory == tab.Name);
@@ -243,7 +279,7 @@ namespace bankrupt_piterjust.ViewModels
             // Устанавливаем владельца, чтобы окно появилось по центру главного
             addWindow.Owner = Application.Current?.MainWindow;
 
-            if (addWindow.ShowDialog() == true)
+            if (addWindow.ShowDialog() == true && addWindow.NewDebtor != null)
             {
                 var newDebtor = addWindow.NewDebtor;
                 _allDebtors.Add(newDebtor);
@@ -289,7 +325,7 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
