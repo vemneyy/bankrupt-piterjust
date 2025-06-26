@@ -646,7 +646,7 @@
                             IsEnabled="{Binding CanGenerateContract}"
                             Margin="0,30,0,0"/>
 
-                    <Button Content="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив, FallbackValue=Добавить в архив, TargetNullValue=Добавить в архив}"
+                    <Button Content="Добавить в архив"
                             Command="{Binding ArchiveDebtorCommand}" 
                             CommandParameter="{Binding SelectedDebtor}"
                             Style="{StaticResource SecondaryButton}" 
