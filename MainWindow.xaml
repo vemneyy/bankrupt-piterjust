@@ -254,17 +254,20 @@
             
                 <!-- Кнопки действий -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Авторизация" 
+                    <Button Content=" Сменить пользователя " 
                             Command="{Binding ShowLoginWindowCommand}" 
                             Style="{StaticResource SecondaryButton}" 
                             Margin="0,0,10,0" 
-                            ToolTip="Сменить пользователя системы"/>
-
-                    <Button Content="Сгенерировать договор" 
-                            Command="{Binding GenerateContractCommand}" 
-                            Style="{StaticResource PrimaryButton}" 
-                            ToolTip="Создать договор юридических услуг для выбранного должника"
-                            IsEnabled="{Binding CanGenerateContract}"/>
+                            ToolTip="Сменить пользователя системы" Height="40" RenderTransformOrigin="0.5,0.5">
+                        <Button.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform/>
+                                <SkewTransform AngleY="-0.139"/>
+                                <RotateTransform/>
+                                <TranslateTransform Y="-0.188"/>
+                            </TransformGroup>
+                        </Button.RenderTransform>
+                    </Button>
                 </StackPanel>
             </Grid>
 

@@ -119,7 +119,7 @@ namespace bankrupt_piterjust.ViewModels
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         MessageBox.Show(
-                            "Неверный логин или пароль. Пожалуйста, проверьте введенные данные.\n\nДля первого входа используйте:\nЛогин: admin\nПароль: admin123",
+                            "Неверный логин или пароль. Пожалуйста, проверьте введенные данные.",
                             "Ошибка входа",
                             MessageBoxButton.OK,
                             MessageBoxImage.Warning);

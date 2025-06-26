@@ -38,7 +38,6 @@ namespace bankrupt_piterjust
                 {
                     // Ensure default admin user exists
                     var authService = new AuthenticationService();
-                    await authService.EnsureDefaultAdminAsync();
                 }
                 
                 await ShowLoginWindow();
