@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:bankrupt_piterjust"
         xmlns:vm="clr-namespace:bankrupt_piterjust.ViewModels"
+        xmlns:converters="clr-namespace:bankrupt_piterjust.Converters"
         mc:Ignorable="d"
         Title="ПитерЮст. Банкротство." Height="900" Width="1400"
         Background="#F8F9FA"
@@ -24,11 +25,6 @@
         <SolidColorBrush x:Key="DarkTextBrush" Color="#212529"/>
         <SolidColorBrush x:Key="SlightlyDarkerGrayBrush" Color="#E9ECEF"/>
         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#212529"/>
-
-        <!-- Конвертеры -->
-        <local:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter"/>
-        <local:StringNotEqualsToVisibilityConverter x:Key="StringNotEqualsToVisibilityConverter"/>
-        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <!-- Стили кнопок -->
         <Style x:Key="PrimaryButton" TargetType="Button">
@@ -604,7 +600,7 @@
         
         <!-- Правая панель с деталями должника -->
         <Border Grid.Column="1" 
-                Visibility="{Binding IsDebtorSelected, Converter={StaticResource BoolToVisConverter}}"
+                Visibility="{Binding IsDebtorSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Background="White" 
                 BorderBrush="{StaticResource BorderGrayBrush}" 
                 BorderThickness="1" 

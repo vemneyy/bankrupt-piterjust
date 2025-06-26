@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using bankrupt_piterjust.Models;
@@ -101,6 +102,7 @@ namespace bankrupt_piterjust.Services
                     { "<серия_паспорта>", passport.Series },
                     { "<номер_паспорта>", passport.Number },
                     { "<кем_выдан_паспорт>", passport.IssuedBy },
+                    { "<код_подразделения>", passport.DivisionCode ?? "-" }, // Use null-coalescing operator to provide a default value
                     { "<дата_выдачи>", passport.IssueDate.ToString("dd.MM.yyyy") },
                     { "<адрес_регистрации_заказчика>", registrationAddress.AddressText },
                     { "<фио_представителя_исполнителя>", representativeName },
@@ -111,23 +113,22 @@ namespace bankrupt_piterjust.Services
                     { "<сумма_обязательных_расходов_прописью>", mandatoryExpensesWords },
                     { "<размер_вознаграждения_фин_управляющего>", managerFee.ToString("#,##0.00") },
                     { "<прочие_расходы_банкротства>", otherExpenses.ToString("#,##0.00") },
-                    { "<номер_телефона_заказчика>", person.Phone ?? "-" },
-                    { "<электронный_адрес_заказчика>", person.Email ?? "-" }
+                    { "<номер_телефона_заказчика>", person.Phone ?? "-" }, // Use null-coalescing operator to provide a default value
+                    { "<электронный_адрес_заказчика>", person.Email ?? "-" } // Use null-coalescing operator to provide a default value
                 };
                 
                 // Replace tags in document
                 using (WordprocessingDocument document = WordprocessingDocument.Open(outputPath, true))
                 {
-                    bool anyTagsFound = false;
+                    int totalReplacements = 0;
                     
                     foreach (var replacement in replacements)
                     {
-                        bool tagFound = ReplaceTextInDocument(document, replacement.Key, replacement.Value);
-                        if (tagFound)
-                            anyTagsFound = true;
+                        int tagsReplaced = ReplaceTextInDocument(document, replacement.Key, replacement.Value);
+                        totalReplacements += tagsReplaced;
                     }
                     
-                    if (!anyTagsFound)
+                    if (totalReplacements == 0)
                     {
                         // If no tags were found, the template might not be set up correctly
                         MessageBox.Show(
@@ -182,52 +183,249 @@ namespace bankrupt_piterjust.Services
         }
         
         /// <summary>
-        /// Replaces a specific text tag in a Word document with a replacement value.
-        /// Handles cases where the tag might be split across multiple text runs.
+        /// Replaces all occurrences of a specific text tag in a Word document with a replacement value.
+        /// Handles cases where tags might be split across multiple text runs.
         /// </summary>
-        /// <returns>True if the tag was found and replaced, false otherwise</returns>
-        private bool ReplaceTextInDocument(WordprocessingDocument document, string searchText, string replaceText)
+        /// <returns>The number of tag occurrences that were replaced</returns>
+        private int ReplaceTextInDocument(WordprocessingDocument document, string searchText, string replaceText)
         {
-            bool tagFound = false;
+            int totalReplacements = 0;
             
             // Process the main document body
             if (document.MainDocumentPart?.Document?.Body != null)
             {
-                tagFound |= ProcessTextElements(document.MainDocumentPart.Document.Body, searchText, replaceText);
+                totalReplacements += ProcessTextElements(document.MainDocumentPart.Document.Body, searchText, replaceText);
             }
             
             // Process headers
             foreach (var headerPart in document.MainDocumentPart.HeaderParts)
             {
-                tagFound |= ProcessTextElements(headerPart.Header, searchText, replaceText);
+                totalReplacements += ProcessTextElements(headerPart.Header, searchText, replaceText);
             }
             
             // Process footers
             foreach (var footerPart in document.MainDocumentPart.FooterParts)
             {
-                tagFound |= ProcessTextElements(footerPart.Footer, searchText, replaceText);
+                totalReplacements += ProcessTextElements(footerPart.Footer, searchText, replaceText);
             }
             
             // Process any other document parts that might contain text
             if (document.MainDocumentPart.FootnotesPart != null)
             {
-                tagFound |= ProcessTextElements(document.MainDocumentPart.FootnotesPart.Footnotes, searchText, replaceText);
+                totalReplacements += ProcessTextElements(document.MainDocumentPart.FootnotesPart.Footnotes, searchText, replaceText);
             }
             
             if (document.MainDocumentPart.EndnotesPart != null)
             {
-                tagFound |= ProcessTextElements(document.MainDocumentPart.EndnotesPart.Endnotes, searchText, replaceText);
+                totalReplacements += ProcessTextElements(document.MainDocumentPart.EndnotesPart.Endnotes, searchText, replaceText);
             }
             
-            return tagFound;
+            return totalReplacements;
         }
         
         /// <summary>
-        /// Processes all text elements in a given OpenXML element and replaces the search text
+        /// Processes all text elements in a given element and replaces all occurrences of the search text
         /// </summary>
-        private bool ProcessTextElements(OpenXmlElement element, string searchText, string replaceText)
+        /// <returns>The number of replacements made</returns>
+        private int ProcessTextElements<T>(T element, string searchText, string replaceText) where T : OpenXmlElement
         {
-            bool tagFound = false;
+            int totalReplacements = 0;
             
-            // First attempt: Simple replacement within each Text element
+            // First attempt: Replace within each Text element
             foreach (var text in element.Descendants<Text>())
+            {
+                if (text.Text.Contains(searchText))
+                {
+                    // Replace all occurrences within this text element
+                    string originalText = text.Text;
+                    string newText = originalText.Replace(searchText, replaceText);
+                    
+                    // Count how many replacements were made
+                    int replacementsInThisElement = (originalText.Length - newText.Length) / 
+                                                    (searchText.Length - replaceText.Length);
+                    if (replacementsInThisElement < 0)
+                    {
+                        // If replacement text is longer than search text
+                        replacementsInThisElement = (newText.Length - originalText.Length) / 
+                                                    (replaceText.Length - searchText.Length);
+                    }
+                    
+                    text.Text = newText;
+                    totalReplacements += Math.Abs(replacementsInThisElement);
+                }
+            }
+            
+            // Handle tags that might be split across multiple runs
+            totalReplacements += HandleSplitTags(element, searchText, replaceText);
+            
+            return totalReplacements;
+        }
+        
+        /// <summary>
+        /// Handles tags that might be split across multiple runs in the document
+        /// </summary>
+        /// <returns>The number of split tags that were replaced</returns>
+        private int HandleSplitTags<T>(T element, string searchText, string replaceText) where T : OpenXmlElement
+        {
+            int totalReplacements = 0;
+            
+            // Process each paragraph
+            foreach (var paragraph in element.Descendants<Paragraph>())
+            {
+                // Get all text runs in the paragraph
+                var runs = paragraph.Descendants<Run>().ToList();
+                if (runs.Count < 2) continue; // Need at least 2 runs for a split tag
+                
+                // Build a string with all text content to check if our tag exists across multiple runs
+                var paragraphText = new StringBuilder();
+                foreach (var run in runs)
+                {
+                    foreach (var text in run.Descendants<Text>())
+                    {
+                        paragraphText.Append(text.Text);
+                    }
+                }
+                
+                // Check if the tag exists in the combined text
+                string fullText = paragraphText.ToString();
+                int tagIndex = 0;
+                
+                // Loop through all occurrences of the tag in the paragraph
+                while ((tagIndex = fullText.IndexOf(searchText, tagIndex)) != -1)
+                {
+                    int tagStartIndex = tagIndex;
+                    int tagEndIndex = tagStartIndex + searchText.Length - 1;
+                    
+                    // Track our position in the paragraph text
+                    int currentPosition = 0;
+                    
+                    // A list to store runs that contain the tag or parts of it
+                    var runsToModify = new List<RunInfo>();
+                    
+                    // Identify runs that contain parts of the tag
+                    foreach (var run in runs)
+                    {
+                        foreach (var text in run.Descendants<Text>())
+                        {
+                            int textLength = text.Text.Length;
+                            int textStartIndex = currentPosition;
+                            int textEndIndex = currentPosition + textLength - 1;
+                            
+                            // Check if this text element overlaps with the tag
+                            if (!(textEndIndex < tagStartIndex || textStartIndex > tagEndIndex))
+                            {
+                                // This text element contains part of the tag
+                                runsToModify.Add(new RunInfo
+                                {
+                                    Run = run,
+                                    Text = text,
+                                    TextStartIndex = Math.Max(0, tagStartIndex - textStartIndex),
+                                    TextEndIndex = Math.Min(textLength - 1, tagEndIndex - textStartIndex)
+                                });
+                            }
+                            
+                            currentPosition += textLength;
+                        }
+                    }
+                    
+                    // If we found runs to modify
+                    if (runsToModify.Count > 0)
+                    {
+                        // Special case: If the tag is fully within a single Text element
+                        if (runsToModify.Count == 1 && 
+                            runsToModify[0].TextStartIndex == 0 && 
+                            runsToModify[0].TextEndIndex == runsToModify[0].Text.Text.Length - 1)
+                        {
+                            runsToModify[0].Text.Text = replaceText;
+                        }
+                        else
+                        {
+                            // Handle the more complex case where the tag spans multiple runs
+                            // We'll replace the tag in the first run and remove tag parts from other runs
+                            for (int i = 0; i < runsToModify.Count; i++)
+                            {
+                                var runInfo = runsToModify[i];
+                                
+                                if (i == 0) // First run containing part of the tag
+                                {
+                                    // Replace from start index to the end of the text with the new value
+                                    string beforeTag = runInfo.Text.Text.Substring(0, runInfo.TextStartIndex);
+                                    runInfo.Text.Text = beforeTag + replaceText;
+                                }
+                                else if (i == runsToModify.Count - 1) // Last run containing part of the tag
+                                {
+                                    // Keep only the text after the tag
+                                    if (runInfo.TextEndIndex < runInfo.Text.Text.Length - 1)
+                                    {
+                                        runInfo.Text.Text = runInfo.Text.Text.Substring(runInfo.TextEndIndex + 1);
+                                    }
+                                    else
+                                    {
+                                        // If the tag ends at the end of the text, clear the text
+                                        runInfo.Text.Text = string.Empty;
+                                    }
+                                    
+                                    // If the text is now empty, remove the run (but only if it's not the only run left)
+                                    if (string.IsNullOrEmpty(runInfo.Text.Text) && runs.Count > 1)
+                                    {
+                                        runInfo.Run.Remove();
+                                    }
+                                }
+                                else // Middle runs containing part of the tag
+                                {
+                                    // Remove these runs entirely as their content is part of the tag
+                                    // (but only if it's not the only run left)
+                                    if (runs.Count > 1)
+                                    {
+                                        runInfo.Run.Remove();
+                                    }
+                                    else
+                                    {
+                                        runInfo.Text.Text = string.Empty;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        totalReplacements++;
+                        
+                        // Move past this occurrence to find the next one
+                        tagIndex = tagStartIndex + replaceText.Length;
+                        
+                        // Need to rebuild runs list as we've modified the structure
+                        runs = paragraph.Descendants<Run>().ToList();
+                        
+                        // Rebuild the paragraph text for the next iteration
+                        paragraphText.Clear();
+                        foreach (var run in runs)
+                        {
+                            foreach (var text in run.Descendants<Text>())
+                            {
+                                paragraphText.Append(text.Text);
+                            }
+                        }
+                        fullText = paragraphText.ToString();
+                    }
+                    else
+                    {
+                        // If we couldn't find the runs to modify, just move past this occurrence
+                        tagIndex = tagStartIndex + 1;
+                    }
+                }
+            }
+            
+            return totalReplacements;
+        }
+        
+        /// <summary>
+        /// Helper class to store information about a run and its text element
+        /// </summary>
+        private class RunInfo
+        {
+            public Run Run { get; set; }
+            public Text Text { get; set; }
+            public int TextStartIndex { get; set; }
+            public int TextEndIndex { get; set; }
+        }
+    }
+}

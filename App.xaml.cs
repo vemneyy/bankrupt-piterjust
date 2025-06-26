@@ -32,7 +32,14 @@ namespace bankrupt_piterjust
                 _databaseService = new DatabaseService();
                 
                 // Attempt initial database connection
-                await _databaseService.TestConnectionAsync();
+                bool connectionSuccess = await _databaseService.TestConnectionAsync();
+                
+                if (connectionSuccess)
+                {
+                    // Ensure default admin user exists
+                    var authService = new AuthenticationService();
+                    await authService.EnsureDefaultAdminAsync();
+                }
                 
                 await ShowLoginWindow();
             }

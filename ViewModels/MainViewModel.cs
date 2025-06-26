@@ -104,6 +104,91 @@ namespace bankrupt_piterjust.ViewModels
                 OnPropertyChanged(nameof(SelectedDebtor));
                 OnPropertyChanged(nameof(CanGenerateContract));
                 OnPropertyChanged(nameof(IsDebtorSelected));
+
+                // Load detailed debtor information when selected
+                if (_selectedDebtor?.PersonId != null)
+                {
+                    _ = LoadDebtorDetailsAsync(_selectedDebtor.PersonId.Value);
+                }
+                else
+                {
+                    ClearDebtorDetails();
+                }
+            }
+        }
+
+        // Person details for the selected debtor
+        private Person? _selectedPerson;
+        public Person? SelectedPerson
+        {
+            get => _selectedPerson;
+            set
+            {
+                _selectedPerson = value;
+                OnPropertyChanged(nameof(SelectedPerson));
+            }
+        }
+
+        // Passport details for the selected debtor
+        private Passport? _selectedPassport;
+        public Passport? SelectedPassport
+        {
+            get => _selectedPassport;
+            set
+            {
+                _selectedPassport = value;
+                OnPropertyChanged(nameof(SelectedPassport));
+            }
+        }
+
+        // Addresses for the selected debtor
+        private ObservableCollection<Address> _selectedAddresses;
+        public ObservableCollection<Address> SelectedAddresses
+        {
+            get => _selectedAddresses;
+            set
+            {
+                _selectedAddresses = value;
+                OnPropertyChanged(nameof(SelectedAddresses));
+                OnPropertyChanged(nameof(HasRegistrationAddress));
+                OnPropertyChanged(nameof(HasResidenceAddress));
+                OnPropertyChanged(nameof(HasMailingAddress));
+                OnPropertyChanged(nameof(RegistrationAddress));
+                OnPropertyChanged(nameof(ResidenceAddress));
+                OnPropertyChanged(nameof(MailingAddress));
+            }
+        }
+
+        // Helper properties for addresses
+        public bool HasRegistrationAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Registration) ?? false;
+        public bool HasResidenceAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Residence) ?? false;
+        public bool HasMailingAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Mailing) ?? false;
+
+        public string? RegistrationAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Registration)?.AddressText;
+        public string? ResidenceAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Residence)?.AddressText;
+        public string? MailingAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Mailing)?.AddressText;
+
+        // Loading state
+        private bool _isLoading;
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
+
+        // Indicates if details view is in edit mode
+        private bool _isEditMode;
+        public bool IsEditMode
+        {
+            get => _isEditMode;
+            set
+            {
+                _isEditMode = value;
+                OnPropertyChanged(nameof(IsEditMode));
             }
         }
 
@@ -118,11 +203,15 @@ namespace bankrupt_piterjust.ViewModels
         public ICommand RefreshDataCommand { get; }
         public ICommand GenerateContractCommand { get; }
         public ICommand ShowLoginWindowCommand { get; }
+        public ICommand EditDebtorCommand { get; }
+        public ICommand SaveDebtorCommand { get; }
+        public ICommand CancelEditCommand { get; }
 
         public MainViewModel()
         {
             _debtorRepository = new DebtorRepository();
             _documentGenerationService = new DocumentGenerationService();
+            _selectedAddresses = new ObservableCollection<Address>();
 
             // Инициализация коллекций для UI
             DebtorsView = new ObservableCollection<Debtor>();
@@ -176,6 +265,9 @@ namespace bankrupt_piterjust.ViewModels
             RefreshDataCommand = new RelayCommand(async o => await LoadDataAsync());
             GenerateContractCommand = new RelayCommand(async o => await GenerateContractAsync(), o => CanGenerateContract);
             ShowLoginWindowCommand = new RelayCommand(o => ShowLoginWindow());
+            EditDebtorCommand = new RelayCommand(o => IsEditMode = true, o => SelectedDebtor != null);
+            SaveDebtorCommand = new RelayCommand(async o => await SaveDebtorDetailsAsync(), o => IsEditMode);
+            CancelEditCommand = new RelayCommand(o => CancelEdit(), o => IsEditMode);
 
             // Устанавливаем начальные активные вкладки
             SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты");
@@ -188,15 +280,78 @@ namespace bankrupt_piterjust.ViewModels
         {
             var loginWindow = new LoginWindow();
             loginWindow.Owner = Application.Current?.MainWindow;
-            
+
             if (loginWindow.ShowDialog() == true && loginWindow.AuthenticatedEmployee != null)
             {
                 UserSessionService.Instance.SetCurrentEmployee(loginWindow.AuthenticatedEmployee);
-                
+
                 if (Application.Current?.MainWindow != null)
                 {
                     Application.Current.MainWindow.Title = $"ПитерЮст. Банкротство. - {loginWindow.AuthenticatedEmployee.FullName}, {loginWindow.AuthenticatedEmployee.Position}";
                 }
+            }
+        }
+
+        // Loads detailed information about the selected debtor
+        private async Task LoadDebtorDetailsAsync(int personId)
+        {
+            try
+            {
+                IsLoading = true;
+
+                // Get person details
+                SelectedPerson = await _debtorRepository.GetPersonByIdAsync(personId);
+
+                // Get passport details
+                SelectedPassport = await _debtorRepository.GetPassportByPersonIdAsync(personId);
+
+                // Get addresses
+                var addresses = await _debtorRepository.GetAddressesByPersonIdAsync(personId);
+                SelectedAddresses = new ObservableCollection<Address>(addresses);
+
+                // Cancel any edit mode
+                IsEditMode = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке данных о должнике: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        // Clears detailed information when no debtor is selected
+        private void ClearDebtorDetails()
+        {
+            SelectedPerson = null;
+            SelectedPassport = null;
+            SelectedAddresses = new ObservableCollection<Address>();
+            IsEditMode = false;
+        }
+
+        // Cancels any edits in the detail view
+        private void CancelEdit()
+        {
+            IsEditMode = false;
+            if (SelectedDebtor?.PersonId != null)
+            {
+                _ = LoadDebtorDetailsAsync(SelectedDebtor.PersonId.Value);
+            }
+        }
+
+        // Saves changes to the debtor details
+        private async Task SaveDebtorDetailsAsync()
+        {
+            // This would be implemented to save changes to person, passport, and addresses
+            // For now, just cancel edit mode
+            IsEditMode = false;
+
+            // Reload the debtor data to reflect any changes
+            if (SelectedDebtor?.PersonId != null)
+            {
+                await LoadDebtorDetailsAsync(SelectedDebtor.PersonId.Value);
             }
         }
 
@@ -367,6 +522,9 @@ namespace bankrupt_piterjust.ViewModels
 
                 UpdateTabCounts();
                 ApplyFilters(); // Применяем фильтры, чтобы сразу увидеть нового должника
+
+                // Select the new debtor to show details
+                SelectedDebtor = newDebtor;
             }
         }
 
@@ -385,6 +543,12 @@ namespace bankrupt_piterjust.ViewModels
 
                 UpdateTabCounts();
                 ApplyFilters();
+
+                // If the archived debtor was selected, refresh the UI
+                if (SelectedDebtor == debtor)
+                {
+                    OnPropertyChanged(nameof(SelectedDebtor));
+                }
             }
         }
 
@@ -399,6 +563,12 @@ namespace bankrupt_piterjust.ViewModels
 
                 UpdateTabCounts();
                 ApplyFilters();
+
+                // If the restored debtor was selected, refresh the UI
+                if (SelectedDebtor == debtor)
+                {
+                    OnPropertyChanged(nameof(SelectedDebtor));
+                }
             }
         }
 

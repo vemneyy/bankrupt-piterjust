@@ -3,6 +3,7 @@ using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -19,17 +20,19 @@ namespace bankrupt_piterjust.ViewModels
         private string _middleName = string.Empty;
         private string _position = string.Empty;
         private bool _isBusy;
+        private string _login = string.Empty;
+        private string _password = string.Empty;
         
         public string LastName
         {
             get => _lastName;
-            set { _lastName = value; OnPropertyChanged(nameof(LastName)); OnPropertyChanged(nameof(CanLogin)); }
+            set { _lastName = value; OnPropertyChanged(nameof(LastName)); UpdateCanLogin(); }
         }
         
         public string FirstName
         {
             get => _firstName;
-            set { _firstName = value; OnPropertyChanged(nameof(FirstName)); OnPropertyChanged(nameof(CanLogin)); }
+            set { _firstName = value; OnPropertyChanged(nameof(FirstName)); UpdateCanLogin(); }
         }
         
         public string MiddleName
@@ -41,22 +44,33 @@ namespace bankrupt_piterjust.ViewModels
         public string Position
         {
             get => _position;
-            set { _position = value; OnPropertyChanged(nameof(Position)); OnPropertyChanged(nameof(CanLogin)); }
+            set { _position = value; OnPropertyChanged(nameof(Position)); UpdateCanLogin(); }
         }
         
         public bool IsBusy
         {
             get => _isBusy;
-            set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); OnPropertyChanged(nameof(CanLogin)); }
+            set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); UpdateCanLogin(); }
         }
         
-        public bool CanLogin => !string.IsNullOrWhiteSpace(LastName) && 
-                                !string.IsNullOrWhiteSpace(FirstName) && 
-                                !string.IsNullOrWhiteSpace(Position) &&
+        public string Login 
+        { 
+            get => _login;
+            set { _login = value; OnPropertyChanged(nameof(Login)); UpdateCanLogin(); }
+        }
+        
+        public string Password 
+        { 
+            get => _password;
+            set { _password = value; OnPropertyChanged(nameof(Password)); UpdateCanLogin(); }
+        }
+
+        public bool CanLogin => !string.IsNullOrWhiteSpace(Login) && 
+                                !string.IsNullOrWhiteSpace(Password) &&
                                 !IsBusy;
         
-        public ICommand LoginCommand { get; }
-        public ICommand CancelCommand { get; }
+        public RelayCommand LoginCommand { get; }
+        public RelayCommand CancelCommand { get; }
         
         // Authentication result
         public Employee? AuthenticatedEmployee { get; private set; }
@@ -67,6 +81,12 @@ namespace bankrupt_piterjust.ViewModels
             _databaseService = new DatabaseService();
             LoginCommand = new RelayCommand(async o => await LoginAsync(), o => CanLogin);
             CancelCommand = new RelayCommand(o => CancelLogin(o as Window));
+        }
+
+        private void UpdateCanLogin()
+        {
+            OnPropertyChanged(nameof(CanLogin));
+            LoginCommand.RaiseCanExecuteChanged();
         }
         
         private async Task LoginAsync()
@@ -83,7 +103,7 @@ namespace bankrupt_piterjust.ViewModels
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         MessageBox.Show(
-                            "Не удалось подключиться к базе данных. Пожалуйста, проверьте подключение к сети.",
+                            "Не удалось подключиться к базе данных. Пожалуйста, проверьте подключение к сети и убедитесь, что база данных доступна.",
                             "Ошибка подключения",
                             MessageBoxButton.OK,
                             MessageBoxImage.Warning);
@@ -92,19 +112,14 @@ namespace bankrupt_piterjust.ViewModels
                 }
                 
                 // Authentication logic
-                AuthenticatedEmployee = await _authService.GetOrCreateEmployeeAsync(
-                    LastName.Trim(),
-                    FirstName.Trim(),
-                    string.IsNullOrWhiteSpace(MiddleName) ? null : MiddleName.Trim(),
-                    Position.Trim()
-                );
-                
+                AuthenticatedEmployee = await _authService.AuthenticateAsync(Login.Trim(), Password);
+
                 if (AuthenticatedEmployee == null)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         MessageBox.Show(
-                            "Не удалось выполнить вход. Пожалуйста, проверьте введенные данные.",
+                            "Неверный логин или пароль. Пожалуйста, проверьте введенные данные.\n\nДля первого входа используйте:\nЛогин: admin\nПароль: admin123",
                             "Ошибка входа",
                             MessageBoxButton.OK,
                             MessageBoxImage.Warning);
@@ -127,7 +142,7 @@ namespace bankrupt_piterjust.ViewModels
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     MessageBox.Show(
-                        $"Ошибка при входе: {ex.Message}",
+                        $"Ошибка при входе: {ex.Message}\n\nПроверьте подключение к базе данных и правильность введенных данных.",
                         "Ошибка",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);

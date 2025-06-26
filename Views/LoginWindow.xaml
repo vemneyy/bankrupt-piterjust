@@ -6,15 +6,16 @@
         xmlns:vm="clr-namespace:bankrupt_piterjust.ViewModels"
         xmlns:conv="clr-namespace:bankrupt_piterjust.Converters"
         mc:Ignorable="d"
-        Title="Авторизация" Height="645" Width="400"
+        Title="ПитерЮст. Банкротство. - Авторизация" Height="440" Width="400"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
-        Background="#F8F9FA">
+        Background="#F8F9FA" Icon="/fav.png">
     
     <Window.DataContext>
         <vm:LoginViewModel/>
     </Window.DataContext>
     
     <Window.Resources>
+        <!-- Converters -->
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         
         <!-- Styles -->
@@ -113,9 +114,9 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="White" Margin="0,0,0,4" CornerRadius="6" Padding="25">
-        <Grid Margin="0,0,0,-39">
-            <StackPanel Margin="0,0,0,21">
+    <Border Background="White" Margin="0,0,0,179" CornerRadius="6" Padding="25">
+        <Grid Margin="0,0,0,-199">
+            <StackPanel Margin="0,0,0,10">
                 <!-- Logo and heading section -->
                 <StackPanel HorizontalAlignment="Center" Margin="0,0,0,15">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -128,21 +129,35 @@
                             <TextBlock Text="Банкротство" Foreground="White" FontSize="20" FontWeight="Bold"/>
                         </Border>
                     </StackPanel>
-                    <TextBlock Text="Авторизация" Style="{StaticResource HeaderTextBlock}" TextAlignment="Center"/>
                 </StackPanel>
                 
-                <TextBlock Text="Фамилия *" Style="{StaticResource FormTextBlock}"/>
-                <TextBox Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                
-                <TextBlock Text="Имя *" Style="{StaticResource FormTextBlock}"/>
-                <TextBox Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                
-                <TextBlock Text="Отчество" Style="{StaticResource FormTextBlock}"/>
-                <TextBox Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                
-                <TextBlock Text="Должность *" Style="{StaticResource FormTextBlock}"/>
-                <TextBox Text="{Binding Position, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                
+                <TextBlock Text="Логин *" Style="{StaticResource FormTextBlock}"/>
+                <TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}" Height="40"/>
+
+                <TextBlock Text="Пароль *" Style="{StaticResource FormTextBlock}"/>
+                <PasswordBox Height="40"
+                             Margin="0,2,0,10"
+                             Padding="10,8"
+                             FontSize="13"
+                             VerticalContentAlignment="Center"
+                             Background="White"
+                             BorderBrush="#CED4DA"
+                             BorderThickness="1"
+                             PasswordChanged="PasswordBox_PasswordChanged">
+                    <PasswordBox.Style>
+                        <Style TargetType="PasswordBox">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="BorderBrush" Value="#A9A9A9"/>
+                                </Trigger>
+                                <Trigger Property="IsFocused" Value="True">
+                                    <Setter Property="BorderBrush" Value="#007BFF"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </PasswordBox.Style>
+                </PasswordBox>
+
                 <TextBlock Text="* Обязательные поля" Foreground="#6C757D" Margin="0,10,0,20"/>
                 
                 <!-- Enhanced login button -->

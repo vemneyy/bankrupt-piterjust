@@ -24,5 +24,13 @@ namespace bankrupt_piterjust.Commands
             add => CommandManager.RequerySuggested += value;
             remove => CommandManager.RequerySuggested -= value;
         }
+
+        /// <summary>
+        /// Method to manually trigger CanExecuteChanged event
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 }

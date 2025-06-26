@@ -39,8 +39,14 @@ namespace bankrupt_piterjust.Services
             {
                 using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
+                
+                // Test basic functionality and pgcrypto extension
                 await using var cmd = new NpgsqlCommand("SELECT 1", connection);
                 await cmd.ExecuteScalarAsync(); // Ensure we can actually execute commands
+                
+                // Test if pgcrypto extension is available
+                await using var cryptoCmd = new NpgsqlCommand("SELECT crypt('test', gen_salt('bf'))", connection);
+                await cryptoCmd.ExecuteScalarAsync();
                 
                 lock (_connectionLock)
                 {
@@ -60,8 +66,17 @@ namespace bankrupt_piterjust.Services
                 // Show message box on UI thread to prevent cross-thread operation issues
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    string errorMessage = "Не удалось подключиться к базе данных. Программа будет работать в автономном режиме.";
+                    
+                    if (ex.Message.Contains("pgcrypto"))
+                    {
+                        errorMessage += "\n\nРасширение pgcrypto недоступно. Убедитесь, что оно установлено:\nCREATE EXTENSION IF NOT EXISTS pgcrypto;";
+                    }
+                    
+                    errorMessage += $"\n\nПодробности: {ex.Message}";
+                    
                     MessageBox.Show(
-                        $"Не удалось подключиться к базе данных. Программа будет работать в автономном режиме.\n\nПодробности: {ex.Message}", 
+                        errorMessage, 
                         "Ошибка подключения", 
                         MessageBoxButton.OK, 
                         MessageBoxImage.Warning);
@@ -105,7 +120,7 @@ namespace bankrupt_piterjust.Services
                 }
                 
                 // Log the error but don't throw it - allow offline mode operation
-                Console.WriteLine($"Database error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
                 return 0;
             }
         }
@@ -155,7 +170,7 @@ namespace bankrupt_piterjust.Services
                 }
                 
                 // Log the error but don't throw it - allow offline mode operation
-                Console.WriteLine($"Database error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
                 return default;
             }
         }
@@ -198,11 +213,14 @@ namespace bankrupt_piterjust.Services
                 }
                 
                 // Log the error but don't throw it - allow offline mode operation
-                Console.WriteLine($"Database error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
                 return new DataTable(); // Return empty table on error
             }
         }
 
+        /// <summary>
+        /// Resets connection state and tests again
+        /// </summary>
         public async Task<bool> ResetConnectionAsync()
         {
             lock (_connectionLock)
@@ -211,6 +229,42 @@ namespace bankrupt_piterjust.Services
                 _connectionAvailable = false;
             }
             return await TestConnectionAsync();
+        }
+
+        /// <summary>
+        /// Gets detailed connection information for debugging
+        /// </summary>
+        public async Task<string> GetConnectionInfoAsync()
+        {
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+                
+                await using var cmd = new NpgsqlCommand(@"
+                    SELECT 
+                        version() as postgres_version,
+                        current_database() as database_name,
+                        current_user as username,
+                        inet_server_addr() as server_address,
+                        inet_server_port() as server_port
+                ", connection);
+                
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return $"PostgreSQL Version: {reader["postgres_version"]}\n" +
+                           $"Database: {reader["database_name"]}\n" +
+                           $"User: {reader["username"]}\n" +
+                           $"Server: {reader["server_address"]}:{reader["server_port"]}";
+                }
+                
+                return "Подключение установлено, но информация недоступна";
+            }
+            catch (Exception ex)
+            {
+                return $"Ошибка получения информации о подключении: {ex.Message}";
+            }
         }
     }
 }
