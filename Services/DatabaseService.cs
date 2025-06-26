@@ -11,16 +11,21 @@ namespace bankrupt_piterjust.Services
 {
     public class DatabaseService
     {
-        private readonly string _connectionString;
+        private string _connectionString;
         private bool _connectionTested = false;
         private bool _connectionAvailable = false;
         private readonly object _connectionLock = new object();
         
         public DatabaseService()
         {
-            // Connection string for PostgreSQL
-            // Credentials from the task description: postgres:postgres@10.155.1.210/piterjust
-            _connectionString = "Host=10.155.1.210;Username=postgres;Password=postgres;Database=piterjust";
+            // Load connection string from configuration
+            UpdateConnectionString();
+        }
+
+        private void UpdateConnectionString()
+        {
+            var config = ConfigurationService.Instance.GetDatabaseConfiguration();
+            _connectionString = config.GetConnectionString();
         }
 
         /// <summary>
@@ -28,6 +33,9 @@ namespace bankrupt_piterjust.Services
         /// </summary>
         public async Task<bool> TestConnectionAsync()
         {
+            // Refresh connection string from current configuration
+            UpdateConnectionString();
+            
             // Use a lock to prevent multiple concurrent connection tests
             lock (_connectionLock)
             {

@@ -1,6 +1,7 @@
 using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
+using bankrupt_piterjust.Views;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -71,6 +72,7 @@ namespace bankrupt_piterjust.ViewModels
         
         public RelayCommand LoginCommand { get; }
         public RelayCommand CancelCommand { get; }
+        public RelayCommand DatabaseSettingsCommand { get; }
         
         // Authentication result
         public Employee? AuthenticatedEmployee { get; private set; }
@@ -81,12 +83,36 @@ namespace bankrupt_piterjust.ViewModels
             _databaseService = new DatabaseService();
             LoginCommand = new RelayCommand(async o => await LoginAsync(), o => CanLogin);
             CancelCommand = new RelayCommand(o => CancelLogin(o as Window));
+            DatabaseSettingsCommand = new RelayCommand(o => OpenDatabaseSettings(o as Window), o => !IsBusy);
         }
 
         private void UpdateCanLogin()
         {
             OnPropertyChanged(nameof(CanLogin));
             LoginCommand.RaiseCanExecuteChanged();
+            DatabaseSettingsCommand.RaiseCanExecuteChanged();
+        }
+
+        private void OpenDatabaseSettings(Window? parentWindow)
+        {
+            try
+            {
+                var settingsWindow = new DatabaseSettingsWindow();
+                if (parentWindow != null)
+                {
+                    settingsWindow.Owner = parentWindow;
+                }
+                
+                settingsWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Ошибка при открытии настроек: {ex.Message}",
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
         
         private async Task LoginAsync()
