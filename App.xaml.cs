@@ -1,8 +1,6 @@
 using bankrupt_piterjust.Services;
 using bankrupt_piterjust.Views;
-using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace bankrupt_piterjust
@@ -27,19 +25,19 @@ namespace bankrupt_piterjust
             {
                 // Ensure document directories are created
                 EnsureDocumentDirectoriesExist();
-                
+
                 // Initialize database service
                 _databaseService = new DatabaseService();
-                
+
                 // Attempt initial database connection
                 bool connectionSuccess = await _databaseService.TestConnectionAsync();
-                
+
                 if (connectionSuccess)
                 {
                     // Ensure default admin user exists
                     var authService = new AuthenticationService();
                 }
-                
+
                 await ShowLoginWindow();
             }
             catch (Exception ex)

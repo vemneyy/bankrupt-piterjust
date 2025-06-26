@@ -1,5 +1,4 @@
 using bankrupt_piterjust.Models;
-using System;
 using System.IO;
 using System.Text.Json;
 
@@ -36,9 +35,9 @@ namespace bankrupt_piterjust.Services
         {
             try
             {
-                var json = JsonSerializer.Serialize(configuration, new JsonSerializerOptions 
-                { 
-                    WriteIndented = true 
+                var json = JsonSerializer.Serialize(configuration, new JsonSerializerOptions
+                {
+                    WriteIndented = true
                 });
                 File.WriteAllText(ConfigFilePath, json);
                 _databaseConfiguration = configuration;

@@ -1,9 +1,5 @@
 using bankrupt_piterjust.Models;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace bankrupt_piterjust.Services
 {
@@ -25,14 +21,14 @@ namespace bankrupt_piterjust.Services
         {
             // Ensure person table exists with all necessary columns
             await EnsurePersonTableExistsAsync();
-            
+
             // Ensure passport table exists
             await EnsurePassportTableExistsAsync();
-            
+
             // Ensure address table exists with address_type enum
             await EnsureAddressTableExistsAsync();
         }
-        
+
         /// <summary>
         /// Ensures that the person table exists with all required columns
         /// </summary>
@@ -48,9 +44,9 @@ namespace bankrupt_piterjust.Services
                     phone VARCHAR(20),
                     email VARCHAR(100)
                 )";
-                
+
             await _databaseService.ExecuteNonQueryAsync(createPersonTableSql);
-            
+
             // Then check if phone and email columns exist, and add them if they don't
             string checkColumnsSql = @"
                 DO $$
@@ -71,10 +67,10 @@ namespace bankrupt_piterjust.Services
                         ALTER TABLE person ADD COLUMN email VARCHAR(100);
                     END IF;
                 END $$;";
-                
+
             await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
         }
-        
+
         /// <summary>
         /// Ensures that the passport table exists
         /// </summary>
@@ -90,10 +86,10 @@ namespace bankrupt_piterjust.Services
                     division_code VARCHAR(20),
                     issue_date DATE NOT NULL
                 )";
-                
+
             await _databaseService.ExecuteNonQueryAsync(createPassportTableSql);
         }
-        
+
         /// <summary>
         /// Ensures that the address table exists with address_type enum
         /// </summary>
@@ -107,9 +103,9 @@ namespace bankrupt_piterjust.Services
                         CREATE TYPE address_type_enum AS ENUM ('registration', 'residence', 'mailing');
                     END IF;
                 END$$;";
-                
+
             await _databaseService.ExecuteNonQueryAsync(createEnumSql);
-            
+
             // Then create the address table
             string createAddressTableSql = @"
                 CREATE TABLE IF NOT EXISTS address (
@@ -118,7 +114,7 @@ namespace bankrupt_piterjust.Services
                     address_type address_type_enum NOT NULL,
                     address_text TEXT NOT NULL
                 )";
-                
+
             await _databaseService.ExecuteNonQueryAsync(createAddressTableSql);
         }
 
@@ -151,7 +147,7 @@ namespace bankrupt_piterjust.Services
                 };
 
                 var debtor = Debtor.FromPerson(person);
-                
+
                 // Set the region if available
                 if (row["region"] != DBNull.Value)
                 {
@@ -177,9 +173,9 @@ namespace bankrupt_piterjust.Services
         {
             if (string.IsNullOrWhiteSpace(series) || string.IsNullOrWhiteSpace(number))
                 return false;
-                
+
             string sql = "SELECT COUNT(*) FROM passport WHERE series = @series AND number = @number";
-            
+
             var parameters = new Dictionary<string, object>
             {
                 { "@series", series },
@@ -194,13 +190,13 @@ namespace bankrupt_piterjust.Services
         /// Insert a new person with their passport and address information
         /// </summary>
         public async Task<int> AddPersonWithDetailsAsync(
-            Person person, 
-            Passport passport, 
+            Person person,
+            Passport passport,
             IEnumerable<Address> addresses)
         {
             // Ensure tables exist before trying to insert data
             await EnsureTablesExistAsync();
-            
+
             // Check for duplicate passport
             if (passport != null && !string.IsNullOrWhiteSpace(passport.Series) && !string.IsNullOrWhiteSpace(passport.Number))
             {
@@ -210,7 +206,7 @@ namespace bankrupt_piterjust.Services
                     throw new Exception("Паспорт с такими серией и номером уже существует в базе данных.");
                 }
             }
-            
+
             // Insert person first to get the person_id
             string insertPersonSql = @"
                 INSERT INTO person (last_name, first_name, middle_name, phone, email)
@@ -300,10 +296,10 @@ namespace bankrupt_piterjust.Services
                 return null;
 
             var row = dataTable.Rows[0];
-            
+
             // Fix Int64 to Int32 conversion
             int id = row["person_id"] is Int64 value ? (int)value : Convert.ToInt32(row["person_id"]);
-            
+
             return new Person
             {
                 PersonId = id,
@@ -333,11 +329,11 @@ namespace bankrupt_piterjust.Services
                 return null;
 
             var row = dataTable.Rows[0];
-            
+
             // Fix Int64 to Int32 conversion for both IDs
             int passportId = row["passport_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["passport_id"]);
             int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
-            
+
             return new Passport
             {
                 PassportId = passportId,
@@ -374,7 +370,7 @@ namespace bankrupt_piterjust.Services
                 // Fix Int64 to Int32 conversion for both IDs
                 int addressId = row["address_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["address_id"]);
                 int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
-                
+
                 addresses.Add(new Address
                 {
                     AddressId = addressId,

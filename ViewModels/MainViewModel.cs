@@ -3,13 +3,9 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using bankrupt_piterjust.Views;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 

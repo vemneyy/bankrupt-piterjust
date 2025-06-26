@@ -2,12 +2,8 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using bankrupt_piterjust.Views;
-using System;
 using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Input;
 
 namespace bankrupt_piterjust.ViewModels
 {
@@ -15,7 +11,7 @@ namespace bankrupt_piterjust.ViewModels
     {
         private readonly AuthenticationService _authService;
         private readonly DatabaseService _databaseService;
-        
+
         private string _lastName = string.Empty;
         private string _firstName = string.Empty;
         private string _middleName = string.Empty;
@@ -23,60 +19,60 @@ namespace bankrupt_piterjust.ViewModels
         private bool _isBusy;
         private string _login = string.Empty;
         private string _password = string.Empty;
-        
+
         public string LastName
         {
             get => _lastName;
             set { _lastName = value; OnPropertyChanged(nameof(LastName)); UpdateCanLogin(); }
         }
-        
+
         public string FirstName
         {
             get => _firstName;
             set { _firstName = value; OnPropertyChanged(nameof(FirstName)); UpdateCanLogin(); }
         }
-        
+
         public string MiddleName
         {
             get => _middleName;
             set { _middleName = value; OnPropertyChanged(nameof(MiddleName)); }
         }
-        
+
         public string Position
         {
             get => _position;
             set { _position = value; OnPropertyChanged(nameof(Position)); UpdateCanLogin(); }
         }
-        
+
         public bool IsBusy
         {
             get => _isBusy;
             set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); UpdateCanLogin(); }
         }
-        
-        public string Login 
-        { 
+
+        public string Login
+        {
             get => _login;
             set { _login = value; OnPropertyChanged(nameof(Login)); UpdateCanLogin(); }
         }
-        
-        public string Password 
-        { 
+
+        public string Password
+        {
             get => _password;
             set { _password = value; OnPropertyChanged(nameof(Password)); UpdateCanLogin(); }
         }
 
-        public bool CanLogin => !string.IsNullOrWhiteSpace(Login) && 
+        public bool CanLogin => !string.IsNullOrWhiteSpace(Login) &&
                                 !string.IsNullOrWhiteSpace(Password) &&
                                 !IsBusy;
-        
+
         public RelayCommand LoginCommand { get; }
         public RelayCommand CancelCommand { get; }
         public RelayCommand DatabaseSettingsCommand { get; }
-        
+
         // Authentication result
         public Employee? AuthenticatedEmployee { get; private set; }
-        
+
         public LoginViewModel()
         {
             _authService = new AuthenticationService();
@@ -102,7 +98,7 @@ namespace bankrupt_piterjust.ViewModels
                 {
                     settingsWindow.Owner = parentWindow;
                 }
-                
+
                 settingsWindow.ShowDialog();
             }
             catch (Exception ex)
@@ -114,7 +110,7 @@ namespace bankrupt_piterjust.ViewModels
                     MessageBoxImage.Error);
             }
         }
-        
+
         private async Task LoginAsync()
         {
             if (!CanLogin) return;
@@ -122,7 +118,7 @@ namespace bankrupt_piterjust.ViewModels
             try
             {
                 IsBusy = true;
-                
+
                 // Test database connection first
                 if (!await _databaseService.TestConnectionAsync())
                 {
@@ -136,7 +132,7 @@ namespace bankrupt_piterjust.ViewModels
                     });
                     return;
                 }
-                
+
                 // Authentication logic
                 AuthenticatedEmployee = await _authService.AuthenticateAsync(Login.Trim(), Password);
 
@@ -152,7 +148,7 @@ namespace bankrupt_piterjust.ViewModels
                     });
                     return;
                 }
-                
+
                 // Close the login window with success
                 Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -180,7 +176,7 @@ namespace bankrupt_piterjust.ViewModels
                 IsBusy = false;
             }
         }
-        
+
         private void CancelLogin(Window? window)
         {
             if (window != null)
@@ -189,9 +185,9 @@ namespace bankrupt_piterjust.ViewModels
                 window.Close();
             }
         }
-        
+
         public event PropertyChangedEventHandler? PropertyChanged;
-        
+
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

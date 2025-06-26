@@ -9,7 +9,7 @@ namespace bankrupt_piterjust
         public MainWindow()
         {
             InitializeComponent();
-            
+
             // Display the current user in the title
             var currentEmployee = UserSessionService.Instance.CurrentEmployee;
             if (currentEmployee != null)

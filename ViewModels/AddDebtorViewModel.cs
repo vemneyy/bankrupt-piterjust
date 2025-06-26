@@ -2,11 +2,7 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Helpers;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -144,9 +140,9 @@ namespace bankrupt_piterjust.ViewModels
         public string RegistrationAddress
         {
             get => _registrationAddress;
-            set 
-            { 
-                _registrationAddress = value; 
+            set
+            {
+                _registrationAddress = value;
                 OnPropertyChanged(nameof(RegistrationAddress));
                 if (_sameAsRegistration)
                     ResidenceAddress = value;
@@ -156,9 +152,9 @@ namespace bankrupt_piterjust.ViewModels
         public string ResidenceAddress
         {
             get => _residenceAddress;
-            set 
-            { 
-                _residenceAddress = value; 
+            set
+            {
+                _residenceAddress = value;
                 OnPropertyChanged(nameof(ResidenceAddress));
                 if (_sameAsResidence)
                     MailingAddress = value;
@@ -168,9 +164,9 @@ namespace bankrupt_piterjust.ViewModels
         public bool SameAsRegistration
         {
             get => _sameAsRegistration;
-            set 
-            { 
-                _sameAsRegistration = value; 
+            set
+            {
+                _sameAsRegistration = value;
                 OnPropertyChanged(nameof(SameAsRegistration));
                 if (value)
                     ResidenceAddress = RegistrationAddress;
@@ -186,10 +182,10 @@ namespace bankrupt_piterjust.ViewModels
         public bool SameAsResidence
         {
             get => _sameAsResidence;
-            set 
-            { 
-                _sameAsResidence = value; 
-                OnPropertyChanged(nameof(SameAsResidence)); 
+            set
+            {
+                _sameAsResidence = value;
+                OnPropertyChanged(nameof(SameAsResidence));
                 if (value)
                     MailingAddress = ResidenceAddress;
             }
@@ -275,7 +271,7 @@ namespace bankrupt_piterjust.ViewModels
         public AddDebtorViewModel()
         {
             _repository = new DebtorRepository();
-            
+
             SaveCommand = new RelayCommand(async o => await SaveDataAsync(), CanSave);
             CancelCommand = new RelayCommand(o => { Window.GetWindow((DependencyObject)o).DialogResult = false; });
             CalculateTotalWordsCommand = new RelayCommand(o => TotalCostWords = NumberToWordsConverter.ConvertToWords(TotalCost));
@@ -290,8 +286,8 @@ namespace bankrupt_piterjust.ViewModels
         private bool CanSave(object parameter)
         {
             // Basic validation
-            return !string.IsNullOrWhiteSpace(LastName) && 
-                   !string.IsNullOrWhiteSpace(FirstName) && 
+            return !string.IsNullOrWhiteSpace(LastName) &&
+                   !string.IsNullOrWhiteSpace(FirstName) &&
                    !string.IsNullOrWhiteSpace(RegistrationAddress);
         }
 
@@ -321,7 +317,7 @@ namespace bankrupt_piterjust.ViewModels
                 };
 
                 var addresses = new List<Address>();
-                
+
                 // Registration address
                 if (!string.IsNullOrWhiteSpace(RegistrationAddress))
                 {

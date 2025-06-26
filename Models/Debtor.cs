@@ -1,5 +1,3 @@
-using System;
-
 namespace bankrupt_piterjust.Models
 {
     public class Debtor
@@ -11,14 +9,14 @@ namespace bankrupt_piterjust.Models
         public string MainCategory { get; set; } = string.Empty; // "Клиенты", "Лиды" и т.д.
         public string FilterCategory { get; set; } = string.Empty; // "Подготовка заявления", "Сбор документов" и т.д.
         public string Date { get; set; } = string.Empty;
-        
+
         // Сохраняем предыдущую категорию для возможности восстановления из архива
         public string? PreviousMainCategory { get; set; }
         public string? PreviousFilterCategory { get; set; }
 
         // Database-related properties
         public int? PersonId { get; set; } // ID in the database
-        
+
         // Helper method to create a Debtor from a Person
         public static Debtor FromPerson(Person person)
         {

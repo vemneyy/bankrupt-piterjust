@@ -1,15 +1,11 @@
 using bankrupt_piterjust.Models;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Threading.Tasks;
 
 namespace bankrupt_piterjust.Services
 {
     public class AuthenticationService
     {
         private readonly DatabaseService _databaseService;
-        
+
         public AuthenticationService()
         {
             _databaseService = new DatabaseService();

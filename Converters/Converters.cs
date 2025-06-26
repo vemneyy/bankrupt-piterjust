@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -121,7 +120,7 @@ namespace bankrupt_piterjust.Converters
                     return boolValue ? options[0] : options[1];
                 }
             }
-            
+
             return value;
         }
 

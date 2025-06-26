@@ -1,4 +1,3 @@
-using System;
 using System.Text;
 
 namespace bankrupt_piterjust.Helpers
@@ -26,7 +25,7 @@ namespace bankrupt_piterjust.Helpers
 
             // Конвертируем рубли
             result.Append(ConvertNumberToWords(rubles));
-            
+
             // Определяем склонение для слова "рубль"
             result.Append(" ");
             result.Append(GetRubleForm(rubles));

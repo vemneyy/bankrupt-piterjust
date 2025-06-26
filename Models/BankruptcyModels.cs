@@ -1,5 +1,3 @@
-using System;
-
 namespace bankrupt_piterjust.Models
 {
     public class Person

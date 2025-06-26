@@ -2,11 +2,8 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using Npgsql;
-using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Input;
 
 namespace bankrupt_piterjust.ViewModels
 {
@@ -30,7 +27,7 @@ namespace bankrupt_piterjust.ViewModels
             set { _busyMessage = value; OnPropertyChanged(nameof(BusyMessage)); }
         }
 
-        public bool CanTestConnection => !IsBusy && 
+        public bool CanTestConnection => !IsBusy &&
                                          !string.IsNullOrWhiteSpace(DatabaseConfiguration.Host) &&
                                          !string.IsNullOrWhiteSpace(DatabaseConfiguration.Database) &&
                                          !string.IsNullOrWhiteSpace(DatabaseConfiguration.Username) &&
@@ -44,7 +41,7 @@ namespace bankrupt_piterjust.ViewModels
         {
             _configurationService = ConfigurationService.Instance;
             DatabaseConfiguration = _configurationService.GetDatabaseConfiguration().Clone();
-            
+
             // Subscribe to property changes in DatabaseConfiguration
             DatabaseConfiguration.PropertyChanged += (s, e) => UpdateCanExecute();
 
@@ -72,14 +69,14 @@ namespace bankrupt_piterjust.ViewModels
 
                 // Create a temporary DatabaseService with the current configuration
                 var connectionString = DatabaseConfiguration.GetConnectionString();
-                
+
                 using var connection = new NpgsqlConnection(connectionString);
                 await connection.OpenAsync();
-                
+
                 // Test basic functionality
                 await using var cmd = new NpgsqlCommand("SELECT 1", connection);
                 await cmd.ExecuteScalarAsync();
-                
+
                 // Test pgcrypto extension
                 await using var cryptoCmd = new NpgsqlCommand("SELECT crypt('test', gen_salt('bf'))", connection);
                 await cryptoCmd.ExecuteScalarAsync();
@@ -98,14 +95,14 @@ namespace bankrupt_piterjust.ViewModels
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     string errorMessage = "Не удалось подключиться к базе данных.";
-                    
+
                     if (ex.Message.Contains("pgcrypto"))
                     {
                         errorMessage += "\n\nРасширение pgcrypto недоступно. Убедитесь, что оно установлено:\nCREATE EXTENSION IF NOT EXISTS pgcrypto;";
                     }
-                    
+
                     errorMessage += $"\n\nПодробности: {ex.Message}";
-                    
+
                     MessageBox.Show(
                         errorMessage,
                         "Ошибка подключения",
@@ -125,7 +122,7 @@ namespace bankrupt_piterjust.ViewModels
             try
             {
                 _configurationService.SaveDatabaseConfiguration(DatabaseConfiguration);
-                
+
                 MessageBox.Show(
                     "Настройки подключения к базе данных сохранены!",
                     "Настройки сохранены",
