@@ -11,11 +11,11 @@
         Title="Добавить нового должника" Height="700" Width="900"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
         Background="#F8F9FA">
-    
+
     <Window.DataContext>
         <vm:AddDebtorViewModel/>
     </Window.DataContext>
-    
+
     <Window.Resources>
         <!-- Converters -->
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -23,7 +23,7 @@
         <conv:StringEqualsConverter x:Key="StringEqualsConverter"/>
         <conv:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter"/>
         <conv:BoolToValueConverter x:Key="BoolToColorConverter"/>
-        
+
         <!-- Styles -->
         <Style x:Key="HeaderTextBlock" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
@@ -31,14 +31,14 @@
             <Setter Property="Margin" Value="0,15,0,10"/>
             <Setter Property="Foreground" Value="#212529"/>
         </Style>
-        
+
         <Style x:Key="FormTextBlock" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,5,0,2"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="Foreground" Value="#495057"/>
         </Style>
-        
+
         <Style x:Key="FormTextBox" TargetType="TextBox">
             <Setter Property="Margin" Value="0,2,0,10"/>
             <Setter Property="Padding" Value="10,8"/>
@@ -57,7 +57,7 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-        
+
         <Style x:Key="FormDatePicker" TargetType="DatePicker">
             <Setter Property="Margin" Value="0,2,0,10"/>
             <Setter Property="Height" Value="36"/>
@@ -67,7 +67,7 @@
             <Setter Property="BorderBrush" Value="#CED4DA"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
-        
+
         <Style x:Key="FormCheckBox" TargetType="CheckBox">
             <Setter Property="Margin" Value="0,5,0,10"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -135,7 +135,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <Style x:Key="SecondaryButton" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#495057"/>
@@ -166,7 +166,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <!-- Style for Tab Control -->
         <Style x:Key="ModernTabControl" TargetType="TabControl">
             <Setter Property="Background" Value="Transparent"/>
@@ -174,7 +174,7 @@
             <Setter Property="Padding" Value="0"/>
             <Setter Property="TabStripPlacement" Value="Top"/>
         </Style>
-        
+
         <Style x:Key="ModernTabItem" TargetType="TabItem">
             <Setter Property="Template">
                 <Setter.Value>
@@ -228,7 +228,7 @@
         </Border>
 
         <!-- Main Content Area -->
-        <ScrollViewer Grid.Row="1" Margin="0" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Margin="-25,70,0,0" VerticalScrollBarVisibility="Auto" Grid.RowSpan="2">
             <Border Background="White" Margin="25,15,25,15">
                 <TabControl Style="{StaticResource ModernTabControl}" BorderThickness="0,1,0,0" BorderBrush="#DEE2E6">
                     <!-- Личные данные -->
@@ -243,23 +243,23 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                         <TextBlock Text="Фамилия *" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="1" Margin="0,0,15,0">
                                         <TextBlock Text="Имя *" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="Отчество" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
                                 </Grid>
-                                
+
                                 <!-- Контактные данные -->
                                 <TextBlock Text="Контактные данные" Style="{StaticResource HeaderTextBlock}"/>
                                 <Grid>
@@ -267,18 +267,18 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                         <TextBlock Text="Телефон" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="E-mail" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
                                 </Grid>
-                                
+
                                 <!-- Паспортные данные -->
                                 <TextBlock Text="Паспортные данные" Style="{StaticResource HeaderTextBlock}"/>
                                 <Grid>
@@ -287,60 +287,60 @@
                                         <ColumnDefinition Width="0.5*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                         <TextBlock Text="Серия" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding PassportSeries, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="1" Margin="0,0,15,0">
                                         <TextBlock Text="Номер" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding PassportNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="Дата выдачи" Style="{StaticResource FormTextBlock}"/>
                                         <DatePicker SelectedDate="{Binding PassportIssueDate}" Style="{StaticResource FormDatePicker}"/>
                                     </StackPanel>
                                 </Grid>
-                                
+
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="2*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                         <TextBlock Text="Кем выдан" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding PassportIssuedBy, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="Код подразделения" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding PassportDivisionCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
                                 </Grid>
-                                
+
                                 <!-- Адреса -->
                                 <TextBlock Text="Адреса" Style="{StaticResource HeaderTextBlock}"/>
-                                
+
                                 <TextBlock Text="Адрес регистрации *" Style="{StaticResource FormTextBlock}"/>
                                 <TextBox Text="{Binding RegistrationAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                
+
                                 <CheckBox Content="Адрес проживания совпадает с адресом регистрации" 
                                           IsChecked="{Binding SameAsRegistration}" 
                                           Style="{StaticResource FormCheckBox}"/>
-                                
+
                                 <TextBlock Text="Адрес проживания" Style="{StaticResource FormTextBlock}"
                                            IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
                                 <TextBox Text="{Binding ResidenceAddress, UpdateSourceTrigger=PropertyChanged}" 
                                          Style="{StaticResource FormTextBox}"
                                          IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
-                                
+
                                 <CheckBox Content="Почтовый адрес совпадает с адресом проживания" 
                                           IsChecked="{Binding SameAsResidence}" 
                                           Style="{StaticResource FormCheckBox}"/>
-                                
+
                                 <TextBlock Text="Почтовый адрес" Style="{StaticResource FormTextBlock}"
                                            IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}"/>
                                 <TextBox Text="{Binding MailingAddress, UpdateSourceTrigger=PropertyChanged}" 
@@ -349,7 +349,7 @@
                             </StackPanel>
                         </Grid>
                     </TabItem>
-                    
+
                     <!-- Договор -->
                     <TabItem Header="Договор" Style="{StaticResource ModernTabItem}">
                         <Grid Margin="15,20,15,10">
@@ -362,23 +362,23 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                         <TextBlock Text="Номер договора" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding ContractNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="1" Margin="0,0,15,0">
                                         <TextBlock Text="Город" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding ContractCity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="Дата договора" Style="{StaticResource FormTextBlock}"/>
                                         <DatePicker SelectedDate="{Binding ContractDate}" Style="{StaticResource FormDatePicker}"/>
                                     </StackPanel>
                                 </Grid>
-                                
+
                                 <!-- Финансовые условия -->
                                 <TextBlock Text="Финансовые условия" Style="{StaticResource HeaderTextBlock}"/>
                                 <Grid>
@@ -386,60 +386,60 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                         <TextBlock Text="Общая стоимость договора (руб.)" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding TotalCost, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <Button Grid.Column="1" Content="Сумма прописью" 
                                             Command="{Binding CalculateTotalWordsCommand}"
                                             Style="{StaticResource SecondaryButton}"
                                             VerticalAlignment="Bottom" Margin="0,0,0,10" Height="36" Width="150"/>
                                 </Grid>
-                                
+
                                 <TextBlock Text="Сумма прописью" Style="{StaticResource FormTextBlock}"/>
                                 <TextBox Text="{Binding TotalCostWords, UpdateSourceTrigger=PropertyChanged}" 
                                          Style="{StaticResource FormTextBox}" 
                                          TextWrapping="Wrap" 
                                          AcceptsReturn="True" 
                                          Height="60" Padding="10"/>
-                                
+
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                         <TextBlock Text="Сумма обязательных расходов (руб.)" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding MandatoryExpenses, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <Button Grid.Column="1" Content="Сумма прописью" 
                                             Command="{Binding CalculateMandatoryWordsCommand}"
                                             Style="{StaticResource SecondaryButton}"
                                             VerticalAlignment="Bottom" Margin="0,0,0,10" Height="36" Width="150"/>
                                 </Grid>
-                                
+
                                 <TextBlock Text="Сумма прописью" Style="{StaticResource FormTextBlock}"/>
                                 <TextBox Text="{Binding MandatoryExpensesWords, UpdateSourceTrigger=PropertyChanged}" 
                                          Style="{StaticResource FormTextBox}" 
                                          TextWrapping="Wrap" 
                                          AcceptsReturn="True" 
                                          Height="60" Padding="10"/>
-                                
+
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                         <TextBlock Text="Размер вознаграждения фин. управляющего (руб.)" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding ManagerFee, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="Прочие расходы банкротства (руб.)" Style="{StaticResource FormTextBlock}"/>
                                         <TextBox Text="{Binding OtherExpenses, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
@@ -448,25 +448,25 @@
                             </StackPanel>
                         </Grid>
                     </TabItem>
-                    
+
                     <!-- Статус -->
                     <TabItem Header="Статус" Style="{StaticResource ModernTabItem}">
                         <Grid Margin="15,20,15,10">
                             <StackPanel>
                                 <TextBlock Text="Статус в программе" Style="{StaticResource HeaderTextBlock}"/>
-                                
+
                                 <TextBlock Text="Текст кнопки статуса" Style="{StaticResource FormTextBlock}"/>
                                 <TextBox Text="{Binding Status, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                
+
                                 <TextBlock Text="Основная категория" Style="{StaticResource HeaderTextBlock}"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,5,0,15">
                                     <RadioButton Content="Лиды" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Лиды}" Style="{StaticResource TabButton}"/>
                                     <RadioButton Content="Клиенты" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Клиенты}" Style="{StaticResource TabButton}"/>
                                     <RadioButton Content="Отказ" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Отказ}" Style="{StaticResource TabButton}"/>
                                 </StackPanel>
-                                
+
                                 <TextBlock Text="Фильтр" Style="{StaticResource HeaderTextBlock}"/>
-                                
+
                                 <!-- Фильтры для Лиды -->
                                 <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Лиды}">
                                     <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
@@ -475,7 +475,7 @@
                                         <RadioButton Content="Повторная консультация" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Повторная консультация}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
                                     </WrapPanel>
                                 </StackPanel>
-                                
+
                                 <!-- Фильтры для Клиенты -->
                                 <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Клиенты}">
                                     <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
@@ -487,7 +487,7 @@
                                         <RadioButton Content="Процедура введена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Процедура введена}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
                                     </WrapPanel>
                                 </StackPanel>
-                                
+
                                 <!-- Фильтры для Отказ -->
                                 <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Отказ}">
                                     <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
@@ -510,13 +510,13 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                
+
                 <TextBlock Grid.Column="0" Text="* Обязательные поля" VerticalAlignment="Center" Foreground="#6C757D"/>
                 <Button Grid.Column="1" Content="Отмена" Width="120" Height="42" Margin="0,0,15,0" Command="{Binding CancelCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Style="{StaticResource SecondaryButton}"/>
                 <Button Grid.Column="2" Content="Сохранить" Width="140" Height="42" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}"/>
             </Grid>
         </Border>
-        
+
         <!-- Busy indicator -->
         <Grid Grid.RowSpan="3" Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
