@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="ПитерЮст. Банкротство." Height="440" Width="400"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
-        Background="#F8F9FA" Icon="/fav.png">
+        Background="#F8F9FA" Icon="/fav.png"
         KeyDown="Window_KeyDown">
     
     <Window.DataContext>
@@ -173,8 +173,8 @@
                                 Height="39" Margin="0,0,-13,0">
                             <Path Data="M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16Z" 
                                   Fill="#6C757D" 
-                                  Width="8" 
-                                  Height="30" Stretch="Fill"/>
+                                  Width="5" 
+                                  Height="20" Stretch="Fill"/>
                         </Button>
                     </Grid>
                 </Grid>
