@@ -86,6 +86,7 @@ namespace bankrupt_piterjust.Services
 
                 // Representative information
                 string representativeName = representative.FullName;
+                string representativePosition = representative.Position;
                 string representativeBasis = $"Доверенность № {new Random().Next(100, 999)} от {DateTime.Now.AddMonths(-1):dd.MM.yyyy}";
 
                 // Prepare replacement data
@@ -102,6 +103,7 @@ namespace bankrupt_piterjust.Services
                     { "<дата_выдачи>", passport.IssueDate.ToString("dd.MM.yyyy") },
                     { "<адрес_регистрации_заказчика>", registrationAddress.AddressText },
                     { "<фио_представителя_исполнителя>", representativeName },
+                    { "<должность_представителя>", representativePosition },
                     { "<основание_действий_представителя>", representativeBasis },
                     { "<cтоимость_договора>", contractTotalCost.ToString("#,##0.00") },
                     { "<стоимость_договора_прописью>", contractTotalCostWords },
@@ -237,17 +239,36 @@ namespace bankrupt_piterjust.Services
                     string newText = originalText.Replace(searchText, replaceText);
 
                     // Count how many replacements were made
-                    int replacementsInThisElement = (originalText.Length - newText.Length) /
-                                                    (searchText.Length - replaceText.Length);
-                    if (replacementsInThisElement < 0)
+                    int replacementsInThisElement = 0;
+                    
+                    // If search and replace text have different lengths, calculate based on length difference
+                    if (searchText.Length != replaceText.Length)
                     {
-                        // If replacement text is longer than search text
-                        replacementsInThisElement = (newText.Length - originalText.Length) /
-                                                    (replaceText.Length - searchText.Length);
+                        int lengthDifference = searchText.Length - replaceText.Length;
+                        if (lengthDifference > 0)
+                        {
+                            // Search text is longer than replace text
+                            replacementsInThisElement = (originalText.Length - newText.Length) / lengthDifference;
+                        }
+                        else
+                        {
+                            // Replace text is longer than search text
+                            replacementsInThisElement = (newText.Length - originalText.Length) / Math.Abs(lengthDifference);
+                        }
+                    }
+                    else
+                    {
+                        // If lengths are equal, count occurrences manually
+                        int searchIndex = 0;
+                        while ((searchIndex = originalText.IndexOf(searchText, searchIndex)) != -1)
+                        {
+                            replacementsInThisElement++;
+                            searchIndex += searchText.Length;
+                        }
                     }
 
                     text.Text = newText;
-                    totalReplacements += Math.Abs(replacementsInThisElement);
+                    totalReplacements += replacementsInThisElement;
                 }
             }
 
