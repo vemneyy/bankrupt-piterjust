@@ -7,7 +7,7 @@
         xmlns:vm="clr-namespace:bankrupt_piterjust.ViewModels"
         xmlns:converters="clr-namespace:bankrupt_piterjust.Converters"
         mc:Ignorable="d"
-        Title="ПитерЮст. Банкротство." Height="900" Width="1400"
+        Title="ПитерЮст. Банкротство." Height="720" Width="1280"
         Background="#F8F9FA"
         FontFamily="Segoe UI"
         MinWidth="800" MinHeight="600" Icon="/fav.png">
@@ -644,19 +644,22 @@
                             Command="{Binding GenerateContractCommand}" 
                             Style="{StaticResource PrimaryButton}" 
                             IsEnabled="{Binding CanGenerateContract}"
+                            Height="40"
                             Margin="0,30,0,0"/>
 
                     <Button Content="Добавить в архив"
                             Command="{Binding ArchiveDebtorCommand}" 
                             CommandParameter="{Binding SelectedDebtor}"
                             Style="{StaticResource SecondaryButton}" 
+                            Height="40"
                             Margin="0,10,0,0"
                             Visibility="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringNotEqualsToVisibilityConverter}, ConverterParameter=Архив}"/>
 
                     <Button Content="Восстановить из архива"
                             Command="{Binding RestoreDebtorCommand}" 
                             CommandParameter="{Binding SelectedDebtor}"
-                            Style="{StaticResource SecondaryButton}" 
+                            Style="{StaticResource SecondaryButton}"
+                            Height="40"
                             Margin="0,10,0,0"
                             Visibility="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив}"/>
                 </StackPanel>

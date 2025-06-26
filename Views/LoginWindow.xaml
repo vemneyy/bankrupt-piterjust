@@ -8,7 +8,8 @@
         mc:Ignorable="d"
         Title="ПитерЮст. Банкротство. - Авторизация" Height="440" Width="400"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
-        Background="#F8F9FA" Icon="/fav.png">
+        Background="#F8F9FA" Icon="/fav.png"
+        KeyDown="Window_KeyDown">
 
     <Window.DataContext>
         <vm:LoginViewModel/>
