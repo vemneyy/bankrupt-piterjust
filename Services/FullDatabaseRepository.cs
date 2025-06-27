@@ -100,7 +100,16 @@ namespace bankrupt_piterjust.Services
                     address_id SERIAL PRIMARY KEY,
                     person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
                     address_type address_type_enum NOT NULL,
-                    address_text TEXT NOT NULL
+                    postal_code VARCHAR(20),
+                    country VARCHAR(100) NOT NULL DEFAULT 'Россия',
+                    region VARCHAR(100),
+                    district VARCHAR(100),
+                    city VARCHAR(100),
+                    locality VARCHAR(100),
+                    street VARCHAR(100),
+                    house_number VARCHAR(20),
+                    building VARCHAR(20),
+                    apartment VARCHAR(20)
                 )";
             await _databaseService.ExecuteNonQueryAsync(sql);
         }

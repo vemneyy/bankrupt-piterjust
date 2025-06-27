@@ -367,7 +367,28 @@
                                 </StackPanel>
                             </Grid>
                             <TextBlock Text="Адрес регистрации *" Style="{StaticResource FormTextBlock}"/>
-                            <TextBox Text="{Binding RegistrationAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                            <StackPanel>
+                                <TextBlock Text="Индекс" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.PostalCode}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Страна" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.Country}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Регион" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.Region}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Район" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.District}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Город" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.City}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Нас. пункт" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.Locality}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Улица" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.Street}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Дом" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.HouseNumber}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Корпус" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.Building}" Style="{StaticResource FormTextBox}"/>
+                                <TextBlock Text="Квартира" Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding RegistrationAddress.Apartment}" Style="{StaticResource FormTextBox}"/>
+                            </StackPanel>
                             
                         </StackPanel>
                     </Grid>
