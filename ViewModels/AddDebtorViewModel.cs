@@ -436,16 +436,6 @@ namespace bankrupt_piterjust.ViewModels
                     addresses.Add(RegistrationAddress);
                 }
 
-                if (!SameAsRegistration && !ResidenceAddress.IsEmpty())
-                {
-                    addresses.Add(ResidenceAddress);
-                }
-
-                if (!SameAsResidence && !MailingAddress.IsEmpty())
-                {
-                    addresses.Add(MailingAddress);
-                }
-
                 // Save person and debtor to database
                 int personId = await _repository.AddPersonWithDetailsAsync(person, passport, addresses, Status, MainCategory, FilterCategory);
 

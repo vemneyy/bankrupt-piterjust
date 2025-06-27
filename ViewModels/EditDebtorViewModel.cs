@@ -160,7 +160,7 @@ namespace bankrupt_piterjust.ViewModels
                 {
                     CopyAddress(RegistrationAddress, ResidenceAddress);
                 }
-        }
+            }
         }
 
         public Address MailingAddress => _mailingAddress;

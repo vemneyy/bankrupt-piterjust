@@ -387,54 +387,6 @@
                                 <TextBlock Text="Квартира" Style="{StaticResource FormTextBlock}"/>
                                 <TextBox Text="{Binding RegistrationAddress.Apartment}" Style="{StaticResource FormTextBox}"/>
                             </StackPanel>
-                            <CheckBox Content="Адрес проживания совпадает с адресом регистрации" IsChecked="{Binding SameAsRegistration}" Style="{StaticResource FormCheckBox}"/>
-                            <TextBlock Text="Адрес проживания" Style="{StaticResource FormTextBlock}" IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
-                            <StackPanel IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}">
-                                <TextBlock Text="Индекс" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.PostalCode}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Страна" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.Country}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Регион" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.Region}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Район" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.District}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Город" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.City}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Нас. пункт" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.Locality}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Улица" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.Street}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Дом" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.HouseNumber}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Корпус" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.Building}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Квартира" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding ResidenceAddress.Apartment}" Style="{StaticResource FormTextBox}"/>
-                            </StackPanel>
-                            <CheckBox Content="Почтовый адрес совпадает с адресом проживания" IsChecked="{Binding SameAsResidence}" Style="{StaticResource FormCheckBox}"/>
-                            <TextBlock Text="Почтовый адрес" Style="{StaticResource FormTextBlock}" IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}"/>
-                            <StackPanel IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}">
-                                <TextBlock Text="Индекс" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.PostalCode}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Страна" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.Country}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Регион" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.Region}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Район" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.District}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Город" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.City}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Нас. пункт" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.Locality}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Улица" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.Street}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Дом" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.HouseNumber}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Корпус" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.Building}" Style="{StaticResource FormTextBox}"/>
-                                <TextBlock Text="Квартира" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox Text="{Binding MailingAddress.Apartment}" Style="{StaticResource FormTextBox}"/>
-                            </StackPanel>
                         </StackPanel>
                     </Grid>
                 </TabItem>
@@ -583,9 +535,9 @@
 
         <!-- Busy indicator -->
         <!-- ИСПРАВЛЕНО: Grid.RowSpan="3" для корректного перекрытия всех элементов. -->
-        <Grid Grid.Row="0" Grid.RowSpan="3"
+        <Grid Grid.RowSpan="3"
               Background="#80000000"
-              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,-4">
             <StackPanel VerticalAlignment="Center"
                         HorizontalAlignment="Center">
                 <TextBlock Text="Сохранение данных..."
