@@ -27,6 +27,9 @@ namespace bankrupt_piterjust.Services
 
             // Ensure address table exists with address_type enum
             await EnsureAddressTableExistsAsync();
+
+            // Ensure status/category tables and debtor table exist
+            await EnsureStatusTablesExistAsync();
         }
 
         /// <summary>
@@ -119,14 +122,63 @@ namespace bankrupt_piterjust.Services
         }
 
         /// <summary>
+        /// Ensures that status/category tables and debtor table exist
+        /// </summary>
+        private async Task EnsureStatusTablesExistAsync()
+        {
+            string createStatusSql = @"
+                CREATE TABLE IF NOT EXISTS status (
+                    status_id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) UNIQUE NOT NULL
+                );";
+
+            string createMainCategorySql = @"
+                CREATE TABLE IF NOT EXISTS main_category (
+                    main_category_id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) UNIQUE NOT NULL
+                );";
+
+            string createFilterCategorySql = @"
+                CREATE TABLE IF NOT EXISTS filter_category (
+                    filter_category_id SERIAL PRIMARY KEY,
+                    main_category_id INTEGER NOT NULL REFERENCES main_category(main_category_id),
+                    name VARCHAR(100) UNIQUE NOT NULL
+                );";
+
+            string createDebtorSql = @"
+                CREATE TABLE IF NOT EXISTS debtor (
+                    debtor_id SERIAL PRIMARY KEY,
+                    person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
+                    status_id INTEGER NOT NULL REFERENCES status(status_id),
+                    main_category_id INTEGER NOT NULL REFERENCES main_category(main_category_id),
+                    filter_category_id INTEGER NOT NULL REFERENCES filter_category(filter_category_id),
+                    created_date DATE NOT NULL DEFAULT CURRENT_DATE
+                );";
+
+            await _databaseService.ExecuteNonQueryAsync(createStatusSql);
+            await _databaseService.ExecuteNonQueryAsync(createMainCategorySql);
+            await _databaseService.ExecuteNonQueryAsync(createFilterCategorySql);
+            await _databaseService.ExecuteNonQueryAsync(createDebtorSql);
+        }
+
+        /// <summary>
         /// Get all debtors from the database
         /// </summary>
         public async Task<List<Debtor>> GetAllDebtorsAsync()
         {
-            string sql = "SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email, " +
-                         "a.address_text as region " +
-                         "FROM person p " +
-                         "LEFT JOIN address a ON p.person_id = a.person_id AND a.address_type = 'registration'";
+            string sql = @"
+                SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
+                       a.address_text AS region,
+                       s.name AS status,
+                       mc.name AS main_category,
+                       fc.name AS filter_category,
+                       d.created_date
+                FROM person p
+                LEFT JOIN address a ON p.person_id = a.person_id AND a.address_type = 'registration'
+                LEFT JOIN debtor d ON d.person_id = p.person_id
+                LEFT JOIN status s ON s.status_id = d.status_id
+                LEFT JOIN main_category mc ON mc.main_category_id = d.main_category_id
+                LEFT JOIN filter_category fc ON fc.filter_category_id = d.filter_category_id";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
             var debtors = new List<Debtor>();
@@ -148,17 +200,14 @@ namespace bankrupt_piterjust.Services
 
                 var debtor = Debtor.FromPerson(person);
 
-                // Set the region if available
                 if (row["region"] != DBNull.Value)
-                {
                     debtor.Region = row["region"].ToString() ?? string.Empty;
-                }
 
-                // Default values for UI display
-                debtor.Status = "Подать заявление";
-                debtor.MainCategory = "Клиенты";
-                debtor.FilterCategory = "Подготовка заявления";
-                debtor.Date = DateTime.Now.ToString("dd.MM.yyyy");
+                debtor.Status = row["status"] != DBNull.Value ? row["status"].ToString() ?? string.Empty : "";
+                debtor.MainCategory = row["main_category"] != DBNull.Value ? row["main_category"].ToString() ?? string.Empty : "";
+                debtor.FilterCategory = row["filter_category"] != DBNull.Value ? row["filter_category"].ToString() ?? string.Empty : "";
+                if (row.Table.Columns.Contains("created_date") && row["created_date"] != DBNull.Value)
+                    debtor.Date = Convert.ToDateTime(row["created_date"]).ToString("dd.MM.yyyy");
 
                 debtors.Add(debtor);
             }
@@ -192,7 +241,10 @@ namespace bankrupt_piterjust.Services
         public async Task<int> AddPersonWithDetailsAsync(
             Person person,
             Passport passport,
-            IEnumerable<Address> addresses)
+            IEnumerable<Address> addresses,
+            string status,
+            string mainCategory,
+            string filterCategory)
         {
             // Ensure tables exist before trying to insert data
             await EnsureTablesExistAsync();
@@ -274,6 +326,9 @@ namespace bankrupt_piterjust.Services
                     await _databaseService.ExecuteNonQueryAsync(insertAddressSql, addressParams);
                 }
             }
+
+            // Insert debtor record with status and categories
+            await AddDebtorRecordAsync(personId, status, mainCategory, filterCategory);
 
             return personId;
         }
@@ -381,6 +436,97 @@ namespace bankrupt_piterjust.Services
             }
 
             return addresses;
+        }
+
+        private async Task<int> GetOrCreateStatusIdAsync(string name)
+        {
+            string checkSql = "SELECT status_id FROM status WHERE name = @name";
+            var p = new Dictionary<string, object> { { "@name", name } };
+            var table = await _databaseService.ExecuteReaderAsync(checkSql, p);
+            if (table.Rows.Count > 0)
+            {
+                return table.Rows[0]["status_id"] is Int64 v ? (int)v : Convert.ToInt32(table.Rows[0]["status_id"]);
+            }
+            string insertSql = "INSERT INTO status(name) VALUES(@name) RETURNING status_id";
+            object result = await _databaseService.ExecuteScalarAsync<object>(insertSql, p);
+            return result is Int64 val ? (int)val : Convert.ToInt32(result);
+        }
+
+        private async Task<int> GetOrCreateMainCategoryIdAsync(string name)
+        {
+            string checkSql = "SELECT main_category_id FROM main_category WHERE name=@name";
+            var p = new Dictionary<string, object> { { "@name", name } };
+            var table = await _databaseService.ExecuteReaderAsync(checkSql, p);
+            if (table.Rows.Count > 0)
+                return table.Rows[0]["main_category_id"] is Int64 v ? (int)v : Convert.ToInt32(table.Rows[0]["main_category_id"]);
+
+            string insertSql = "INSERT INTO main_category(name) VALUES(@name) RETURNING main_category_id";
+            object result = await _databaseService.ExecuteScalarAsync<object>(insertSql, p);
+            return result is Int64 val ? (int)val : Convert.ToInt32(result);
+        }
+
+        private async Task<int> GetOrCreateFilterCategoryIdAsync(string name, int mainCategoryId)
+        {
+            string checkSql = "SELECT filter_category_id FROM filter_category WHERE name=@name";
+            var p = new Dictionary<string, object> { { "@name", name } };
+            var table = await _databaseService.ExecuteReaderAsync(checkSql, p);
+            if (table.Rows.Count > 0)
+                return table.Rows[0]["filter_category_id"] is Int64 v ? (int)v : Convert.ToInt32(table.Rows[0]["filter_category_id"]);
+
+            string insertSql = "INSERT INTO filter_category(name, main_category_id) VALUES(@name,@main) RETURNING filter_category_id";
+            var pp = new Dictionary<string, object> { { "@name", name }, { "@main", mainCategoryId } };
+            object result = await _databaseService.ExecuteScalarAsync<object>(insertSql, pp);
+            return result is Int64 val ? (int)val : Convert.ToInt32(result);
+        }
+
+        private async Task AddDebtorRecordAsync(int personId, string status, string mainCategory, string filterCategory)
+        {
+            int statusId = await GetOrCreateStatusIdAsync(status);
+            int mainId = await GetOrCreateMainCategoryIdAsync(mainCategory);
+            int filterId = await GetOrCreateFilterCategoryIdAsync(filterCategory, mainId);
+
+            string sql = @"INSERT INTO debtor(person_id, status_id, main_category_id, filter_category_id)
+                           VALUES(@pid,@sid,@mid,@fid)";
+            var param = new Dictionary<string, object>
+            {
+                {"@pid", personId},
+                {"@sid", statusId},
+                {"@mid", mainId},
+                {"@fid", filterId}
+            };
+            await _databaseService.ExecuteNonQueryAsync(sql, param);
+        }
+
+        public async Task UpdatePersonAsync(Person person)
+        {
+            string sql = @"UPDATE person SET last_name=@ln, first_name=@fn, middle_name=@mn, phone=@ph, email=@em WHERE person_id=@id";
+            var p = new Dictionary<string, object>
+            {
+                {"@ln", person.LastName},
+                {"@fn", person.FirstName},
+                {"@mn", person.MiddleName != null ? person.MiddleName : DBNull.Value},
+                {"@ph", person.Phone != null ? person.Phone : DBNull.Value},
+                {"@em", person.Email != null ? person.Email : DBNull.Value},
+                {"@id", person.PersonId}
+            };
+            await _databaseService.ExecuteNonQueryAsync(sql, p);
+        }
+
+        public async Task UpdateDebtorInfoAsync(int personId, string status, string mainCategory, string filterCategory)
+        {
+            int statusId = await GetOrCreateStatusIdAsync(status);
+            int mainId = await GetOrCreateMainCategoryIdAsync(mainCategory);
+            int filterId = await GetOrCreateFilterCategoryIdAsync(filterCategory, mainId);
+
+            string sql = @"UPDATE debtor SET status_id=@sid, main_category_id=@mid, filter_category_id=@fid WHERE person_id=@pid";
+            var p = new Dictionary<string, object>
+            {
+                {"@sid", statusId},
+                {"@mid", mainId},
+                {"@fid", filterId},
+                {"@pid", personId}
+            };
+            await _databaseService.ExecuteNonQueryAsync(sql, p);
         }
     }
 }

@@ -2,6 +2,8 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Helpers;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
+using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
@@ -246,6 +248,24 @@ namespace bankrupt_piterjust.ViewModels
             get => _otherExpenses;
             set { _otherExpenses = value; OnPropertyChanged(nameof(OtherExpenses)); }
         }
+
+        // Payment schedule properties
+        private int _scheduleMonths = 12;
+        private ObservableCollection<PaymentSchedule> _paymentSchedule = new();
+
+        public int ScheduleMonths
+        {
+            get => _scheduleMonths;
+            set { _scheduleMonths = value; OnPropertyChanged(nameof(ScheduleMonths)); }
+        }
+
+        public ObservableCollection<PaymentSchedule> PaymentSchedule
+        {
+            get => _paymentSchedule;
+            set { _paymentSchedule = value; OnPropertyChanged(nameof(PaymentSchedule)); }
+        }
+
+        public ICommand GenerateScheduleCommand { get; }
         #endregion
 
         #region Status Properties
@@ -276,6 +296,7 @@ namespace bankrupt_piterjust.ViewModels
             CancelCommand = new RelayCommand(o => { Window.GetWindow((DependencyObject)o).DialogResult = false; });
             CalculateTotalWordsCommand = new RelayCommand(o => TotalCostWords = NumberToWordsConverter.ConvertToWords(TotalCost));
             CalculateMandatoryWordsCommand = new RelayCommand(o => MandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(MandatoryExpenses));
+            GenerateScheduleCommand = new RelayCommand(o => GenerateSchedule());
         }
 
         private void UpdateFullName()
@@ -349,7 +370,7 @@ namespace bankrupt_piterjust.ViewModels
                 }
 
                 // Save to database
-                int personId = await _repository.AddPersonWithDetailsAsync(person, passport, addresses);
+                int personId = await _repository.AddPersonWithDetailsAsync(person, passport, addresses, Status, MainCategory, FilterCategory);
 
                 // Create a Debtor object for UI display
                 NewDebtor = new Debtor
@@ -377,6 +398,25 @@ namespace bankrupt_piterjust.ViewModels
             finally
             {
                 IsBusy = false;
+            }
+        }
+
+        private void GenerateSchedule()
+        {
+            PaymentSchedule.Clear();
+            if (ScheduleMonths <= 0)
+                return;
+
+            decimal monthly = ScheduleMonths > 0 ? Math.Round(ManagerFee / ScheduleMonths, 2) : 0m;
+            for (int i = 1; i <= ScheduleMonths; i++)
+            {
+                PaymentSchedule.Add(new PaymentSchedule
+                {
+                    Stage = i,
+                    Description = $"Платеж {i}",
+                    Amount = monthly,
+                    DueDate = ContractDate.AddMonths(i - 1)
+                });
             }
         }
 
