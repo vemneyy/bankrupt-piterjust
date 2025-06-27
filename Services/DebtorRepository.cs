@@ -543,6 +543,64 @@ namespace bankrupt_piterjust.Services
                 {"@pid", personId}
             };
             await _databaseService.ExecuteNonQueryAsync(sql, p);
+        public async Task UpsertPassportAsync(Passport passport)
+        {
+            var existing = await GetPassportByPersonIdAsync(passport.PersonId);
+            if (existing == null)
+            {
+                string insertSql = @"INSERT INTO passport (person_id, series, number, issued_by, division_code, issue_date)
+                                      VALUES (@personId, @series, @number, @issuedBy, @divisionCode, @issueDate)";
+                var p = new Dictionary<string, object>
+                {
+                    {"@personId", passport.PersonId},
+                    {"@series", passport.Series},
+                    {"@number", passport.Number},
+                    {"@issuedBy", passport.IssuedBy},
+                    {"@divisionCode", passport.DivisionCode != null ? passport.DivisionCode : DBNull.Value},
+                    {"@issueDate", passport.IssueDate}
+                };
+                await _databaseService.ExecuteNonQueryAsync(insertSql, p);
+            }
+            else
+            {
+                string updateSql = @"UPDATE passport SET series=@series, number=@number, issued_by=@issuedBy, division_code=@divisionCode, issue_date=@issueDate WHERE passport_id=@id";
+                var p = new Dictionary<string, object>
+                {
+                    {"@series", passport.Series},
+                    {"@number", passport.Number},
+                    {"@issuedBy", passport.IssuedBy},
+                    {"@divisionCode", passport.DivisionCode != null ? passport.DivisionCode : DBNull.Value},
+                    {"@issueDate", passport.IssueDate},
+                    {"@id", existing.PassportId}
+                };
+                await _databaseService.ExecuteNonQueryAsync(updateSql, p);
+            }
+        }
+
+        public async Task ReplaceAddressesAsync(int personId, IEnumerable<Address> addresses)
+        {
+            string deleteSql = "DELETE FROM address WHERE person_id=@pid";
+            await _databaseService.ExecuteNonQueryAsync(deleteSql, new Dictionary<string, object>{{"@pid", personId}});
+
+            if (addresses == null) return;
+            foreach (var address in addresses)
+            {
+                string typeValue = address.AddressType switch
+                {
+                    AddressType.Registration => "registration",
+                    AddressType.Residence => "residence",
+                    AddressType.Mailing => "mailing",
+                    _ => "registration"
+                };
+                string insertSql = @"INSERT INTO address (person_id, address_type, address_text) VALUES (@pid, @type::address_type_enum, @text)";
+                var p = new Dictionary<string, object>
+                {
+                    {"@pid", personId},
+                    {"@type", typeValue},
+                    {"@text", address.AddressText}
+                };
+                await _databaseService.ExecuteNonQueryAsync(insertSql, p);
+            }
         }
     }
 }
