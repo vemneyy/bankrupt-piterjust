@@ -116,7 +116,7 @@ namespace bankrupt_piterjust.Services
                 };
 
                 // Add gender-based ending tag
-                string genderEnding = person.IsMale ? "-ый" : "-ая";
+                string genderEnding = person.IsMale ? "ый" : "ая";
                 replacements.Add("<окончание_пола>", genderEnding);
 
                 // Replace tags in document

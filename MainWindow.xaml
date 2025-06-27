@@ -159,6 +159,30 @@
             </Setter>
         </Style>
 
+        <!-- Add this style definition for TabButton -->
+        <Style x:Key="TabButton" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Margin" Value="0,0,1,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="backgroundBorder" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}" BorderBrush="Transparent" BorderThickness="1">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="backgroundBorder" Property="Background" Value="White"/>
+                                <Setter TargetName="backgroundBorder" Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Hyperlink Style -->
         <Style TargetType="Hyperlink">
             <Setter Property="Foreground" Value="{StaticResource DarkTextBrush}"/>
