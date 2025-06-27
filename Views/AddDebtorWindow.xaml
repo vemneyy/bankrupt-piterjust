@@ -15,7 +15,8 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         Icon="/Images/icon.png"
-        Background="#F8F9FA">
+        Background="#F8F9FA"
+        ShowInTaskbar="False">
 
     <Window.DataContext>
         <vm:AddDebtorViewModel/>
