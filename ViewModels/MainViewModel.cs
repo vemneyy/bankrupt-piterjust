@@ -60,8 +60,6 @@ namespace bankrupt_piterjust.ViewModels
                     // Обновляем список вкладок фильтров
                     CurrentFilterTabs = _filterTabsByCategory[_selectedMainTab.Name];
                     // Устанавливаем "Все" как активный фильтр по умолчанию
-                    // Fix for CS8601: Possible null reference assignment.
-                    // Fix for CS8601: Possible null reference assignment.
                     SelectedFilterTab = CurrentFilterTabs?.FirstOrDefault() ?? new TabItem { Name = "Все" };
 
                     UpdateTabCounts();
@@ -112,6 +110,40 @@ namespace bankrupt_piterjust.ViewModels
                 {
                     ClearDebtorDetails();
                 }
+            }
+        }
+
+        // Status change functionality
+        private bool _isStatusSelectionVisible;
+        public bool IsStatusSelectionVisible
+        {
+            get => _isStatusSelectionVisible;
+            set
+            {
+                _isStatusSelectionVisible = value;
+                OnPropertyChanged(nameof(IsStatusSelectionVisible));
+            }
+        }
+
+        private ObservableCollection<string> _availableStatuses;
+        public ObservableCollection<string> AvailableStatuses
+        {
+            get => _availableStatuses;
+            private set
+            {
+                _availableStatuses = value;
+                OnPropertyChanged(nameof(AvailableStatuses));
+            }
+        }
+
+        private string _selectedStatus;
+        public string SelectedStatus
+        {
+            get => _selectedStatus;
+            set
+            {
+                _selectedStatus = value;
+                OnPropertyChanged(nameof(SelectedStatus));
             }
         }
 
@@ -207,33 +239,30 @@ namespace bankrupt_piterjust.ViewModels
         public ICommand ManageContractsCommand { get; }
         public ICommand ManageCompaniesCommand { get; }
         public ICommand ManageEmployeesCommand { get; }
+        public ICommand ShowStatusSelectionCommand { get; }
+        public ICommand ChangeStatusCommand { get; }
+        public ICommand CancelStatusSelectionCommand { get; }
 
         public MainViewModel()
         {
             _debtorRepository = new DebtorRepository();
             _documentGenerationService = new DocumentGenerationService();
             _selectedAddresses = new ObservableCollection<Address>();
+            _availableStatuses = new ObservableCollection<string>();
+            _selectedStatus = string.Empty;
 
             // Инициализация коллекций для UI
             DebtorsView = new ObservableCollection<Debtor>();
+
+            // Remove "Лиды" and "Отказ" categories
             MainTabs = new ObservableCollection<TabItem>
             {
-                new() { Name = "Лиды" },
                 new() { Name = "Клиенты" },
-                new() { Name = "Отказ" },
                 new() { Name = "Архив" }
             };
 
             _filterTabsByCategory = new Dictionary<string, ObservableCollection<TabItem>>
             {
-                { "Лиды", new ObservableCollection<TabItem>
-                    {
-                        new() { Name = "Все" },
-                        new() { Name = "Консультация не назначена" },
-                        new() { Name = "Консультация назначена" },
-                        new() { Name = "Повторная консультация" }
-                    }
-                },
                 { "Клиенты", new ObservableCollection<TabItem>
                     {
                         new() { Name = "Все" },
@@ -243,13 +272,6 @@ namespace bankrupt_piterjust.ViewModels
                         new() { Name = "Ходатайство" },
                         new() { Name = "Заседание" },
                         new() { Name = "Процедура введена" }
-                    }
-                },
-                { "Отказ", new ObservableCollection<TabItem>
-                    {
-                        new() { Name = "Все" },
-                        new() { Name = "Мой отказ" },
-                        new() { Name = "Отказ должника" }
                     }
                 },
                 { "Архив", new ObservableCollection<TabItem>
@@ -270,13 +292,103 @@ namespace bankrupt_piterjust.ViewModels
             SaveDebtorCommand = new RelayCommand(async o => await SaveDebtorDetailsAsync(), o => IsEditMode);
             CancelEditCommand = new RelayCommand(o => CancelEdit(), o => IsEditMode);
 
+            // Status change commands
+            ShowStatusSelectionCommand = new RelayCommand(o => ShowStatusSelection(), o => SelectedDebtor != null);
+            ChangeStatusCommand = new RelayCommand(async o => await ChangeDebtorStatusAsync(), o => !string.IsNullOrEmpty(SelectedStatus));
+            CancelStatusSelectionCommand = new RelayCommand(o => IsStatusSelectionVisible = false);
 
             // Устанавливаем начальные активные вкладки
-            // Fix for CS8601: Possible null reference assignment.
             SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты") ?? new TabItem { Name = "Клиенты" };
 
             // Загружаем данные асинхронно
             _ = LoadDataAsync();
+        }
+
+        private void ShowStatusSelection()
+        {
+            if (SelectedDebtor == null || SelectedMainTab == null)
+                return;
+
+            // Get statuses for the current main category
+            AvailableStatuses = new ObservableCollection<string>();
+
+            // For Clients category, add all client statuses
+            if (SelectedMainTab.Name == "Клиенты")
+            {
+                AvailableStatuses.Add("Сбор документов");
+                AvailableStatuses.Add("Подготовка заявления");
+                AvailableStatuses.Add("На рассмотрении");
+                AvailableStatuses.Add("Ходатайство");
+                AvailableStatuses.Add("Заседание");
+                AvailableStatuses.Add("Процедура введена");
+            }
+            // For Archive, just have one status
+            else if (SelectedMainTab.Name == "Архив")
+            {
+                AvailableStatuses.Add("В архиве");
+            }
+
+            // Set current status as selected
+            SelectedStatus = SelectedDebtor.Status;
+
+            // Show status selection popup
+            IsStatusSelectionVisible = true;
+        }
+
+        private async Task ChangeDebtorStatusAsync()
+        {
+            if (SelectedDebtor == null || string.IsNullOrEmpty(SelectedStatus) || SelectedDebtor.PersonId == null)
+            {
+                MessageBox.Show("Не выбран должник или отсутствует идентификатор должника.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                IsLoading = true;
+
+                // Update the status
+                string oldStatus = SelectedDebtor.Status;
+                SelectedDebtor.Status = SelectedStatus;
+
+                // Update filter category to match the status for Clients
+                if (SelectedMainTab?.Name == "Клиенты")
+                {
+                    SelectedDebtor.FilterCategory = SelectedStatus;
+                }
+
+                // Save to database
+                await _debtorRepository.UpdateDebtorInfoAsync(
+                    SelectedDebtor.PersonId.Value,
+                    SelectedDebtor.Status,
+                    SelectedDebtor.MainCategory,
+                    SelectedDebtor.FilterCategory);
+
+                // Hide status selection
+                IsStatusSelectionVisible = false;
+
+                // Refresh counts and filters
+                UpdateTabCounts();
+                ApplyFilters();
+
+                // If filter changed, update selection
+                if (SelectedDebtor.FilterCategory != oldStatus &&
+                    SelectedMainTab?.Name == "Клиенты" &&
+                    SelectedFilterTab != null && CurrentFilterTabs != null && SelectedFilterTab.Name != "Все")
+                {
+                    SelectedFilterTab = CurrentFilterTabs.FirstOrDefault(t => t.Name == SelectedDebtor.FilterCategory) ??
+                                       CurrentFilterTabs.FirstOrDefault(t => t.Name == "Все") ??
+                                       CurrentFilterTabs.FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при изменении статуса: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         private void ShowLoginWindow()
@@ -294,7 +406,6 @@ namespace bankrupt_piterjust.ViewModels
                 }
             }
         }
-
 
         // Loads detailed information about the selected debtor
         private async Task LoadDebtorDetailsAsync(int personId)
@@ -412,6 +523,24 @@ namespace bankrupt_piterjust.ViewModels
                 var debtors = await _debtorRepository.GetAllDebtorsAsync();
                 _allDebtors = debtors.ToList();
 
+                // Update all debtors that were in Leads or Reject categories to Clients
+                foreach (var debtor in _allDebtors)
+                {
+                    if (debtor.MainCategory == "Лиды" || debtor.MainCategory == "Отказ")
+                    {
+                        debtor.MainCategory = "Клиенты";
+                        debtor.FilterCategory = "Сбор документов";
+                        debtor.Status = "Сбор документов";
+
+                        // Update in database
+                        await _debtorRepository.UpdateDebtorInfoAsync(
+                            debtor.PersonId.Value,
+                            debtor.Status,
+                            debtor.MainCategory,
+                            debtor.FilterCategory);
+                    }
+                }
+
                 // Обновляем счетчики на всех вкладках
                 UpdateTabCounts();
                 ApplyFilters();
@@ -461,7 +590,7 @@ namespace bankrupt_piterjust.ViewModels
                 tab.Count = _allDebtors.Count(d => d.MainCategory == tab.Name);
             }
 
-            if (CurrentFilterTabs == null) return;
+            if (CurrentFilterTabs == null || SelectedMainTab == null) return;
 
             // Для фильтров считаем внутри выбранной основной категории
             var debtorsInCurrentMainTab = _allDebtors.Where(d => d.MainCategory == SelectedMainTab.Name).ToList();
@@ -508,7 +637,14 @@ namespace bankrupt_piterjust.ViewModels
                 // Перемещаем в архив
                 debtor.MainCategory = "Архив";
                 debtor.FilterCategory = "Все";
-                debtor.Status = "В архив";
+                debtor.Status = "В архиве";
+
+                // Save to database
+                _ = _debtorRepository.UpdateDebtorInfoAsync(
+                    debtor.PersonId.Value,
+                    debtor.Status,
+                    debtor.MainCategory,
+                    debtor.FilterCategory);
 
                 UpdateTabCounts();
                 ApplyFilters();
@@ -527,8 +663,15 @@ namespace bankrupt_piterjust.ViewModels
             {
                 // Восстанавливаем из предыдущей категории, если есть
                 debtor.MainCategory = debtor.PreviousMainCategory ?? "Клиенты";
-                debtor.FilterCategory = debtor.PreviousFilterCategory ?? "Подготовка заявления";
-                debtor.Status = "Восстановлен";
+                debtor.FilterCategory = debtor.PreviousFilterCategory ?? "Сбор документов";
+                debtor.Status = "Сбор документов";
+
+                // Save to database
+                _ = _debtorRepository.UpdateDebtorInfoAsync(
+                    debtor.PersonId.Value,
+                    debtor.Status,
+                    debtor.MainCategory,
+                    debtor.FilterCategory);
 
                 UpdateTabCounts();
                 ApplyFilters();

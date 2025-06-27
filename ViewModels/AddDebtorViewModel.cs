@@ -47,10 +47,10 @@ namespace bankrupt_piterjust.ViewModels
         private decimal _managerFee;
         private decimal _otherExpenses;
 
-        // Status properties - Default values set, no UI selection needed
-        private string _status = "Сбор документов";
-        private string _mainCategory = "Клиенты";
-        private string _filterCategory = "Сбор документов";
+        // Default status values - No UI selection needed as per requirements
+        private readonly string _status = "Сбор документов";
+        private readonly string _mainCategory = "Клиенты";
+        private readonly string _filterCategory = "Сбор документов";
 
         // Результат - новый должник
         public Debtor NewDebtor { get; private set; }
@@ -477,7 +477,7 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
-        // Status properties - Kept as public properties but without UI binding
+        // Status properties - readonly with default values
         public string Status => _status;
         public string MainCategory => _mainCategory;
         public string FilterCategory => _filterCategory;
