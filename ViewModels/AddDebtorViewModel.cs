@@ -583,7 +583,7 @@ namespace bankrupt_piterjust.ViewModels
 
         private void PaymentItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(PaymentSchedule.Amount))
+            if (e.PropertyName == nameof(bankrupt_piterjust.Models.PaymentSchedule.Amount))
             {
                 UpdateScheduleTotal();
             }
