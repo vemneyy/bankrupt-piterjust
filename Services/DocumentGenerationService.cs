@@ -31,7 +31,7 @@ namespace bankrupt_piterjust.Services
 
                 // Get address information
                 var addresses = await debtorRepository.GetAddressesByPersonIdAsync(debtorId);
-                var registrationAddress = addresses.FirstOrDefault(a => a.AddressType == AddressType.Registration);
+                var registrationAddress = addresses.FirstOrDefault();
                 if (registrationAddress == null)
                     throw new Exception("Адрес регистрации должника не найден.");
 

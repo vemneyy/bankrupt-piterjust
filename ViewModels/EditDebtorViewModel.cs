@@ -410,21 +410,12 @@ namespace bankrupt_piterjust.ViewModels
                 }
 
                 var addresses = await _repository.GetAddressesByPersonIdAsync(_personId);
-                foreach (var addr in addresses)
-                {
-                    switch (addr.AddressType)
-                    {
-                        case AddressType.Registration:
-                            CopyAddress(addr, RegistrationAddress);
-                            break;
-                        case AddressType.Residence:
-                            CopyAddress(addr, ResidenceAddress);
-                            break;
-                        case AddressType.Mailing:
-                            CopyAddress(addr, MailingAddress);
-                            break;
-                    }
-                }
+                if (addresses.Count > 0)
+                    CopyAddress(addresses[0], RegistrationAddress);
+                if (addresses.Count > 1)
+                    CopyAddress(addresses[1], ResidenceAddress);
+                if (addresses.Count > 2)
+                    CopyAddress(addresses[2], MailingAddress);
 
                 SameAsRegistration = FormatAddress(ResidenceAddress) == FormatAddress(RegistrationAddress) && !ResidenceAddress.IsEmpty();
                 SameAsResidence = FormatAddress(MailingAddress) == FormatAddress(ResidenceAddress) && !MailingAddress.IsEmpty();
@@ -478,17 +469,17 @@ namespace bankrupt_piterjust.ViewModels
                 var addresses = new List<Address>();
                 if (!RegistrationAddress.IsEmpty())
                 {
-                    RegistrationAddress.AddressType = AddressType.Registration;
+
                     addresses.Add(RegistrationAddress);
                 }
                 if (!SameAsRegistration && !ResidenceAddress.IsEmpty())
                 {
-                    ResidenceAddress.AddressType = AddressType.Residence;
+
                     addresses.Add(ResidenceAddress);
                 }
                 if (!SameAsResidence && !MailingAddress.IsEmpty())
                 {
-                    MailingAddress.AddressType = AddressType.Mailing;
+
                     addresses.Add(MailingAddress);
                 }
 

@@ -190,13 +190,14 @@ namespace bankrupt_piterjust.ViewModels
         }
 
         // Helper properties for addresses
-        public bool HasRegistrationAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Registration) ?? false;
-        public bool HasResidenceAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Residence) ?? false;
-        public bool HasMailingAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Mailing) ?? false;
+        public bool HasRegistrationAddress => SelectedAddresses?.Any() ?? false;
+        public bool HasResidenceAddress => SelectedAddresses?.Count > 1;
+        public bool HasMailingAddress => SelectedAddresses?.Count > 2;
 
-        public string? RegistrationAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Registration) is Address addrR ? FormatAddress(addrR) : null;
-        public string? ResidenceAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Residence) is Address addrRes ? FormatAddress(addrRes) : null;
-        public string? MailingAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Mailing) is Address addrM ? FormatAddress(addrM) : null;
+        public string? RegistrationAddress => SelectedAddresses != null && SelectedAddresses.Count > 0 ? FormatAddress(SelectedAddresses[0]) : null;
+        public string? ResidenceAddress => SelectedAddresses != null && SelectedAddresses.Count > 1 ? FormatAddress(SelectedAddresses[1]) : null;
+        public string? MailingAddress => SelectedAddresses != null && SelectedAddresses.Count > 2 ? FormatAddress(SelectedAddresses[2]) : null;
+
 
         // Loading state
         private bool _isLoading;

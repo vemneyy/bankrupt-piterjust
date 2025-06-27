@@ -433,19 +433,16 @@ namespace bankrupt_piterjust.ViewModels
 
                 if (!RegistrationAddress.IsEmpty())
                 {
-                    RegistrationAddress.AddressType = AddressType.Registration;
                     addresses.Add(RegistrationAddress);
                 }
 
                 if (!SameAsRegistration && !ResidenceAddress.IsEmpty())
                 {
-                    ResidenceAddress.AddressType = AddressType.Residence;
                     addresses.Add(ResidenceAddress);
                 }
 
                 if (!SameAsResidence && !MailingAddress.IsEmpty())
                 {
-                    MailingAddress.AddressType = AddressType.Mailing;
                     addresses.Add(MailingAddress);
                 }
 

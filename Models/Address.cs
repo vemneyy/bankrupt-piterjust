@@ -7,7 +7,6 @@ namespace bankrupt_piterjust.Models
         public int AddressId { get; set; }
         public int PersonId { get; set; }
 
-        public AddressType AddressType { get; set; }
 
         private string? _postalCode;
         public string? PostalCode
