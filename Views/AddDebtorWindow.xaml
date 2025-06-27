@@ -22,7 +22,7 @@
         <vm:AddDebtorViewModel/>
     </Window.DataContext>
 
-    <!-- ===== R E S O U R C E S ===== -->
+    <!-- ===== R E S O U Р C E S ===== -->
     <Window.Resources>
         <!-- ... (ресурсы остаются без изменений) ... -->
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -30,6 +30,10 @@
         <conv:StringEqualsConverter       x:Key="StringEqualsConverter"/>
         <conv:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter"/>
         <conv:BoolToValueConverter        x:Key="BoolToColorConverter"/>
+        <conv:PassportSeriesConverter     x:Key="PassportSeriesConverter"/>
+        <conv:PassportNumberConverter     x:Key="PassportNumberConverter"/>
+        <conv:DivisionCodeConverter       x:Key="DivisionCodeConverter"/>
+        <conv:CurrencyConverter           x:Key="CurrencyConverter"/>
 
         <!-- Styles -->
         <Style x:Key="HeaderTextBlock" TargetType="TextBlock">
@@ -324,11 +328,11 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                     <TextBlock Text="Серия" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding PassportSeries, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding PassportSeries, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource PassportSeriesConverter}}" Style="{StaticResource FormTextBox}" MaxLength="4"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="0,0,15,0">
                                     <TextBlock Text="Номер" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding PassportNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding PassportNumber, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource PassportNumberConverter}}" Style="{StaticResource FormTextBox}" MaxLength="6"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Дата выдачи" Style="{StaticResource FormTextBlock}"/>
@@ -346,7 +350,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="Код подразделения" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding PassportDivisionCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding PassportDivisionCode, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DivisionCodeConverter}}" Style="{StaticResource FormTextBox}" MaxLength="7"/>
                                 </StackPanel>
                             </Grid>
                             <TextBlock Text="Адреса" Style="{StaticResource HeaderTextBlock}"/>
@@ -382,35 +386,10 @@
                                 </StackPanel>
                             </Grid>
                             <TextBlock Text="Финансовые условия" Style="{StaticResource HeaderTextBlock}"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Margin="0,0,15,0">
-                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Language="ru-ru" Text="Общая "/><Run Language="ru-ru" Text="с"/><Run Text="умма договора (руб.)"/></TextBlock>
-                                    <TextBox Text="{Binding TotalCost}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                                <Button Grid.Column="1" Content="Сумма прописью" Command="{Binding CalculateTotalWordsCommand}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" Margin="0,0,0,10" Height="36" Width="150"/>
-                            </Grid>
-
-                            <TextBlock Text="Сумма прописью" Style="{StaticResource FormTextBlock}"/>
-                            <TextBox Text="{Binding TotalCostWords}" Style="{StaticResource FormTextBox}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Padding="10"/>
-
-                            <Grid Margin="0,10,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Margin="0,0,15,0">
-                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Обязательные расходы (руб.)"/></TextBlock>
-                                    <TextBox Text="{Binding MandatoryExpenses}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                                <Button Grid.Column="1" Content="Сумма прописью" Command="{Binding CalculateMandatoryWordsCommand}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" Margin="0,0,0,10" Height="36" Width="150"/>
-                            </Grid>
-
-                            <TextBlock Text="Обязательные расходы прописью" Style="{StaticResource FormTextBlock}"/>
-                            <TextBox Text="{Binding MandatoryExpensesWords}" Style="{StaticResource FormTextBox}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Padding="10"/>
+                            <StackPanel Margin="0,0,15,0">
+                                <TextBlock Style="{StaticResource FormTextBlock}"><Run Language="ru-ru" Text="Общая "/><Run Language="ru-ru" Text="с"/><Run Text="умма договора (руб.)"/></TextBlock>
+                                <TextBox Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                            </StackPanel>
 
                             <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>
@@ -419,26 +398,26 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Сумма "/><Run Language="ru-ru" Text="юридических "/><Run Text="услуг (руб.)"/></TextBlock>
-                                    <TextBox Text="{Binding ServicesAmount}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
+                                    <TextBox Text="{Binding ServicesAmount, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Общая сумма "/><Run Language="ru-ru" Text="расходов "/><Run Text="(руб.)"/></TextBlock>
-                                    <TextBox Text="{Binding ExpensesAmount}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
+                                    <TextBox Text="{Binding ExpensesAmount, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
                                 </StackPanel>
                             </Grid>
 
-                            <Grid Margin="10,10,0,0">
+                            <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="395*"/>
-                                    <ColumnDefinition Width="398*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Margin="-12,0,27,0">
-                                    <TextBlock Text="Вознаграждение фин. управляющего (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding ManagerFee}" Style="{StaticResource FormTextBox}"/>
+                                <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Вознаграждение фин. управляющего (руб.)"/></TextBlock>
+                                    <TextBox Text="{Binding ManagerFee, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
-                                <StackPanel Grid.ColumnSpan="2" Margin="390,0,0,0">
-                                    <TextBlock Text="Прочие расходы (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding OtherExpenses}" Style="{StaticResource FormTextBox}"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Прочие расходы (руб.)"/></TextBlock>
+                                    <TextBox Text="{Binding OtherExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                             </Grid>
 
@@ -451,22 +430,22 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                                     <TextBlock Text="Этап 1 (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding Stage1Amount}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding Stage1Amount, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="0,0,10,0">
                                     <TextBlock Text="Этап 2 (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding Stage2Amount}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding Stage2Amount, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Этап 3 (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding Stage3Amount}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding Stage3Amount, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                             </Grid>
 
                             <StackPanel Orientation="Horizontal" Margin="0,20,0,5">
-                                <TextBlock Text="Количество месяцев:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <TextBox Width="50" Text="{Binding ScheduleMonths}" Style="{StaticResource FormTextBox}"/>
-                                <Button Content="Сгенерировать" Command="{Binding GenerateScheduleCommand}" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}"/>
+                                <TextBlock Text="Количество месяцев:" VerticalAlignment="Center" Margin="0,0,10,0" Height="28"/>
+                                <TextBox Width="50" Text="{Binding ScheduleMonths}" Style="{StaticResource FormTextBox}" Height="34"/>
+                                <Button Content="Сгенерировать" Command="{Binding GenerateScheduleCommand}" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}" Height="31"/>
                             </StackPanel>
                             <TextBlock Text="График платежей" Style="{StaticResource HeaderTextBlock}" Margin="0,10,0,5"/>
                             <DataGrid ItemsSource="{Binding PaymentSchedule}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" Margin="0,0,0,10">

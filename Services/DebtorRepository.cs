@@ -543,6 +543,8 @@ namespace bankrupt_piterjust.Services
                 {"@pid", personId}
             };
             await _databaseService.ExecuteNonQueryAsync(sql, p);
+        }
+
         public async Task UpsertPassportAsync(Passport passport)
         {
             var existing = await GetPassportByPersonIdAsync(passport.PersonId);

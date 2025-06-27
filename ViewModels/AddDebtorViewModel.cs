@@ -41,9 +41,7 @@ namespace bankrupt_piterjust.ViewModels
         private string _contractCity = "Санкт-Петербург";
         private DateTime _contractDate = DateTime.Now;
         private decimal _totalCost;
-        private string _totalCostWords = string.Empty;
         private decimal _mandatoryExpenses;
-        private string _mandatoryExpensesWords = string.Empty;
         private decimal _managerFee;
         private decimal _otherExpenses;
         private decimal _servicesAmount;
@@ -64,8 +62,7 @@ namespace bankrupt_piterjust.ViewModels
         // Commands
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
-        public ICommand CalculateTotalWordsCommand { get; }
-        public ICommand CalculateMandatoryWordsCommand { get; }
+        public ICommand GenerateScheduleCommand { get; }
 
         public bool IsBusy
         {
@@ -228,73 +225,95 @@ namespace bankrupt_piterjust.ViewModels
         public decimal TotalCost
         {
             get => _totalCost;
-            set { _totalCost = value; OnPropertyChanged(nameof(TotalCost)); UpdateContractSums(); }
-        }
-
-        public string TotalCostWords
-        {
-            get => _totalCostWords;
-            set { _totalCostWords = value; OnPropertyChanged(nameof(TotalCostWords)); }
+            set { 
+                _totalCost = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(TotalCost)); 
+                UpdateContractSums(); 
+            }
         }
 
         public decimal MandatoryExpenses
         {
             get => _mandatoryExpenses;
-            set { _mandatoryExpenses = value; OnPropertyChanged(nameof(MandatoryExpenses)); UpdateContractSums(); }
-        }
-
-        public string MandatoryExpensesWords
-        {
-            get => _mandatoryExpensesWords;
-            set { _mandatoryExpensesWords = value; OnPropertyChanged(nameof(MandatoryExpensesWords)); }
+            set { 
+                _mandatoryExpenses = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(MandatoryExpenses)); 
+                UpdateContractSums(); 
+            }
         }
 
         public decimal ManagerFee
         {
             get => _managerFee;
-            set { _managerFee = value; OnPropertyChanged(nameof(ManagerFee)); UpdateContractSums(); }
+            set { 
+                _managerFee = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(ManagerFee)); 
+                UpdateContractSums(); 
+            }
         }
 
         public decimal OtherExpenses
         {
             get => _otherExpenses;
-            set { _otherExpenses = value; OnPropertyChanged(nameof(OtherExpenses)); UpdateContractSums(); }
+            set { 
+                _otherExpenses = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(OtherExpenses)); 
+                UpdateContractSums(); 
+            }
         }
 
         public decimal ServicesAmount
         {
             get => _servicesAmount;
-            set { _servicesAmount = value; OnPropertyChanged(nameof(ServicesAmount)); }
+            set { 
+                _servicesAmount = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(ServicesAmount)); 
+            }
         }
 
         public decimal ExpensesAmount
         {
             get => _expensesAmount;
-            set { _expensesAmount = value; OnPropertyChanged(nameof(ExpensesAmount)); }
+            set { 
+                _expensesAmount = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(ExpensesAmount)); 
+            }
         }
 
         public decimal Stage1Amount
         {
             get => _stage1Amount;
-            set { _stage1Amount = value; OnPropertyChanged(nameof(Stage1Amount)); }
+            set { 
+                _stage1Amount = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(Stage1Amount)); 
+            }
         }
 
         public decimal Stage2Amount
         {
             get => _stage2Amount;
-            set { _stage2Amount = value; OnPropertyChanged(nameof(Stage2Amount)); }
+            set { 
+                _stage2Amount = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(Stage2Amount)); 
+            }
         }
 
         public decimal Stage3Amount
         {
             get => _stage3Amount;
-            set { _stage3Amount = value; OnPropertyChanged(nameof(Stage3Amount)); }
+            set { 
+                _stage3Amount = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(Stage3Amount)); 
+            }
         }
 
         public decimal ScheduleTotal
         {
             get => _scheduleTotal;
-            set { _scheduleTotal = value; OnPropertyChanged(nameof(ScheduleTotal)); }
+            set { 
+                _scheduleTotal = Math.Round(value, 2); 
+                OnPropertyChanged(nameof(ScheduleTotal)); 
+            }
         }
 
         // Payment schedule properties
@@ -332,8 +351,6 @@ namespace bankrupt_piterjust.ViewModels
                 UpdateScheduleTotal();
             }
         }
-
-        public ICommand GenerateScheduleCommand { get; }
         #endregion
 
         public AddDebtorViewModel()
@@ -357,8 +374,6 @@ namespace bankrupt_piterjust.ViewModels
                     window.DialogResult = false;
                 }
             });
-            CalculateTotalWordsCommand = new RelayCommand(o => TotalCostWords = NumberToWordsConverter.ConvertToWords(TotalCost));
-            CalculateMandatoryWordsCommand = new RelayCommand(o => MandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(MandatoryExpenses));
             GenerateScheduleCommand = new RelayCommand(o => GenerateSchedule());
 
             PaymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
@@ -457,9 +472,7 @@ namespace bankrupt_piterjust.ViewModels
                         DebtorId = debtorId,
                         EmployeeId = employeeId,
                         TotalCost = TotalCost,
-                        TotalCostWords = TotalCostWords,
                         MandatoryExpenses = MandatoryExpenses,
-                        MandatoryExpensesWords = MandatoryExpensesWords,
                         ManagerFee = ManagerFee,
                         OtherExpenses = OtherExpenses,
                         Stage1Cost = Stage1Amount,
@@ -480,7 +493,6 @@ namespace bankrupt_piterjust.ViewModels
                                 Stage = payment.Stage,
                                 Description = payment.Description,
                                 Amount = payment.Amount,
-                                AmountWords = payment.AmountWords,
                                 DueDate = payment.DueDate
                             };
 
