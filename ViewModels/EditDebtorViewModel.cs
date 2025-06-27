@@ -547,7 +547,7 @@ namespace bankrupt_piterjust.ViewModels
 
         private void UpdateContractSums()
         {
-            ExpensesAmount = MandatoryExpenses + ManagerFee + OtherExpenses;
+            ExpensesAmount = ManagerFee + OtherExpenses;
             ServicesAmount = TotalCost - ExpensesAmount;
         }
 

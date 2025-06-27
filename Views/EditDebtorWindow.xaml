@@ -422,12 +422,12 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
-                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Обязательные расходы (руб.)"/></TextBlock>
-                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding MandatoryExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Сумма "/><Run Language="ru-ru" Text="юридических "/><Run Text="услуг (руб.)"/></TextBlock>
+                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding ServicesAmount, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Вознаграждение фин. управляющего (руб.)"/></TextBlock>
-                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding ManagerFee, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Обязательные расходы (руб.)"/></TextBlock>
+                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding MandatoryExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                             </Grid>
 
@@ -437,19 +437,14 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Вознаграждение фин. управляющего (руб.)"/></TextBlock>
+                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding ManagerFee, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Прочие расходы (руб.)"/></TextBlock>
                                     <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding OtherExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Сумма "/><Run Language="ru-ru" Text="юридических "/><Run Text="услуг (руб.)"/></TextBlock>
-                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding ServicesAmount, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
-                                </StackPanel>
                             </Grid>
-
-                            <StackPanel Margin="0,10,0,0">
-                                <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Общая сумма "/><Run Language="ru-ru" Text="расходов "/><Run Text="(руб.)"/></TextBlock>
-                                <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding ExpensesAmount, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
-                            </StackPanel>
 
                             <TextBlock Text="Разбивка по этапам" Style="{StaticResource HeaderTextBlock}" Margin="0,20,0,10"/>
                             <Grid>
@@ -535,9 +530,9 @@
 
         <!-- Busy indicator -->
         <!-- ИСПРАВЛЕНО: Grid.RowSpan="3" для корректного перекрытия всех элементов. -->
-        <Grid Grid.RowSpan="3"
+        <Grid Grid.RowSpan="2"
               Background="#80000000"
-              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,-4">
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="940,141,-940,-195" Grid.Row="1">
             <StackPanel VerticalAlignment="Center"
                         HorizontalAlignment="Center">
                 <TextBlock Text="Сохранение данных..."
