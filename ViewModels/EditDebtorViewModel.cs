@@ -287,7 +287,8 @@ namespace bankrupt_piterjust.ViewModels
         {
             get => _stage1Amount;
 
-            set {
+            set
+            {
                 var newValue = Math.Round(value, 2);
                 if (newValue + Stage2Amount + Stage3Amount > ServicesAmount)
                 {
@@ -303,7 +304,8 @@ namespace bankrupt_piterjust.ViewModels
         {
             get => _stage2Amount;
 
-            set {
+            set
+            {
                 var newValue = Math.Round(value, 2);
                 if (Stage1Amount + newValue + Stage3Amount > ServicesAmount)
                 {
@@ -320,7 +322,8 @@ namespace bankrupt_piterjust.ViewModels
         {
             get => _stage3Amount;
 
-            set {
+            set
+            {
                 var newValue = Math.Round(value, 2);
                 if (Stage1Amount + Stage2Amount + newValue > ServicesAmount)
                 {
