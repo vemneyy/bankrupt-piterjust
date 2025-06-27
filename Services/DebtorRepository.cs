@@ -408,7 +408,6 @@ namespace bankrupt_piterjust.Services
                     PostalCode = row["postal_code"] != DBNull.Value ? row["postal_code"].ToString() : null,
                     Country = row["country"].ToString() ?? "Россия",
                     Region = row["region"] != DBNull.Value ? row["region"].ToString() : null,
-                    District = row["district"] != DBNull.Value ? row["district"].ToString() : null,
                     City = row["city"] != DBNull.Value ? row["city"].ToString() : null,
                     Locality = row["locality"] != DBNull.Value ? row["locality"].ToString() : null,
                     Street = row["street"] != DBNull.Value ? row["street"].ToString() : null,

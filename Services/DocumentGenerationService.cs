@@ -237,18 +237,15 @@ namespace bankrupt_piterjust.Services
                         int lengthDifference = searchText.Length - replaceText.Length;
                         if (lengthDifference > 0)
                         {
-                            // Search text is longer than replace text
                             replacementsInThisElement = (originalText.Length - newText.Length) / lengthDifference;
                         }
                         else
                         {
-                            // Replace text is longer than search text
                             replacementsInThisElement = (newText.Length - originalText.Length) / Math.Abs(lengthDifference);
                         }
                     }
                     else
                     {
-                        // If lengths are equal, count occurrences manually
                         int searchIndex = 0;
                         while ((searchIndex = originalText.IndexOf(searchText, searchIndex)) != -1)
                         {
@@ -262,28 +259,20 @@ namespace bankrupt_piterjust.Services
                 }
             }
 
-            // Handle tags that might be split across multiple runs
             totalReplacements += HandleSplitTags(element, searchText, replaceText);
 
             return totalReplacements;
         }
 
-        /// <summary>
-        /// Handles tags that might be split across multiple runs in the document
-        /// </summary>
-        /// <returns>The number of split tags that were replaced</returns>
         private int HandleSplitTags<T>(T element, string searchText, string replaceText) where T : OpenXmlElement
         {
             int totalReplacements = 0;
 
-            // Process each paragraph
             foreach (var paragraph in element.Descendants<Paragraph>())
             {
-                // Get all text runs in the paragraph
                 var runs = paragraph.Descendants<Run>().ToList();
-                if (runs.Count < 2) continue; // Need at least 2 runs for a split tag
+                if (runs.Count < 2) continue; 
 
-                // Build a string with all text content to check if our tag exists across multiple runs
                 var paragraphText = new StringBuilder();
                 foreach (var run in runs)
                 {
@@ -293,23 +282,19 @@ namespace bankrupt_piterjust.Services
                     }
                 }
 
-                // Check if the tag exists in the combined text
                 string fullText = paragraphText.ToString();
                 int tagIndex = 0;
 
-                // Loop through all occurrences of the tag in the paragraph
+
                 while ((tagIndex = fullText.IndexOf(searchText, tagIndex)) != -1)
                 {
                     int tagStartIndex = tagIndex;
                     int tagEndIndex = tagStartIndex + searchText.Length - 1;
 
-                    // Track our position in the paragraph text
                     int currentPosition = 0;
 
-                    // A list to store runs that contain the tag or parts of it
                     var runsToModify = new List<RunInfo>();
 
-                    // Identify runs that contain parts of the tag
                     foreach (var run in runs)
                     {
                         foreach (var text in run.Descendants<Text>())
