@@ -27,19 +27,19 @@ namespace bankrupt_piterjust.Services
 
                 string sql = @"
                     SELECT 
-    e.employee_id, 
-    p.last_name, 
-    p.first_name, 
-    p.middle_name, 
-    e.position, 
-    e.login,
-    e.created_date, 
-    e.is_active,
-    (e.password_hash = crypt(@password, e.password_hash)) AS password_matches
-FROM employee e
-JOIN person p ON e.person_id = p.person_id
-WHERE e.login = @login AND e.is_active = true;
-";
+                    e.employee_id, 
+                    p.last_name, 
+                    p.first_name, 
+                    p.middle_name, 
+                    e.position, 
+                    e.login,
+                    e.created_date, 
+                    e.is_active,
+                    (e.password_hash = crypt(@password, e.password_hash)) AS password_matches
+                    FROM employee e
+                    JOIN person p ON e.person_id = p.person_id
+                    WHERE e.login = @login AND e.is_active = true;
+                ";
 
                 var parameters = new Dictionary<string, object>
                 {
