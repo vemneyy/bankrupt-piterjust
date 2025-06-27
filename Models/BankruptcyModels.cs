@@ -82,6 +82,9 @@ namespace bankrupt_piterjust.Models
         public string? MandatoryExpensesWords { get; set; }
         public decimal ManagerFee { get; set; }
         public decimal OtherExpenses { get; set; }
+        public decimal Stage1Cost { get; set; }
+        public decimal Stage2Cost { get; set; }
+        public decimal Stage3Cost { get; set; }
 
         // Navigation properties
         public Employee? Employee { get; set; }

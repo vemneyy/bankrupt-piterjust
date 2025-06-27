@@ -71,18 +71,24 @@ namespace bankrupt_piterjust.Services
                 // Create a copy of the template
                 File.Copy(templatePath, outputPath, true);
 
-                // Generate contract number based on person ID and current date
-                string contractNumber = $"БФЛ-{debtorId}-{DateTime.Now:ddMMyy}";
+                var repo = new FullDatabaseRepository();
+                var contractInfo = await repo.GetLatestContractByDebtorIdAsync(debtorId);
+                if (contractInfo == null)
+                    throw new Exception("Договор для должника не найден.");
 
-                // Set contract cost and convert to words
-                decimal contractTotalCost = 100000m;
-                decimal mandatoryExpenses = 25000m;
-                decimal managerFee = 25000m;
-                decimal otherExpenses = 50000m;
+                string contractNumber = $"{contractInfo.ContractNumber}-БФЛ{DateTime.Now:yy}";
 
-                // Use NumberToWordsConverter for Russian words
-                string contractTotalCostWords = NumberToWordsConverter.ConvertToWords(contractTotalCost);
-                string mandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(mandatoryExpenses);
+                decimal contractTotalCost = contractInfo.TotalCost;
+                decimal mandatoryExpenses = contractInfo.MandatoryExpenses;
+                decimal managerFee = contractInfo.ManagerFee;
+                decimal otherExpenses = contractInfo.OtherExpenses;
+
+                string contractTotalCostWords = !string.IsNullOrWhiteSpace(contractInfo.TotalCostWords)
+                    ? contractInfo.TotalCostWords!
+                    : NumberToWordsConverter.ConvertToWords(contractTotalCost);
+                string mandatoryExpensesWords = !string.IsNullOrWhiteSpace(contractInfo.MandatoryExpensesWords)
+                    ? contractInfo.MandatoryExpensesWords!
+                    : NumberToWordsConverter.ConvertToWords(mandatoryExpenses);
 
                 // Representative information
                 string representativeName = representative.FullName;
@@ -93,8 +99,8 @@ namespace bankrupt_piterjust.Services
                 var replacements = new Dictionary<string, string>
                 {
                     { "<номер_договора>", contractNumber },
-                    { "<город_составления>", "Санкт-Петербург" },
-                    { "<дата_составления>", DateTime.Now.ToString("dd.MM.yyyy") },
+                    { "<город_составления>", contractInfo.City },
+                    { "<дата_составления>", contractInfo.ContractDate.ToString("dd.MM.yyyy") },
                     { "<фио_заказчика>", person.FullName },
                     { "<серия_паспорта>", passport.Series },
                     { "<номер_паспорта>", passport.Number },
@@ -111,6 +117,12 @@ namespace bankrupt_piterjust.Services
                     { "<сумма_обязательных_расходов_прописью>", mandatoryExpensesWords },
                     { "<размер_вознаграждения_фин_управляющего>", managerFee.ToString("#,##0.00") },
                     { "<прочие_расходы_банкротства>", otherExpenses.ToString("#,##0.00") },
+                    { "<стоимость_первого_этапа>", contractInfo.Stage1Cost.ToString("#,##0.00") },
+                    { "<стоимость_первого_этапа_прописью>", NumberToWordsConverter.ConvertToWords(contractInfo.Stage1Cost) },
+                    { "<стоимость_второго_этапа>", contractInfo.Stage2Cost.ToString("#,##0.00") },
+                    { "<стоимость_второго_этапа_прописью>", NumberToWordsConverter.ConvertToWords(contractInfo.Stage2Cost) },
+                    { "<стоимость_третьего_этапа>", contractInfo.Stage3Cost.ToString("#,##0.00") },
+                    { "<стоимость_третьего_этапа_прописью>", NumberToWordsConverter.ConvertToWords(contractInfo.Stage3Cost) },
                     { "<номер_телефона_заказчика>", person.Phone ?? "-" }, // Use null-coalescing operator to provide a default value
                     { "<электронный_адрес_заказчика>", person.Email ?? "-" } // Use null-coalescing operator to provide a default value
                 };
