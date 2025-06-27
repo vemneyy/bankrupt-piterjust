@@ -2,13 +2,45 @@ using System.Text;
 
 namespace bankrupt_piterjust.Helpers
 {
+    /// <summary>
+    /// Класс для преобразования чисел в текстовое представление на русском языке,
+    /// включая корректное склонение слов «рубль», «копейка», «тысяча», «миллион».
+    /// </summary>
     public static class NumberToWordsConverter
     {
-        private static readonly string[] units = new string[] { "", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять", "десять", "одиннадцать", "двенадцать", "тринадцать", "четырнадцать", "пятнадцать", "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать" };
-        private static readonly string[] tens = new string[] { "", "", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто" };
-        private static readonly string[] hundreds = new string[] { "", "сто", "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот" };
-        private static readonly string[] unitsForThousands = new string[] { "", "одна", "две", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять" };
+        // Единицы и числа до 19 включительно
+        private static readonly string[] units = new string[] {
+            "", "один", "два", "три", "четыре", "пять",
+            "шесть", "семь", "восемь", "девять", "десять",
+            "одиннадцать", "двенадцать", "тринадцать", "четырнадцать",
+            "пятнадцать", "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать"
+        };
 
+        // Десятки
+        private static readonly string[] tens = new string[] {
+            "", "", "двадцать", "тридцать", "сорок",
+            "пятьдесят", "шестьдесят", "семьдесят",
+            "восемьдесят", "девяносто"
+        };
+
+        // Сотни
+        private static readonly string[] hundreds = new string[] {
+            "", "сто", "двести", "триста", "четыреста",
+            "пятьсот", "шестьсот", "семьсот",
+            "восемьсот", "девятьсот"
+        };
+
+        // Единицы женского рода для тысяч
+        private static readonly string[] unitsForThousands = new string[] {
+            "", "одна", "две", "три", "четыре",
+            "пять", "шесть", "семь", "восемь", "девять"
+        };
+
+        /// <summary>
+        /// Преобразует десятичное число в текстовую строку с рублями и копейками.
+        /// </summary>
+        /// <param name="number">Число с двумя десятичными знаками (рубли.копейки)</param>
+        /// <returns>Строка, представляющая число словами, с правильными падежами</returns>
         public static string ConvertToWords(decimal number)
         {
             number = Math.Round(number, 2);
@@ -19,10 +51,8 @@ namespace bankrupt_piterjust.Helpers
             var result = new StringBuilder();
 
             result.Append(ConvertNumberToWords(rubles));
-
             result.Append(" ");
             result.Append(GetRubleForm(rubles));
-
             result.Append(" ");
             if (kopecks < 10)
                 result.Append("0");
@@ -31,13 +61,15 @@ namespace bankrupt_piterjust.Helpers
             result.Append(GetKopeckForm(kopecks));
 
             if (result.Length > 0)
-            {
                 result[0] = char.ToUpper(result[0]);
-            }
 
             return result.ToString();
         }
 
+        /// <summary>
+        /// Преобразует целое число в текстовое представление.
+        /// Обрабатывает миллионы, тысячи и остаток.
+        /// </summary>
         private static string ConvertNumberToWords(int number)
         {
             if (number == 0)
@@ -45,36 +77,37 @@ namespace bankrupt_piterjust.Helpers
 
             var words = new StringBuilder();
 
-            if (number >= 1000000)
+            if (number >= 1_000_000)
             {
-                int millions = number / 1000000;
+                int millions = number / 1_000_000;
                 words.Append(ConvertLessThanThousand(millions));
                 words.Append(" ");
                 words.Append(GetMillionForm(millions));
-                number %= 1000000;
+                number %= 1_000_000;
                 if (number > 0)
                     words.Append(" ");
             }
 
-            if (number >= 1000)
+            if (number >= 1_000)
             {
-                int thousands = number / 1000;
+                int thousands = number / 1_000;
                 words.Append(ConvertLessThanThousandForThousands(thousands));
                 words.Append(" ");
                 words.Append(GetThousandForm(thousands));
-                number %= 1000;
+                number %= 1_000;
                 if (number > 0)
                     words.Append(" ");
             }
 
             if (number > 0)
-            {
                 words.Append(ConvertLessThanThousand(number));
-            }
 
             return words.ToString();
         }
 
+        /// <summary>
+        /// Преобразует число от 0 до 999 в слова (мужской род).
+        /// </summary>
         private static string ConvertLessThanThousand(int number)
         {
             var words = new StringBuilder();
@@ -108,6 +141,9 @@ namespace bankrupt_piterjust.Helpers
             return words.ToString();
         }
 
+        /// <summary>
+        /// Преобразует число от 0 до 999 в слова (для тысяч, женский род).
+        /// </summary>
         private static string ConvertLessThanThousandForThousands(int number)
         {
             var words = new StringBuilder();
@@ -147,6 +183,9 @@ namespace bankrupt_piterjust.Helpers
             return words.ToString();
         }
 
+        /// <summary>
+        /// Возвращает нужную форму слова «рубль» в зависимости от количества.
+        /// </summary>
         private static string GetRubleForm(int number)
         {
             number = Math.Abs(number);
@@ -156,15 +195,17 @@ namespace bankrupt_piterjust.Helpers
             if (lastTwoDigits >= 11 && lastTwoDigits <= 19)
                 return "рублей";
 
-            if (lastDigit == 1)
-                return "рубль";
-
-            if (lastDigit >= 2 && lastDigit <= 4)
-                return "рубля";
-
-            return "рублей";
+            return lastDigit switch
+            {
+                1 => "рубль",
+                >= 2 and <= 4 => "рубля",
+                _ => "рублей"
+            };
         }
 
+        /// <summary>
+        /// Возвращает нужную форму слова «копейка» в зависимости от количества.
+        /// </summary>
         private static string GetKopeckForm(int number)
         {
             number = Math.Abs(number);
@@ -174,15 +215,17 @@ namespace bankrupt_piterjust.Helpers
             if (lastTwoDigits >= 11 && lastTwoDigits <= 19)
                 return "копеек";
 
-            if (lastDigit == 1)
-                return "копейка";
-
-            if (lastDigit >= 2 && lastDigit <= 4)
-                return "копейки";
-
-            return "копеек";
+            return lastDigit switch
+            {
+                1 => "копейка",
+                >= 2 and <= 4 => "копейки",
+                _ => "копеек"
+            };
         }
 
+        /// <summary>
+        /// Возвращает нужную форму слова «тысяча» в зависимости от количества.
+        /// </summary>
         private static string GetThousandForm(int number)
         {
             number = Math.Abs(number);
@@ -192,15 +235,17 @@ namespace bankrupt_piterjust.Helpers
             if (lastTwoDigits >= 11 && lastTwoDigits <= 19)
                 return "тысяч";
 
-            if (lastDigit == 1)
-                return "тысяча";
-
-            if (lastDigit >= 2 && lastDigit <= 4)
-                return "тысячи";
-
-            return "тысяч";
+            return lastDigit switch
+            {
+                1 => "тысяча",
+                >= 2 and <= 4 => "тысячи",
+                _ => "тысяч"
+            };
         }
 
+        /// <summary>
+        /// Возвращает нужную форму слова «миллион» в зависимости от количества.
+        /// </summary>
         private static string GetMillionForm(int number)
         {
             number = Math.Abs(number);
@@ -210,13 +255,12 @@ namespace bankrupt_piterjust.Helpers
             if (lastTwoDigits >= 11 && lastTwoDigits <= 19)
                 return "миллионов";
 
-            if (lastDigit == 1)
-                return "миллион";
-
-            if (lastDigit >= 2 && lastDigit <= 4)
-                return "миллиона";
-
-            return "миллионов";
+            return lastDigit switch
+            {
+                1 => "миллион",
+                >= 2 and <= 4 => "миллиона",
+                _ => "миллионов"
+            };
         }
     }
 }

@@ -5,8 +5,14 @@ using System.Windows.Data;
 
 namespace bankrupt_piterjust.Converters
 {
+    /// <summary>
+    /// Конвертер: если строка значения равна параметру — показать элемент, иначе скрыть.
+    /// </summary>
     public class StringEqualsToVisibilityConverter : IValueConverter
     {
+        /// <summary>
+        /// Возвращает Visible, если value == parameter, иначе Collapsed.
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null || parameter == null)
@@ -15,14 +21,23 @@ namespace bankrupt_piterjust.Converters
             return value.ToString() == parameter.ToString() ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        /// <summary>
+        /// Обратное преобразование не реализовано.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
     }
 
+    /// <summary>
+    /// Конвертер: если строка значения НЕ равна параметру — показать элемент, иначе скрыть.
+    /// </summary>
     public class StringNotEqualsToVisibilityConverter : IValueConverter
     {
+        /// <summary>
+        /// Возвращает Visible, если value != parameter, иначе Collapsed.
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null || parameter == null)
@@ -31,14 +46,23 @@ namespace bankrupt_piterjust.Converters
             return value.ToString() != parameter.ToString() ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        /// <summary>
+        /// Обратное преобразование не реализовано.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
     }
 
+    /// <summary>
+    /// Конвертер: строковое сравнение -> булево значение.
+    /// </summary>
     public class StringEqualsConverter : IValueConverter
     {
+        /// <summary>
+        /// Возвращает true, если строки совпадают.
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null || parameter == null)
@@ -47,6 +71,9 @@ namespace bankrupt_piterjust.Converters
             return value.ToString() == parameter.ToString();
         }
 
+        /// <summary>
+        /// Возвращает параметр, если входной value = true.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool boolValue && boolValue && parameter != null)
@@ -55,8 +82,15 @@ namespace bankrupt_piterjust.Converters
             return null!;
         }
     }
+
+    /// <summary>
+    /// Конвертер: bool -> Visibility. true = Visible, false = Collapsed.
+    /// </summary>
     public class BooleanToVisibilityConverter : IValueConverter
     {
+        /// <summary>
+        /// Преобразует логическое значение в Visibility.
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool boolValue)
@@ -65,14 +99,23 @@ namespace bankrupt_piterjust.Converters
             return Visibility.Collapsed;
         }
 
+        /// <summary>
+        /// Преобразует Visibility обратно в логическое значение.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             return value is Visibility visibility && visibility == Visibility.Visible;
         }
     }
 
+    /// <summary>
+    /// Конвертер: инвертирует значение типа bool.
+    /// </summary>
     public class BooleanToInverseConverter : IValueConverter
     {
+        /// <summary>
+        /// Инвертирует логическое значение.
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool boolValue)
@@ -81,6 +124,9 @@ namespace bankrupt_piterjust.Converters
             return true;
         }
 
+        /// <summary>
+        /// Инвертирует логическое значение обратно.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool boolValue)
@@ -90,8 +136,14 @@ namespace bankrupt_piterjust.Converters
         }
     }
 
+    /// <summary>
+    /// Конвертер: bool -> строка из параметра "TrueValue|FalseValue".
+    /// </summary>
     public class BoolToValueConverter : IValueConverter
     {
+        /// <summary>
+        /// Преобразует bool в одну из двух строк, заданных через параметр "x|y".
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool boolValue && parameter is string paramString)
@@ -106,6 +158,9 @@ namespace bankrupt_piterjust.Converters
             return value;
         }
 
+        /// <summary>
+        /// Обратное преобразование не реализовано.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
@@ -113,92 +168,88 @@ namespace bankrupt_piterjust.Converters
     }
 
     /// <summary>
-    /// Конвертер для форматирования серии паспорта (4 цифры)
+    /// Конвертер: принимает серию паспорта (должно быть только 4 цифры). Убирает лишние символы, ограничивает длину.
     /// </summary>
     public class PassportSeriesConverter : IValueConverter
     {
+        /// <summary>
+        /// Возвращает строковое представление значения.
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             return value?.ToString() ?? string.Empty;
         }
 
+        /// <summary>
+        /// Очищает строку от нецифровых символов, ограничивает длину до 4 цифр.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null) return string.Empty;
-
-            string input = value.ToString() ?? string.Empty;
-            // Оставляем только цифры
+            string input = value?.ToString() ?? string.Empty;
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
-            // Ограничиваем до 4 символов
-            return digitsOnly.Length > 4 ? digitsOnly.Substring(0, 4) : digitsOnly;
+            return digitsOnly.Length > 4 ? digitsOnly[..4] : digitsOnly;
         }
     }
-
     /// <summary>
-    /// Конвертер для форматирования номера паспорта (6 цифр)
+    /// Конвертер: принимает номер паспорта (6 цифр).
     /// </summary>
     public class PassportNumberConverter : IValueConverter
     {
+        /// <summary>
+        /// Возвращает строковое представление значения.
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             return value?.ToString() ?? string.Empty;
         }
 
+        /// <summary>
+        /// Очищает строку от нецифровых символов, ограничивает длину до 6 цифр.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null) return string.Empty;
-
-            string input = value.ToString() ?? string.Empty;
-            // Оставляем только цифры
+            string input = value?.ToString() ?? string.Empty;
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
-            // Ограничиваем до 6 символов
-            return digitsOnly.Length > 6 ? digitsOnly.Substring(0, 6) : digitsOnly;
+            return digitsOnly.Length > 6 ? digitsOnly[..6] : digitsOnly;
         }
     }
 
     /// <summary>
-    /// Конвертер для форматирования кода подразделения (XXX-XXX)
+    /// Конвертер: форматирует код подразделения МВД в формате XXX-XXX.
     /// </summary>
     public class DivisionCodeConverter : IValueConverter
     {
+        /// <summary>
+        /// Преобразует строку из цифр в формат "XXX-XXX".
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null) return string.Empty;
-
-            string input = value.ToString() ?? string.Empty;
-            // Убираем все кроме цифр
+            string input = value?.ToString() ?? string.Empty;
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
 
-            if (digitsOnly.Length == 0) return string.Empty;
-            if (digitsOnly.Length <= 3) return digitsOnly;
-            if (digitsOnly.Length <= 6) return $"{digitsOnly.Substring(0, 3)}-{digitsOnly.Substring(3)}";
-
-            // Если больше 6 цифр, обрезаем
-            return $"{digitsOnly.Substring(0, 3)}-{digitsOnly.Substring(3, 3)}";
+            return digitsOnly.Length switch
+            {
+                <= 3 => digitsOnly,
+                <= 6 => $"{digitsOnly[..3]}-{digitsOnly[3..]}",
+                _ => $"{digitsOnly[..3]}-{digitsOnly.Substring(3, 3)}"
+            };
         }
 
+        /// <summary>
+        /// Очищает строку от символов и форматирует в виде "XXX-XXX", не более 6 цифр.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null) return string.Empty;
-
-            string input = value.ToString() ?? string.Empty;
-            // Убираем все кроме цифр
+            string input = value?.ToString() ?? string.Empty;
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
+            digitsOnly = digitsOnly.Length > 6 ? digitsOnly[..6] : digitsOnly;
 
-            // Ограничиваем до 6 цифр
-            if (digitsOnly.Length > 6)
-                digitsOnly = digitsOnly.Substring(0, 6);
-
-            // Форматируем с тире если есть более 3 цифр
-            if (digitsOnly.Length > 3)
-                return $"{digitsOnly.Substring(0, 3)}-{digitsOnly.Substring(3)}";
-
-            return digitsOnly;
+            return digitsOnly.Length > 3 ? $"{digitsOnly[..3]}-{digitsOnly[3..]}" : digitsOnly;
         }
     }
 
     /// <summary>
-    /// Конвертер для форматирования денежных сумм с двумя знаками после запятой
+    /// Конвертер: форматирует денежную сумму с разделителями групп и двумя знаками после запятой.
     /// </summary>
     public class CurrencyConverter : IValueConverter
     {
@@ -207,193 +258,116 @@ namespace bankrupt_piterjust.Converters
             NumberFormat = { NumberGroupSeparator = "'", NumberDecimalSeparator = "." }
         };
 
+        /// <summary>
+        /// Преобразует decimal или строку в строку с форматированием "#,##0.00".
+        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is decimal decimalValue)
-                return decimalValue.ToString("N2", _culture);
-
-            if (decimal.TryParse(value?.ToString()?.Replace("'", string.Empty), NumberStyles.Any, _culture, out decimal parsedValue))
-                return parsedValue.ToString("N2", _culture);
+            if (value is decimal d) return d.ToString("N2", _culture);
+            if (decimal.TryParse(value?.ToString()?.Replace("'", ""), NumberStyles.Any, _culture, out decimal parsed))
+                return parsed.ToString("N2", _culture);
 
             return 0m.ToString("N2", _culture);
         }
 
+        /// <summary>
+        /// Удаляет разделители и преобразует строку обратно в decimal с округлением до двух знаков.
+        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null) return 0m;
-
-            string input = value.ToString() ?? string.Empty;
-
-            input = input.Replace("'", string.Empty);
-
-            if (decimal.TryParse(input, NumberStyles.Any, _culture, out decimal result))
-
-                return Math.Round(result, 2);
-
-            return 0m;
+            string input = value?.ToString()?.Replace("'", "") ?? string.Empty;
+            return decimal.TryParse(input, NumberStyles.Any, _culture, out var result)
+                ? Math.Round(result, 2)
+                : 0m;
         }
     }
 
     /// <summary>
-    /// Конвертер для форматирования мобильного телефона в формате +7 (921) 444-31-23
+    /// Конвертер: форматирует номер телефона в формате +7 (XXX) XXX-XX-XX.
     /// </summary>
     public class PhoneConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value == null) return string.Empty;
+        /// <summary>
+        /// Форматирует номер телефона для отображения.
+        /// </summary>
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            FormatPhone(value?.ToString() ?? string.Empty);
 
-            string input = value.ToString() ?? string.Empty;
-            return FormatPhone(input);
-        }
+        /// <summary>
+        /// Форматирует номер телефона при вводе.
+        /// </summary>
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            FormatPhone(value?.ToString() ?? string.Empty);
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value == null) return string.Empty;
-
-            string input = value.ToString() ?? string.Empty;
-            return FormatPhone(input);
-        }
-
+        /// <summary>
+        /// Форматирует строку с цифрами в формат +7 (XXX) XXX-XX-XX.
+        /// </summary>
         private string FormatPhone(string input)
         {
-            // Удаляем все символы кроме цифр
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
 
-            // Если пустая строка, возвращаем пустую
-            if (string.IsNullOrEmpty(digitsOnly)) return string.Empty;
-
-            // Нормализуем номер: если начинается с 8 и длина 11, заменяем на 7
             if (digitsOnly.StartsWith("8") && digitsOnly.Length == 11)
-            {
-                digitsOnly = "7" + digitsOnly.Substring(1);
-            }
+                digitsOnly = "7" + digitsOnly[1..];
 
-            // Если номер начинается с 7 и длина больше 11, обрезаем
-            if (digitsOnly.StartsWith("7") && digitsOnly.Length > 11)
-            {
-                digitsOnly = digitsOnly.Substring(0, 11);
-            }
+            if (!digitsOnly.StartsWith("7") && digitsOnly.Length >= 10)
+                digitsOnly = "7" + digitsOnly[..10];
+            else if (!digitsOnly.StartsWith("7"))
+                digitsOnly = "7" + digitsOnly;
 
-            // Если номер не начинается с 7 или 8
-            if (!digitsOnly.StartsWith("7") && !digitsOnly.StartsWith("8"))
-            {
-                // Если длина 10 цифр, добавляем 7 в начало
-                if (digitsOnly.Length == 10)
-                {
-                    digitsOnly = "7" + digitsOnly;
-                }
-                // Если больше 10, обрезаем до 10 и добавляем 7
-                else if (digitsOnly.Length > 10)
-                {
-                    digitsOnly = "7" + digitsOnly.Substring(0, 10);
-                }
-                // Если меньше 10, добавляем 7 в начало
-                else if (digitsOnly.Length > 0)
-                {
-                    digitsOnly = "7" + digitsOnly;
-                }
-            }
+            if (digitsOnly.Length < 2) return "+7";
+            if (digitsOnly.Length <= 4) return $"+7 ({digitsOnly[1..]}";
+            if (digitsOnly.Length <= 7) return $"+7 ({digitsOnly[1..4]}) {digitsOnly[4..]}";
+            if (digitsOnly.Length <= 9) return $"+7 ({digitsOnly[1..4]}) {digitsOnly[4..7]}-{digitsOnly[7..]}";
+            if (digitsOnly.Length == 10) return $"+7 ({digitsOnly[1..4]}) {digitsOnly[4..7]}-{digitsOnly[7..9]}-{digitsOnly[9..]}";
+            if (digitsOnly.Length == 11) return $"+7 ({digitsOnly[1..4]}) {digitsOnly[4..7]}-{digitsOnly[7..9]}-{digitsOnly[9..]}";
 
-            // Теперь форматируем номер
-            if (digitsOnly.Length == 0) return string.Empty;
-
-            // Номер должен начинаться с 7 после нормализации
-            if (!digitsOnly.StartsWith("7"))
-            {
-                return digitsOnly; // Возвращаем как есть если что-то пошло не так
-            }
-
-            // Форматируем поэтапно
-            if (digitsOnly.Length == 1) return "+7";
-            if (digitsOnly.Length <= 4)
-            {
-                return $"+7 ({digitsOnly.Substring(1)}";
-            }
-            if (digitsOnly.Length <= 7)
-            {
-                string code = digitsOnly.Substring(1, 3);
-                string rest = digitsOnly.Substring(4);
-                return $"+7 ({code}) {rest}";
-            }
-            if (digitsOnly.Length <= 9)
-            {
-                string code = digitsOnly.Substring(1, 3);
-                string part1 = digitsOnly.Substring(4, 3);
-                string part2 = digitsOnly.Substring(7);
-                return $"+7 ({code}) {part1}-{part2}";
-            }
-            if (digitsOnly.Length == 10)
-            {
-                // Это случай когда у нас 10 цифр без 7, но мы уже добавили 7, значит теперь 11
-                string code = digitsOnly.Substring(1, 3);
-                string part1 = digitsOnly.Substring(4, 3);
-                string part2 = digitsOnly.Substring(7, 2);
-                string part3 = digitsOnly.Substring(9);
-                return $"+7 ({code}) {part1}-{part2}-{part3}";
-            }
-            if (digitsOnly.Length == 11)
-            {
-                string code = digitsOnly.Substring(1, 3);
-                string part1 = digitsOnly.Substring(4, 3);
-                string part2 = digitsOnly.Substring(7, 2);
-                string part3 = digitsOnly.Substring(9, 2);
-                return $"+7 ({code}) {part1}-{part2}-{part3}";
-            }
-
-            return input; // Возвращаем исходную строку если не удалось форматировать
+            return input;
         }
     }
 
     /// <summary>
-    /// Конвертер для валидации и форматирования email
+    /// Конвертер: нормализует email, удаляя пробелы и приводя к нижнему регистру. Также предоставляет статическую валидацию.
     /// </summary>
     public class EmailConverter : IValueConverter
     {
-        private static readonly Regex EmailRegex = new Regex(
-            @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-            RegexOptions.Compiled);
+        private static readonly Regex EmailRegex = new(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return value?.ToString() ?? string.Empty;
-        }
+        /// <summary>
+        /// Возвращает email без изменений.
+        /// </summary>
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value?.ToString() ?? string.Empty;
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value == null) return string.Empty;
+        /// <summary>
+        /// Очищает строку от пробелов и приводит к нижнему регистру.
+        /// </summary>
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            (value?.ToString() ?? string.Empty).Trim().ToLowerInvariant();
 
-            string email = value.ToString() ?? string.Empty;
-
-            // Приводим к нижнему регистру и удаляем лишние пробелы
-            email = email.Trim().ToLowerInvariant();
-
-            return email;
-        }
-
-        public static bool IsValidEmail(string email)
-        {
-            if (string.IsNullOrWhiteSpace(email)) return true; // Пустой email считается валидным (необязательное поле)
-            return EmailRegex.IsMatch(email);
-        }
+        /// <summary>
+        /// Проверяет, соответствует ли строка формату email.
+        /// </summary>
+        /// <param name="email">Email-адрес.</param>
+        /// <returns>true, если строка — валидный email; иначе false.</returns>
+        public static bool IsValidEmail(string email) =>
+            string.IsNullOrWhiteSpace(email) || EmailRegex.IsMatch(email);
     }
 
     /// <summary>
-    /// Конвертер для валидации email с визуальной индикацией ошибки
+    /// Конвертер: проверяет email на валидность для UI (напр., валидация на форме).
     /// </summary>
     public class EmailValidationConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value == null) return true;
+        /// <summary>
+        /// Возвращает true, если email валиден.
+        /// </summary>
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            EmailConverter.IsValidEmail(value?.ToString() ?? string.Empty);
 
-            string email = value.ToString() ?? string.Empty;
-            return EmailConverter.IsValidEmail(email);
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
+        /// <summary>
+        /// Обратное преобразование не реализовано.
+        /// </summary>
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
             throw new NotImplementedException();
-        }
     }
 }

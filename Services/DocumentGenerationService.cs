@@ -164,17 +164,17 @@ namespace bankrupt_piterjust.Services
         {
             string templateName = "Договор_Юридических_Услуг.docx";
 
-            string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents", templateName);
+            string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TemplatesDocx", templateName);
             if (File.Exists(templatePath))
                 return templatePath;
 
             string solutionDir = AppDomain.CurrentDomain.BaseDirectory;
             string[] possiblePaths = new string[]
             {
-                Path.Combine(solutionDir, "Documents", templateName),
-                Path.Combine(solutionDir, "..", "Documents", templateName),
-                Path.Combine(solutionDir, "..", "..", "Documents", templateName),
-                Path.Combine(solutionDir, "..", "..", "..", "Documents", templateName)
+                Path.Combine(solutionDir, "TemplatesDocx", templateName),
+                Path.Combine(solutionDir, "..", "TemplatesDocx", templateName),
+                Path.Combine(solutionDir, "..", "..", "TemplatesDocx", templateName),
+                Path.Combine(solutionDir, "..", "..", "..", "TemplatesDocx", templateName)
             };
 
             foreach (var path in possiblePaths)

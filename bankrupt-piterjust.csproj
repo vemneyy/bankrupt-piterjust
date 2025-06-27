@@ -18,7 +18,8 @@
     <PackageProjectUrl>https://питерюст.рф/</PackageProjectUrl>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
     <ApplicationIcon>Images\icon.ico</ApplicationIcon>
-    <AssemblyName>ПитерЮст. Банкротство.</AssemblyName>
+    <AssemblyName>ПитерЮст. Банкротство</AssemblyName>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -44,7 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Documents\" />
+    <Folder Include="TemplatesDocx\" />
   </ItemGroup>
 
   <ItemGroup>
