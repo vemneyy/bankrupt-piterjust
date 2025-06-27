@@ -13,9 +13,6 @@ namespace bankrupt_piterjust.Services
             _ = EnsureAllTablesExistAsync();
         }
 
-        /// <summary>
-        /// Ensures that all database tables exist
-        /// </summary>
         private async Task EnsureAllTablesExistAsync()
         {
             await EnsurePersonTableExistsAsync();
@@ -429,7 +426,6 @@ namespace bankrupt_piterjust.Services
                 Stage3Cost = row["third_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["third_stage_cost"]) : 0m
             };
 
-            // Load employee info
             if (row["position"] != DBNull.Value)
             {
                 contract.Employee = new Employee
@@ -450,7 +446,6 @@ namespace bankrupt_piterjust.Services
                 }
             }
 
-            // Load debtor info
             if (row["debtor_last_name"] != DBNull.Value)
             {
                 contract.Debtor = new Person
@@ -500,7 +495,6 @@ namespace bankrupt_piterjust.Services
                     Stage3Cost = row["third_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["third_stage_cost"]) : 0m
                 };
 
-                // Load employee info
                 if (row["position"] != DBNull.Value)
                 {
                     contract.Employee = new Employee
@@ -521,7 +515,6 @@ namespace bankrupt_piterjust.Services
                     }
                 }
 
-                // Load debtor info
                 if (row["debtor_last_name"] != DBNull.Value)
                 {
                     contract.Debtor = new Person

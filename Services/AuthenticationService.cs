@@ -62,7 +62,6 @@ WHERE e.login = @login AND e.is_active = true;
                     return null;
                 }
 
-                // Create a Person object for the Employee
                 var person = new Person
                 {
                     LastName = row["last_name"].ToString()!,

@@ -69,12 +69,9 @@ namespace bankrupt_piterjust.Services
 
                 string outputPath = saveDialog.FileName;
 
-                // Create a copy of the template
                 File.Copy(templatePath, outputPath, true);
 
                 var repo = new FullDatabaseRepository();
-
-                // First get debtor_id by person_id
                 int debtorIdFromPersonId = await repo.GetDebtorIdByPersonIdAsync(debtorId);
 
                 var contractInfo = await repo.GetLatestContractByDebtorIdAsync(debtorIdFromPersonId);
@@ -89,15 +86,10 @@ namespace bankrupt_piterjust.Services
                 decimal servicesAmount = contractInfo.TotalCost - contractInfo.MandatoryExpenses;
                 decimal otherExpenses = contractInfo.OtherExpenses;
 
-                // Get payment schedule for this contract
                 var paymentSchedule = await repo.GetPaymentScheduleByContractIdAsync(contractInfo.ContractId);
-
-                // Representative information
                 string representativeName = representative.FullName;
                 string representativePosition = representative.Position;
                 string? representativeBasis = await repo.GetEmployeeBasisStringAsync(representative.EmployeeId);
-
-                // Prepare replacement data
                 var replacements = new Dictionary<string, string>
                 {
                     { "<номер_договора>", contractNumber },
@@ -152,7 +144,6 @@ namespace bankrupt_piterjust.Services
 
                     if (totalReplacements == 0)
                     {
-                        // If no tags were found, the template might not be set up correctly
                         MessageBox.Show(
                             "В шаблоне договора не найдены теги для замены. Проверьте, что шаблон содержит необходимые теги для заполнения.",
                             "Предупреждение",
@@ -169,21 +160,14 @@ namespace bankrupt_piterjust.Services
                 return null;
             }
         }
-
-        /// <summary>
-        /// Searches for the contract template file in multiple possible locations
-        /// </summary>
-        /// <returns>The path to the template file, or null if not found</returns>
         private string FindTemplateFile()
         {
             string templateName = "Договор_Юридических_Услуг.docx";
 
-            // First check in the application directory
             string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents", templateName);
             if (File.Exists(templatePath))
                 return templatePath;
 
-            // Try looking in the solution directory structure
             string solutionDir = AppDomain.CurrentDomain.BaseDirectory;
             string[] possiblePaths = new string[]
             {
@@ -204,34 +188,25 @@ namespace bankrupt_piterjust.Services
             return null!;
         }
 
-        /// <summary>
-        /// Replaces all occurrences of a specific text tag in a Word document with a replacement value.
-        /// Handles cases where tags might be split across multiple text runs.
-        /// </summary>
-        /// <returns>The number of tag occurrences that were replaced</returns>
         private int ReplaceTextInDocument(WordprocessingDocument document, string searchText, string replaceText)
         {
             int totalReplacements = 0;
 
-            // Process the main document body
             if (document.MainDocumentPart?.Document?.Body != null)
             {
                 totalReplacements += ProcessTextElements(document.MainDocumentPart.Document.Body, searchText, replaceText);
             }
 
-            // Process headers
             foreach (var headerPart in document.MainDocumentPart.HeaderParts)
             {
                 totalReplacements += ProcessTextElements(headerPart.Header, searchText, replaceText);
             }
 
-            // Process footers
             foreach (var footerPart in document.MainDocumentPart.FooterParts)
             {
                 totalReplacements += ProcessTextElements(footerPart.Footer, searchText, replaceText);
             }
 
-            // Process any other document parts that might contain text
             if (document.MainDocumentPart.FootnotesPart != null)
             {
                 totalReplacements += ProcessTextElements(document.MainDocumentPart.FootnotesPart.Footnotes, searchText, replaceText);
@@ -245,27 +220,18 @@ namespace bankrupt_piterjust.Services
             return totalReplacements;
         }
 
-        /// <summary>
-        /// Processes all text elements in a given element and replaces all occurrences of the search text
-        /// </summary>
-        /// <returns>The number of replacements made</returns>
         private int ProcessTextElements<T>(T element, string searchText, string replaceText) where T : OpenXmlElement
         {
             int totalReplacements = 0;
 
-            // First attempt: Replace within each Text element
             foreach (var text in element.Descendants<Text>())
             {
                 if (text.Text.Contains(searchText))
                 {
-                    // Replace all occurrences within this text element
                     string originalText = text.Text;
                     string newText = originalText.Replace(searchText, replaceText);
-
-                    // Count how many replacements were made
                     int replacementsInThisElement = 0;
 
-                    // If search and replace text have different lengths, calculate based on length difference
                     if (searchText.Length != replaceText.Length)
                     {
                         int lengthDifference = searchText.Length - replaceText.Length;

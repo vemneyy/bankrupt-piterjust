@@ -12,34 +12,19 @@ namespace bankrupt_piterjust.Services
         {
             _databaseService = new DatabaseService();
             _fullRepository = new FullDatabaseRepository();
-            // Ensure tables exist when repository is initialized
             _ = EnsureTablesExistAsync();
         }
 
-        /// <summary>
-        /// Ensures that all necessary tables exist in the database
-        /// </summary>
         private async Task EnsureTablesExistAsync()
         {
-            // Ensure person table exists with all necessary columns
             await EnsurePersonTableExistsAsync();
-
-            // Ensure passport table exists
             await EnsurePassportTableExistsAsync();
-
-            // Ensure address table exists with address_type enum
             await EnsureAddressTableExistsAsync();
-
-            // Ensure status/category tables and debtor table exist
             await EnsureStatusTablesExistAsync();
         }
 
-        /// <summary>
-        /// Ensures that the person table exists with all required columns
-        /// </summary>
         private async Task EnsurePersonTableExistsAsync()
         {
-            // First, check if the person table exists
             string createPersonTableSql = @"
                 CREATE TABLE IF NOT EXISTS person (
                     person_id SERIAL PRIMARY KEY,
@@ -53,7 +38,6 @@ namespace bankrupt_piterjust.Services
 
             await _databaseService.ExecuteNonQueryAsync(createPersonTableSql);
 
-            // Then check if phone and email columns exist, and add them if they don't
             string checkColumnsSql = @"
                 DO $$
                 BEGIN
@@ -85,9 +69,6 @@ namespace bankrupt_piterjust.Services
             await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
         }
 
-        /// <summary>
-        /// Ensures that the passport table exists
-        /// </summary>
         private async Task EnsurePassportTableExistsAsync()
         {
             string createPassportTableSql = @"
@@ -104,12 +85,9 @@ namespace bankrupt_piterjust.Services
             await _databaseService.ExecuteNonQueryAsync(createPassportTableSql);
         }
 
-        /// <summary>
-        /// Ensures that the address table exists
-        /// </summary>
         private async Task EnsureAddressTableExistsAsync()
         {
-            // Create the address table
+
             string createAddressTableSql = @"
                 CREATE TABLE IF NOT EXISTS address (
                     address_id SERIAL PRIMARY KEY,
@@ -128,10 +106,6 @@ namespace bankrupt_piterjust.Services
 
             await _databaseService.ExecuteNonQueryAsync(createAddressTableSql);
         }
-
-        /// <summary>
-        /// Ensures that status/category tables and debtor table exist
-        /// </summary>
         private async Task EnsureStatusTablesExistAsync()
         {
             string createStatusSql = @"
@@ -169,9 +143,6 @@ namespace bankrupt_piterjust.Services
             await _databaseService.ExecuteNonQueryAsync(createDebtorSql);
         }
 
-        /// <summary>
-        /// Get all debtors from the database
-        /// </summary>
         public async Task<List<Debtor>> GetAllDebtorsAsync()
         {
             string sql = @"
@@ -191,7 +162,6 @@ namespace bankrupt_piterjust.Services
 
             foreach (DataRow row in dataTable.Rows)
             {
-                // Fix Int64 to Int32 conversion
                 int personId = row["person_id"] is Int64 value ? (int)value : Convert.ToInt32(row["person_id"]);
 
                 var person = new Person
@@ -210,7 +180,7 @@ namespace bankrupt_piterjust.Services
                 var addrList = await GetAddressesByPersonIdAsync(personId);
                 var firstAddr = addrList.FirstOrDefault();
                 if (firstAddr != null)
-                    debtor.Region = FormatAddress(firstAddr);
+                    debtor.Region = firstAddr.Region ?? string.Empty;
 
                 debtor.Status = row["status"] != DBNull.Value ? row["status"].ToString() ?? string.Empty : "";
                 debtor.MainCategory = row["main_category"] != DBNull.Value ? row["main_category"].ToString() ?? string.Empty : "";
@@ -224,9 +194,6 @@ namespace bankrupt_piterjust.Services
             return debtors;
         }
 
-        /// <summary>
-        /// Check if passport with given series and number already exists
-        /// </summary>
         public async Task<bool> IsPassportExistsAsync(string series, string number)
         {
             if (string.IsNullOrWhiteSpace(series) || string.IsNullOrWhiteSpace(number))
@@ -244,9 +211,6 @@ namespace bankrupt_piterjust.Services
             return count > 0;
         }
 
-        /// <summary>
-        /// Insert a new person with their passport and address information
-        /// </summary>
         public async Task<int> AddPersonWithDetailsAsync(
             Person person,
             Passport passport,
@@ -255,10 +219,8 @@ namespace bankrupt_piterjust.Services
             string mainCategory,
             string filterCategory)
         {
-            // Ensure tables exist before trying to insert data
             await EnsureTablesExistAsync();
 
-            // Check for duplicate passport
             if (passport != null && !string.IsNullOrWhiteSpace(passport.Series) && !string.IsNullOrWhiteSpace(passport.Number))
             {
                 bool passportExists = await IsPassportExistsAsync(passport.Series, passport.Number);
@@ -268,7 +230,6 @@ namespace bankrupt_piterjust.Services
                 }
             }
 
-            // Insert person first to get the person_id
             string insertPersonSql = @"
                 INSERT INTO person (last_name, first_name, middle_name, is_male, phone, email)
                 VALUES (@lastName, @firstName, @middleName, @isMale, @phone, @email)
@@ -284,12 +245,10 @@ namespace bankrupt_piterjust.Services
                 { "@isMale", person.IsMale }
             };
 
-            // Fix Int64 to Int32 conversion
             object? v = await _databaseService.ExecuteScalarAsync<object>(insertPersonSql, personParams);
             object scalarResult = v!;
             int personId = scalarResult is Int64 value ? (int)value : Convert.ToInt32(scalarResult);
 
-            // Insert passport data
             if (passport != null && !string.IsNullOrWhiteSpace(passport.Series) && !string.IsNullOrWhiteSpace(passport.Number))
             {
                 string insertPassportSql = @"
@@ -309,7 +268,6 @@ namespace bankrupt_piterjust.Services
                 await _databaseService.ExecuteNonQueryAsync(insertPassportSql, passportParams);
             }
 
-            // Insert addresses
             if (addresses != null && addresses.Any())
             {
                 foreach (var address in addresses)
@@ -365,9 +323,6 @@ namespace bankrupt_piterjust.Services
             return personId;
         }
 
-        /// <summary>
-        /// Get person details by ID
-        /// </summary>
         public async Task<Person?> GetPersonByIdAsync(int personId)
         {
             string sql = "SELECT * FROM person WHERE person_id = @personId";
@@ -384,7 +339,6 @@ namespace bankrupt_piterjust.Services
 
             var row = dataTable.Rows[0];
 
-            // Fix Int64 to Int32 conversion
             int id = row["person_id"] is Int64 value ? (int)value : Convert.ToInt32(row["person_id"]);
 
             return new Person
@@ -399,9 +353,6 @@ namespace bankrupt_piterjust.Services
             };
         }
 
-        /// <summary>
-        /// Get passport details by person ID
-        /// </summary>
         public async Task<Passport?> GetPassportByPersonIdAsync(int personId)
         {
             string sql = "SELECT * FROM passport WHERE person_id = @personId";
@@ -418,7 +369,6 @@ namespace bankrupt_piterjust.Services
 
             var row = dataTable.Rows[0];
 
-            // Fix Int64 to Int32 conversion for both IDs
             int passportId = row["passport_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["passport_id"]);
             int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
 
@@ -434,9 +384,6 @@ namespace bankrupt_piterjust.Services
             };
         }
 
-        /// <summary>
-        /// Get addresses by person ID
-        /// </summary>
         public async Task<List<Address>> GetAddressesByPersonIdAsync(int personId)
         {
             string sql = "SELECT * FROM address WHERE person_id = @personId ORDER BY address_id";
@@ -451,7 +398,6 @@ namespace bankrupt_piterjust.Services
 
             foreach (DataRow row in dataTable.Rows)
             {
-                // Fix Int64 to Int32 conversion for both IDs
                 int addressId = row["address_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["address_id"]);
                 int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
 
@@ -651,22 +597,6 @@ namespace bankrupt_piterjust.Services
                 };
                 await _databaseService.ExecuteNonQueryAsync(insertSql, p);
             }
-        }
-
-        private static string FormatAddress(Address address)
-        {
-            var parts = new List<string>();
-            if (!string.IsNullOrWhiteSpace(address.PostalCode)) parts.Add(address.PostalCode);
-            if (!string.IsNullOrWhiteSpace(address.Country)) parts.Add(address.Country);
-            if (!string.IsNullOrWhiteSpace(address.Region)) parts.Add(address.Region);
-            if (!string.IsNullOrWhiteSpace(address.District)) parts.Add(address.District);
-            if (!string.IsNullOrWhiteSpace(address.City)) parts.Add(address.City);
-            if (!string.IsNullOrWhiteSpace(address.Locality)) parts.Add(address.Locality);
-            if (!string.IsNullOrWhiteSpace(address.Street)) parts.Add(address.Street);
-            if (!string.IsNullOrWhiteSpace(address.HouseNumber)) parts.Add(address.HouseNumber);
-            if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
-            if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
-            return string.Join(", ", parts);
         }
     }
 }

@@ -13,7 +13,6 @@ namespace bankrupt_piterjust.ViewModels
         private readonly DebtorRepository _repository;
         private bool _isBusy;
 
-        // Person properties
         private string _lastName = string.Empty;
         private string _firstName = string.Empty;
         private string _middleName = string.Empty;
@@ -21,21 +20,18 @@ namespace bankrupt_piterjust.ViewModels
         private string _phone = string.Empty;
         private string _email = string.Empty;
 
-        // Passport properties
         private string _passportSeries = string.Empty;
         private string _passportNumber = string.Empty;
         private string _passportIssuedBy = string.Empty;
         private string _passportDivisionCode = string.Empty;
         private DateTime _passportIssueDate = DateTime.Now.AddYears(-5);
 
-        // Address properties
         private readonly Address _registrationAddress = new();
         private readonly Address _residenceAddress = new();
         private bool _sameAsRegistration = false;
         private readonly Address _mailingAddress = new();
         private bool _sameAsResidence = false;
 
-        // Contract properties
         private string _contractNumber = string.Empty;
         private string _contractCity = "Санкт-Петербург";
         private DateTime _contractDate = DateTime.Now;
@@ -50,15 +46,12 @@ namespace bankrupt_piterjust.ViewModels
         private decimal _stage3Amount;
         private decimal _scheduleTotal;
 
-        // Default status values - No UI selection needed as per requirements
         private readonly string _status = "Сбор документов";
         private readonly string _mainCategory = "Клиенты";
         private readonly string _filterCategory = "Сбор документов";
 
-        // Результат - новый должник
         public Debtor NewDebtor { get; private set; }
 
-        // Commands
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand GenerateScheduleCommand { get; }
@@ -366,13 +359,11 @@ namespace bankrupt_piterjust.ViewModels
         {
             _repository = new DebtorRepository();
 
-            // Initialize non-nullable properties and fields
             NewDebtor = new Debtor();
             _fullName = string.Empty;
 
-            // Pre-fill default values for fees
-            ManagerFee = 25000m; // Default manager fee
-            OtherExpenses = 20000m; // Default other expenses
+            ManagerFee = 25000m;
+            OtherExpenses = 20000m;
 
             SaveCommand = new RelayCommand(async o => await SaveDataAsync(), CanSave);
             CancelCommand = new RelayCommand(o =>
@@ -409,7 +400,6 @@ namespace bankrupt_piterjust.ViewModels
 
                 var fullRepository = new FullDatabaseRepository();
 
-                // Create models from UI data
                 var person = new Person
                 {
                     LastName = LastName,
@@ -436,15 +426,12 @@ namespace bankrupt_piterjust.ViewModels
                     addresses.Add(RegistrationAddress);
                 }
 
-                // Save person and debtor to database
                 int personId = await _repository.AddPersonWithDetailsAsync(person, passport, addresses, Status, MainCategory, FilterCategory);
 
-                // Save contract if contract fields are filled
                 if (ShouldSaveContract())
                 {
                     int debtorId = await fullRepository.GetDebtorIdByPersonIdAsync(personId);
 
-                    // Get current employee ID (you may need to implement this based on current user session)
                     int employeeId = GetCurrentEmployeeId();
 
                     UpdateScheduleTotal();
@@ -466,7 +453,6 @@ namespace bankrupt_piterjust.ViewModels
 
                     int contractId = await fullRepository.CreateContractAsync(contract);
 
-                    // Save payment schedule if it exists
                     if (PaymentSchedule.Any())
                     {
                         foreach (var payment in PaymentSchedule)
@@ -485,7 +471,6 @@ namespace bankrupt_piterjust.ViewModels
                     }
                 }
 
-                // Create a Debtor object for UI display
                 NewDebtor = new Debtor
                 {
                     PersonId = personId,
@@ -497,7 +482,6 @@ namespace bankrupt_piterjust.ViewModels
                     Date = DateTime.Now.ToString("dd.MM.yyyy")
                 };
 
-                // Close the window with success
                 var window = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
                 if (window != null)
                 {
@@ -522,14 +506,11 @@ namespace bankrupt_piterjust.ViewModels
 
         private int GetCurrentEmployeeId()
         {
-            // Get employee ID from user session
             var currentEmployee = UserSessionService.Instance.CurrentEmployee;
             if (currentEmployee != null)
             {
                 return currentEmployee.EmployeeId;
             }
-
-            // Default to 1 if no employee is logged in (you might want to handle this differently)
             return 1;
         }
 
@@ -539,7 +520,6 @@ namespace bankrupt_piterjust.ViewModels
             if (ScheduleMonths <= 0)
                 return;
 
-            // Generate schedule based on TotalCost (legal services cost) instead of ManagerFee
             decimal monthly = ScheduleMonths > 0 ? Math.Round(ServicesAmount / ScheduleMonths, 2) : 0m;
             for (int i = 1; i <= ScheduleMonths; i++)
             {
@@ -556,9 +536,7 @@ namespace bankrupt_piterjust.ViewModels
 
         private void UpdateContractSums()
         {
-            // Total expenses include mandatory expenses, manager fee, and other expenses
             MandatoryExpenses = ManagerFee + OtherExpenses;
-            // Services amount is the total cost minus all expenses
             ServicesAmount = TotalCost - MandatoryExpenses;
         }
 
@@ -620,8 +598,6 @@ namespace bankrupt_piterjust.ViewModels
             if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
             return string.Join(", ", parts);
         }
-
-        // Status properties - readonly with default values
         public string Status => _status;
         public string MainCategory => _mainCategory;
         public string FilterCategory => _filterCategory;

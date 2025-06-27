@@ -57,7 +57,6 @@ namespace bankrupt_piterjust.Services
                     _connectionTested = true;
                 }
 
-                // Show message box on UI thread to prevent cross-thread operation issues
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     string errorMessage = "Не удалось подключиться к базе данных. Программа будет работать в автономном режиме.";
@@ -80,9 +79,6 @@ namespace bankrupt_piterjust.Services
             }
         }
 
-        /// <summary>
-        /// Execute a SQL command that does not return data
-        /// </summary>
         public async Task<int> ExecuteNonQueryAsync(string sql, Dictionary<string, object>? parameters = null)
         {
             if (!await TestConnectionAsync())
@@ -113,15 +109,11 @@ namespace bankrupt_piterjust.Services
                     _connectionTested = false;
                 }
 
-                // Log the error but don't throw it - allow offline mode operation
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
                 return 0;
             }
         }
 
-        /// <summary>
-        /// Execute a SQL query that returns a single value
-        /// </summary>
         public async Task<T?> ExecuteScalarAsync<T>(string sql, Dictionary<string, object>? parameters = null)
         {
             if (!await TestConnectionAsync())
@@ -144,15 +136,12 @@ namespace bankrupt_piterjust.Services
 
                 var result = await command.ExecuteScalarAsync();
 
-                // Handle DBNull
                 if (result == DBNull.Value)
                     return default;
 
-                // Handle type conversion for Int64 to Int32
                 if (typeof(T) == typeof(int) && result is Int64 longValue)
                     return (T)(object)(int)longValue;
 
-                // General case
                 return (T?)Convert.ChangeType(result, typeof(T));
             }
             catch (Exception ex)
@@ -163,19 +152,15 @@ namespace bankrupt_piterjust.Services
                     _connectionTested = false;
                 }
 
-                // Log the error but don't throw it - allow offline mode operation
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
                 return default;
             }
         }
 
-        /// <summary>
-        /// Execute a SQL query that returns a data reader
-        /// </summary>
         public async Task<DataTable> ExecuteReaderAsync(string sql, Dictionary<string, object>? parameters = null)
         {
             if (!await TestConnectionAsync())
-                return new DataTable(); // Return empty table when connection fails
+                return new DataTable();
 
             try
             {
@@ -206,15 +191,11 @@ namespace bankrupt_piterjust.Services
                     _connectionTested = false;
                 }
 
-                // Log the error but don't throw it - allow offline mode operation
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
-                return new DataTable(); // Return empty table on error
+                return new DataTable();
             }
         }
 
-        /// <summary>
-        /// Resets connection state and tests again
-        /// </summary>
         public async Task<bool> ResetConnectionAsync()
         {
             lock (_connectionLock)
@@ -224,10 +205,6 @@ namespace bankrupt_piterjust.Services
             }
             return await TestConnectionAsync();
         }
-
-        /// <summary>
-        /// Gets detailed connection information for debugging
-        /// </summary>
         public async Task<string> GetConnectionInfoAsync()
         {
             try

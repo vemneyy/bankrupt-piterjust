@@ -93,7 +93,6 @@ namespace bankrupt_piterjust.ViewModels
                     Employees.Add(employee);
                 }
 
-                // Load debtors (from the existing DebtorRepository since we need the debtor logic)
                 var debtorRepo = new DebtorRepository();
                 var debtorData = await debtorRepo.GetAllDebtorsAsync();
                 Debtors.Clear();
@@ -253,7 +252,6 @@ namespace bankrupt_piterjust.ViewModels
         public List<Employee> Employees { get; }
         public List<Person> Debtors { get; }
 
-        // Contract properties
         private string _contractNumber = string.Empty;
         private string _city = "Санкт-Петербург";
         private DateTime _contractDate = DateTime.Now;
@@ -337,7 +335,6 @@ namespace bankrupt_piterjust.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
 
-        // Constructor for new contract
         public ContractEditViewModel(FullDatabaseRepository repository, List<Employee> employees, List<Person> debtors)
         {
             _repository = repository;
@@ -346,15 +343,12 @@ namespace bankrupt_piterjust.ViewModels
             Employees = employees;
             Debtors = debtors;
 
-            // Pre-fill default values for fees
-            _managerFee = 25000m; // Default manager fee
-            _otherExpenses = 5000m; // Default other expenses
+            _managerFee = 25000m;
+            _otherExpenses = 5000m;
 
             SaveCommand = new RelayCommand(async o => await SaveAsync(), CanSave);
             CancelCommand = new RelayCommand(o => CloseDialog(false));
         }
-
-        // Constructor for editing existing contract
         public ContractEditViewModel(FullDatabaseRepository repository, List<Employee> employees, List<Person> debtors, Contract contract)
         {
             _repository = repository;
@@ -363,7 +357,6 @@ namespace bankrupt_piterjust.ViewModels
             Employees = employees;
             Debtors = debtors;
 
-            // Load contract data
             LoadContractData(contract);
 
             SaveCommand = new RelayCommand(async o => await SaveAsync(), CanSave);
@@ -376,7 +369,7 @@ namespace bankrupt_piterjust.ViewModels
             City = contract.City;
             ContractDate = contract.ContractDate;
             SelectedEmployee = Employees.FirstOrDefault(e => e.EmployeeId == contract.EmployeeId);
-            SelectedDebtor = Debtors.FirstOrDefault(d => d.PersonId == contract.DebtorId); // Note: This assumes DebtorId is PersonId
+            SelectedDebtor = Debtors.FirstOrDefault(d => d.PersonId == contract.DebtorId);
             TotalCost = contract.TotalCost;
             MandatoryExpenses = contract.MandatoryExpenses;
             ManagerFee = contract.ManagerFee;
@@ -394,7 +387,6 @@ namespace bankrupt_piterjust.ViewModels
         {
             try
             {
-                // Get debtor ID from person ID
                 int debtorId = await _repository.GetDebtorIdByPersonIdAsync(SelectedDebtor!.PersonId);
 
                 var contract = new Contract

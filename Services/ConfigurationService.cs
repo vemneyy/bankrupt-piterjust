@@ -66,8 +66,6 @@ namespace bankrupt_piterjust.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading configuration: {ex.Message}");
             }
-
-            // Return default configuration if loading failed
             return new DatabaseConfiguration();
         }
 
