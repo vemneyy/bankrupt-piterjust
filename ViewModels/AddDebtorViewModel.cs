@@ -587,6 +587,7 @@ namespace bankrupt_piterjust.ViewModels
             {
                 UpdateScheduleTotal();
             }
+
         }
 
         // Status properties - readonly with default values
