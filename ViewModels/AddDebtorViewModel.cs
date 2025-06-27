@@ -2,7 +2,6 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Helpers;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -369,7 +368,7 @@ namespace bankrupt_piterjust.ViewModels
                 if (ShouldSaveContract())
                 {
                     int debtorId = await fullRepository.GetDebtorIdByPersonIdAsync(personId);
-                    
+
                     // Get current employee ID (you may need to implement this based on current user session)
                     int employeeId = GetCurrentEmployeeId();
 
@@ -441,7 +440,7 @@ namespace bankrupt_piterjust.ViewModels
 
         private bool ShouldSaveContract()
         {
-            return !string.IsNullOrWhiteSpace(ContractNumber) && 
+            return !string.IsNullOrWhiteSpace(ContractNumber) &&
                    (TotalCost > 0 || MandatoryExpenses > 0 || ManagerFee > 0 || OtherExpenses > 0);
         }
 
@@ -453,7 +452,7 @@ namespace bankrupt_piterjust.ViewModels
             {
                 return currentEmployee.EmployeeId;
             }
-            
+
             // Default to 1 if no employee is logged in (you might want to handle this differently)
             return 1;
         }

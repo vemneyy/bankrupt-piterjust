@@ -60,10 +60,10 @@ namespace bankrupt_piterjust.Models
         public bool IsActive { get; set; } = true;
         public string? Basis { get; set; }
         public int? PersonId { get; set; }
-        
+
         // Navigation properties
         public Person? Person { get; set; }
-        
+
         public string FullName => Person?.FullName ?? $"{Login}";
     }
 
@@ -81,7 +81,7 @@ namespace bankrupt_piterjust.Models
         public string? MandatoryExpensesWords { get; set; }
         public decimal ManagerFee { get; set; }
         public decimal OtherExpenses { get; set; }
-        
+
         // Navigation properties
         public Employee? Employee { get; set; }
         public Person? Debtor { get; set; }
@@ -96,7 +96,7 @@ namespace bankrupt_piterjust.Models
         public decimal Amount { get; set; }
         public string? AmountWords { get; set; }
         public DateTime? DueDate { get; set; }
-        
+
         // Navigation property
         public Contract? Contract { get; set; }
     }
@@ -118,7 +118,7 @@ namespace bankrupt_piterjust.Models
         public int FilterCategoryId { get; set; }
         public int MainCategoryId { get; set; }
         public string Name { get; set; } = string.Empty;
-        
+
         // Navigation property
         public MainCategory? MainCategory { get; set; }
     }
@@ -131,7 +131,7 @@ namespace bankrupt_piterjust.Models
         public int MainCategoryId { get; set; }
         public int FilterCategoryId { get; set; }
         public DateTime CreatedDate { get; set; }
-        
+
         // Navigation properties
         public Person? Person { get; set; }
         public Status? Status { get; set; }

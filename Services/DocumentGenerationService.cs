@@ -240,7 +240,7 @@ namespace bankrupt_piterjust.Services
 
                     // Count how many replacements were made
                     int replacementsInThisElement = 0;
-                    
+
                     // If search and replace text have different lengths, calculate based on length difference
                     if (searchText.Length != replaceText.Length)
                     {

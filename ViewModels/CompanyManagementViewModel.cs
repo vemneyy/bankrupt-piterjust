@@ -544,10 +544,10 @@ namespace bankrupt_piterjust.ViewModels
                 {
                     employee.EmployeeId = _originalEmployee.EmployeeId;
                     // Only update password if a new one is provided
-                    employee.PasswordHash = string.IsNullOrWhiteSpace(Password) ? 
-                        _originalEmployee.PasswordHash : 
+                    employee.PasswordHash = string.IsNullOrWhiteSpace(Password) ?
+                        _originalEmployee.PasswordHash :
                         BCrypt.Net.BCrypt.HashPassword(Password);
-                    
+
                     await _repository.UpdateEmployeeAsync(employee);
                 }
                 else
