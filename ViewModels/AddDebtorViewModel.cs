@@ -29,10 +29,10 @@ namespace bankrupt_piterjust.ViewModels
         private DateTime _passportIssueDate = DateTime.Now.AddYears(-5);
 
         // Address properties
-        private string _registrationAddress = string.Empty;
-        private string _residenceAddress = string.Empty;
+        private readonly Address _registrationAddress = new();
+        private readonly Address _residenceAddress = new();
         private bool _sameAsRegistration = false;
-        private string _mailingAddress = string.Empty;
+        private readonly Address _mailingAddress = new();
         private bool _sameAsResidence = false;
 
         // Contract properties
@@ -147,29 +147,9 @@ namespace bankrupt_piterjust.ViewModels
         #endregion
 
         #region Address Properties
-        public string RegistrationAddress
-        {
-            get => _registrationAddress;
-            set
-            {
-                _registrationAddress = value;
-                OnPropertyChanged(nameof(RegistrationAddress));
-                if (_sameAsRegistration)
-                    ResidenceAddress = value;
-            }
-        }
+        public Address RegistrationAddress => _registrationAddress;
 
-        public string ResidenceAddress
-        {
-            get => _residenceAddress;
-            set
-            {
-                _residenceAddress = value;
-                OnPropertyChanged(nameof(ResidenceAddress));
-                if (_sameAsResidence)
-                    MailingAddress = value;
-            }
-        }
+        public Address ResidenceAddress => _residenceAddress;
 
         public bool SameAsRegistration
         {
@@ -179,15 +159,13 @@ namespace bankrupt_piterjust.ViewModels
                 _sameAsRegistration = value;
                 OnPropertyChanged(nameof(SameAsRegistration));
                 if (value)
-                    ResidenceAddress = RegistrationAddress;
+                {
+                    CopyAddress(RegistrationAddress, ResidenceAddress);
+                }
             }
         }
 
-        public string MailingAddress
-        {
-            get => _mailingAddress;
-            set { _mailingAddress = value; OnPropertyChanged(nameof(MailingAddress)); }
-        }
+        public Address MailingAddress => _mailingAddress;
 
         public bool SameAsResidence
         {
@@ -197,7 +175,9 @@ namespace bankrupt_piterjust.ViewModels
                 _sameAsResidence = value;
                 OnPropertyChanged(nameof(SameAsResidence));
                 if (value)
-                    MailingAddress = ResidenceAddress;
+                {
+                    CopyAddress(ResidenceAddress, MailingAddress);
+                }
             }
         }
         #endregion
@@ -418,7 +398,7 @@ namespace bankrupt_piterjust.ViewModels
             // Basic validation
             return !string.IsNullOrWhiteSpace(LastName) &&
                    !string.IsNullOrWhiteSpace(FirstName) &&
-                   !string.IsNullOrWhiteSpace(RegistrationAddress);
+                   !RegistrationAddress.IsEmpty();
         }
 
         private async Task SaveDataAsync()
@@ -451,34 +431,22 @@ namespace bankrupt_piterjust.ViewModels
 
                 var addresses = new List<Address>();
 
-                // Registration address
-                if (!string.IsNullOrWhiteSpace(RegistrationAddress))
+                if (!RegistrationAddress.IsEmpty())
                 {
-                    addresses.Add(new Address
-                    {
-                        AddressText = RegistrationAddress,
-                        AddressType = AddressType.Registration
-                    });
+                    RegistrationAddress.AddressType = AddressType.Registration;
+                    addresses.Add(RegistrationAddress);
                 }
 
-                // Residence address (if different from registration)
-                if (!SameAsRegistration && !string.IsNullOrWhiteSpace(ResidenceAddress))
+                if (!SameAsRegistration && !ResidenceAddress.IsEmpty())
                 {
-                    addresses.Add(new Address
-                    {
-                        AddressText = ResidenceAddress,
-                        AddressType = AddressType.Residence
-                    });
+                    ResidenceAddress.AddressType = AddressType.Residence;
+                    addresses.Add(ResidenceAddress);
                 }
 
-                // Mailing address (if different from residence)
-                if (!SameAsResidence && !string.IsNullOrWhiteSpace(MailingAddress))
+                if (!SameAsResidence && !MailingAddress.IsEmpty())
                 {
-                    addresses.Add(new Address
-                    {
-                        AddressText = MailingAddress,
-                        AddressType = AddressType.Mailing
-                    });
+                    MailingAddress.AddressType = AddressType.Mailing;
+                    addresses.Add(MailingAddress);
                 }
 
                 // Save person and debtor to database
@@ -535,7 +503,7 @@ namespace bankrupt_piterjust.ViewModels
                 {
                     PersonId = personId,
                     FullName = FullName,
-                    Region = RegistrationAddress,
+                    Region = FormatAddress(RegistrationAddress),
                     Status = Status,
                     MainCategory = MainCategory,
                     FilterCategory = FilterCategory,
@@ -634,6 +602,36 @@ namespace bankrupt_piterjust.ViewModels
                 UpdateScheduleTotal();
             }
 
+        }
+
+        private static void CopyAddress(Address source, Address target)
+        {
+            target.PostalCode = source.PostalCode;
+            target.Country = source.Country;
+            target.Region = source.Region;
+            target.District = source.District;
+            target.City = source.City;
+            target.Locality = source.Locality;
+            target.Street = source.Street;
+            target.HouseNumber = source.HouseNumber;
+            target.Building = source.Building;
+            target.Apartment = source.Apartment;
+        }
+
+        private static string FormatAddress(Address address)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(address.PostalCode)) parts.Add(address.PostalCode);
+            if (!string.IsNullOrWhiteSpace(address.Country)) parts.Add(address.Country);
+            if (!string.IsNullOrWhiteSpace(address.Region)) parts.Add(address.Region);
+            if (!string.IsNullOrWhiteSpace(address.District)) parts.Add(address.District);
+            if (!string.IsNullOrWhiteSpace(address.City)) parts.Add(address.City);
+            if (!string.IsNullOrWhiteSpace(address.Locality)) parts.Add(address.Locality);
+            if (!string.IsNullOrWhiteSpace(address.Street)) parts.Add(address.Street);
+            if (!string.IsNullOrWhiteSpace(address.HouseNumber)) parts.Add(address.HouseNumber);
+            if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
+            if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
+            return string.Join(", ", parts);
         }
 
         // Status properties - readonly with default values
