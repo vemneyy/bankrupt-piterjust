@@ -295,6 +295,10 @@
                                     <TextBox Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                             </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <RadioButton Content="Мужской" IsChecked="{Binding IsMale}" Style="{StaticResource TabButton}"/>
+                                <RadioButton Content="Женский" IsChecked="{Binding IsMale, Converter={StaticResource BooleanToInverseConverter}}" Style="{StaticResource TabButton}" Margin="10,0,0,0"/>
+                            </StackPanel>
                             <TextBlock Text="Контактные данные" Style="{StaticResource HeaderTextBlock}"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>

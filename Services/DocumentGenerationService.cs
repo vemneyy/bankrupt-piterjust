@@ -115,6 +115,10 @@ namespace bankrupt_piterjust.Services
                     { "<электронный_адрес_заказчика>", person.Email ?? "-" } // Use null-coalescing operator to provide a default value
                 };
 
+                // Add gender-based ending tag
+                string genderEnding = person.IsMale ? "-ый" : "-ая";
+                replacements.Add("<окончание_пола>", genderEnding);
+
                 // Replace tags in document
                 using (WordprocessingDocument document = WordprocessingDocument.Open(outputPath, true))
                 {

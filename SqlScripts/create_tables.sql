@@ -95,13 +95,14 @@ CREATE TABLE public.payment_schedule (
 );
 
 CREATE TABLE public.person (
-	person_id serial4 NOT NULL,
-	last_name varchar(100) NOT NULL,
-	first_name varchar(100) NOT NULL,
-	middle_name varchar(100) NULL,
-	phone varchar(20) NULL,
-	email varchar(100) NULL,
-	CONSTRAINT person_pkey PRIMARY KEY (person_id)
+        person_id serial4 NOT NULL,
+        last_name varchar(100) NOT NULL,
+        first_name varchar(100) NOT NULL,
+        middle_name varchar(100) NULL,
+        is_male boolean DEFAULT true,
+        phone varchar(20) NULL,
+        email varchar(100) NULL,
+        CONSTRAINT person_pkey PRIMARY KEY (person_id)
 );
 
 CREATE TABLE public.status (
