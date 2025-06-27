@@ -287,9 +287,15 @@ namespace bankrupt_piterjust.ViewModels
         public decimal Stage1Amount
         {
             get => _stage1Amount;
-            set
-            {
-                _stage1Amount = Math.Round(value, 2);
+            set {
+                var newValue = Math.Round(value, 2);
+                if (newValue + Stage2Amount + Stage3Amount > ServicesAmount)
+                {
+                    MessageBox.Show("Сумма этапов не может превышать сумму юридических услуг", "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                _stage1Amount = newValue;
+
                 OnPropertyChanged(nameof(Stage1Amount));
             }
         }
@@ -297,9 +303,15 @@ namespace bankrupt_piterjust.ViewModels
         public decimal Stage2Amount
         {
             get => _stage2Amount;
-            set
-            {
-                _stage2Amount = Math.Round(value, 2);
+            set {
+                var newValue = Math.Round(value, 2);
+                if (Stage1Amount + newValue + Stage3Amount > ServicesAmount)
+                {
+                    MessageBox.Show("Сумма этапов не может превышать сумму юридических услуг", "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                _stage2Amount = newValue;
+
                 OnPropertyChanged(nameof(Stage2Amount));
             }
         }
@@ -307,9 +319,15 @@ namespace bankrupt_piterjust.ViewModels
         public decimal Stage3Amount
         {
             get => _stage3Amount;
-            set
-            {
-                _stage3Amount = Math.Round(value, 2);
+
+            set {
+                var newValue = Math.Round(value, 2);
+                if (Stage1Amount + Stage2Amount + newValue > ServicesAmount)
+                {
+                    MessageBox.Show("Сумма этапов не может превышать сумму юридических услуг", "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                _stage3Amount = newValue;
                 OnPropertyChanged(nameof(Stage3Amount));
             }
         }
