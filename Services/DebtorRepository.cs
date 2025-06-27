@@ -124,9 +124,18 @@ namespace bankrupt_piterjust.Services
             string createAddressTableSql = @"
                 CREATE TABLE IF NOT EXISTS address (
                     address_id SERIAL PRIMARY KEY,
-                    person_id INTEGER NOT NULL REFERENCES person(person_id),
+                    person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
                     address_type address_type_enum NOT NULL,
-                    address_text TEXT NOT NULL
+                    postal_code VARCHAR(20),
+                    country VARCHAR(100) NOT NULL DEFAULT 'Россия',
+                    region VARCHAR(100),
+                    district VARCHAR(100),
+                    city VARCHAR(100),
+                    locality VARCHAR(100),
+                    street VARCHAR(100),
+                    house_number VARCHAR(20),
+                    building VARCHAR(20),
+                    apartment VARCHAR(20)
                 )";
 
             await _databaseService.ExecuteNonQueryAsync(createAddressTableSql);
@@ -327,14 +336,47 @@ namespace bankrupt_piterjust.Services
                     };
 
                     string insertAddressSql = @"
-                        INSERT INTO address (person_id, address_type, address_text)
-                        VALUES (@personId, @addressType::address_type_enum, @addressText)";
+                        INSERT INTO address (
+                            person_id,
+                            address_type,
+                            postal_code,
+                            country,
+                            region,
+                            district,
+                            city,
+                            locality,
+                            street,
+                            house_number,
+                            building,
+                            apartment)
+                        VALUES (
+                            @personId,
+                            @addressType::address_type_enum,
+                            @postalCode,
+                            @country,
+                            @region,
+                            @district,
+                            @city,
+                            @locality,
+                            @street,
+                            @houseNumber,
+                            @building,
+                            @apartment)";
 
                     var addressParams = new Dictionary<string, object>
                     {
                         { "@personId", personId },
                         { "@addressType", addressTypeValue },
-                        { "@addressText", address.AddressText }
+                        { "@postalCode", address.PostalCode ?? (object)DBNull.Value },
+                        { "@country", address.Country },
+                        { "@region", address.Region ?? (object)DBNull.Value },
+                        { "@district", address.District ?? (object)DBNull.Value },
+                        { "@city", address.City ?? (object)DBNull.Value },
+                        { "@locality", address.Locality ?? (object)DBNull.Value },
+                        { "@street", address.Street ?? (object)DBNull.Value },
+                        { "@houseNumber", address.HouseNumber ?? (object)DBNull.Value },
+                        { "@building", address.Building ?? (object)DBNull.Value },
+                        { "@apartment", address.Apartment ?? (object)DBNull.Value }
                     };
 
                     await _databaseService.ExecuteNonQueryAsync(insertAddressSql, addressParams);
@@ -446,7 +488,16 @@ namespace bankrupt_piterjust.Services
                     AddressId = addressId,
                     PersonId = pId,
                     AddressType = addressType,
-                    AddressText = row["address_text"].ToString() ?? string.Empty
+                    PostalCode = row["postal_code"] != DBNull.Value ? row["postal_code"].ToString() : null,
+                    Country = row["country"].ToString() ?? "Россия",
+                    Region = row["region"] != DBNull.Value ? row["region"].ToString() : null,
+                    District = row["district"] != DBNull.Value ? row["district"].ToString() : null,
+                    City = row["city"] != DBNull.Value ? row["city"].ToString() : null,
+                    Locality = row["locality"] != DBNull.Value ? row["locality"].ToString() : null,
+                    Street = row["street"] != DBNull.Value ? row["street"].ToString() : null,
+                    HouseNumber = row["house_number"] != DBNull.Value ? row["house_number"].ToString() : null,
+                    Building = row["building"] != DBNull.Value ? row["building"].ToString() : null,
+                    Apartment = row["apartment"] != DBNull.Value ? row["apartment"].ToString() : null
                 });
             }
 
@@ -594,12 +645,47 @@ namespace bankrupt_piterjust.Services
                     AddressType.Mailing => "mailing",
                     _ => "registration"
                 };
-                string insertSql = @"INSERT INTO address (person_id, address_type, address_text) VALUES (@pid, @type::address_type_enum, @text)";
+                string insertSql = @"INSERT INTO address (
+                                        person_id,
+                                        address_type,
+                                        postal_code,
+                                        country,
+                                        region,
+                                        district,
+                                        city,
+                                        locality,
+                                        street,
+                                        house_number,
+                                        building,
+                                        apartment)
+                                    VALUES (
+                                        @pid,
+                                        @type::address_type_enum,
+                                        @postalCode,
+                                        @country,
+                                        @region,
+                                        @district,
+                                        @city,
+                                        @locality,
+                                        @street,
+                                        @houseNumber,
+                                        @building,
+                                        @apartment)";
+
                 var p = new Dictionary<string, object>
                 {
                     {"@pid", personId},
                     {"@type", typeValue},
-                    {"@text", address.AddressText}
+                    {"@postalCode", address.PostalCode ?? (object)DBNull.Value },
+                    {"@country", address.Country },
+                    {"@region", address.Region ?? (object)DBNull.Value },
+                    {"@district", address.District ?? (object)DBNull.Value },
+                    {"@city", address.City ?? (object)DBNull.Value },
+                    {"@locality", address.Locality ?? (object)DBNull.Value },
+                    {"@street", address.Street ?? (object)DBNull.Value },
+                    {"@houseNumber", address.HouseNumber ?? (object)DBNull.Value },
+                    {"@building", address.Building ?? (object)DBNull.Value },
+                    {"@apartment", address.Apartment ?? (object)DBNull.Value }
                 };
                 await _databaseService.ExecuteNonQueryAsync(insertSql, p);
             }
