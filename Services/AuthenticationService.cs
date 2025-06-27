@@ -11,9 +11,6 @@ namespace bankrupt_piterjust.Services
             _databaseService = new DatabaseService();
         }
 
-        /// <summary>
-        /// Authenticates an employee by login and password using PostgreSQL crypt function
-        /// </summary>
         public async Task<Employee?> AuthenticateAsync(string login, string password)
         {
             if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password))
@@ -23,14 +20,11 @@ namespace bankrupt_piterjust.Services
 
             try
             {
-                // Test database connection first
                 if (!await _databaseService.TestConnectionAsync())
                 {
                     return null;
                 }
 
-                // Use PostgreSQL crypt function to verify password
-                // The crypt function takes plain password and stored hash and returns the same hash if they match
                 string sql = @"
                     SELECT 
                         employee_id, 
@@ -55,7 +49,7 @@ namespace bankrupt_piterjust.Services
 
                 if (dataTable.Rows.Count == 0)
                 {
-                    return null; // User not found
+                    return null;
                 }
 
                 var row = dataTable.Rows[0];
@@ -63,7 +57,7 @@ namespace bankrupt_piterjust.Services
 
                 if (!passwordMatches)
                 {
-                    return null; // Wrong password
+                    return null;
                 }
 
                 return new Employee
@@ -80,7 +74,6 @@ namespace bankrupt_piterjust.Services
             }
             catch (Exception ex)
             {
-                // Log error but don't expose details to UI
                 System.Diagnostics.Debug.WriteLine($"Authentication error: {ex.Message}");
                 return null;
             }

@@ -6,14 +6,13 @@ namespace bankrupt_piterjust.Services
 {
     public class DatabaseService
     {
-        private string _connectionString;
+        private string _connectionString = string.Empty;
         private bool _connectionTested = false;
         private bool _connectionAvailable = false;
         private readonly object _connectionLock = new object();
 
         public DatabaseService()
         {
-            // Load connection string from configuration
             UpdateConnectionString();
         }
 
@@ -23,15 +22,10 @@ namespace bankrupt_piterjust.Services
             _connectionString = config.GetConnectionString();
         }
 
-        /// <summary>
-        /// Tests the database connection and returns true if successful
-        /// </summary>
         public async Task<bool> TestConnectionAsync()
         {
-            // Refresh connection string from current configuration
             UpdateConnectionString();
 
-            // Use a lock to prevent multiple concurrent connection tests
             lock (_connectionLock)
             {
                 if (_connectionTested && _connectionAvailable)
@@ -43,11 +37,8 @@ namespace bankrupt_piterjust.Services
                 using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
 
-                // Test basic functionality and pgcrypto extension
                 await using var cmd = new NpgsqlCommand("SELECT 1", connection);
-                await cmd.ExecuteScalarAsync(); // Ensure we can actually execute commands
-
-                // Test if pgcrypto extension is available
+                await cmd.ExecuteScalarAsync();
                 await using var cryptoCmd = new NpgsqlCommand("SELECT crypt('test', gen_salt('bf'))", connection);
                 await cryptoCmd.ExecuteScalarAsync();
 

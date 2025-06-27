@@ -4,9 +4,6 @@ using System.Windows.Data;
 
 namespace bankrupt_piterjust.Converters
 {
-    /// <summary>
-    /// Converts a string equality check to a Visibility (Equal = Visible, Not Equal = Collapsed)
-    /// </summary>
     public class StringEqualsToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -23,9 +20,6 @@ namespace bankrupt_piterjust.Converters
         }
     }
 
-    /// <summary>
-    /// Converts a string inequality check to a Visibility (Not Equal = Visible, Equal = Collapsed)
-    /// </summary>
     public class StringNotEqualsToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -42,9 +36,6 @@ namespace bankrupt_piterjust.Converters
         }
     }
 
-    /// <summary>
-    /// Converts a string equality check to a boolean (Equal = true, Not Equal = false)
-    /// </summary>
     public class StringEqualsConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -63,10 +54,6 @@ namespace bankrupt_piterjust.Converters
             return null;
         }
     }
-
-    /// <summary>
-    /// Converts a boolean to a Visibility (true = Visible, false = Collapsed)
-    /// </summary>
     public class BooleanToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -83,9 +70,6 @@ namespace bankrupt_piterjust.Converters
         }
     }
 
-    /// <summary>
-    /// Converts a boolean to its inverse (true = false, false = true)
-    /// </summary>
     public class BooleanToInverseConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -105,9 +89,6 @@ namespace bankrupt_piterjust.Converters
         }
     }
 
-    /// <summary>
-    /// Converts a boolean value to different values depending on true or false condition
-    /// </summary>
     public class BoolToValueConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

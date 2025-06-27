@@ -1,4 +1,3 @@
-// Commands/RelayCommand.cs
 using System.Windows.Input;
 
 namespace bankrupt_piterjust.Commands
@@ -24,9 +23,6 @@ namespace bankrupt_piterjust.Commands
             remove => CommandManager.RequerySuggested -= value;
         }
 
-        /// <summary>
-        /// Method to manually trigger CanExecuteChanged event
-        /// </summary>
         public void RaiseCanExecuteChanged()
         {
             CommandManager.InvalidateRequerySuggested();

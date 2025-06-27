@@ -9,28 +9,20 @@ namespace bankrupt_piterjust.Helpers
         private static readonly string[] hundreds = new string[] { "", "сто", "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот" };
         private static readonly string[] unitsForThousands = new string[] { "", "одна", "две", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять" };
 
-        /// <summary>
-        /// Converts a numeric value to words in Russian
-        /// </summary>
         public static string ConvertToWords(decimal number)
         {
-            // Округление до копеек
             number = Math.Round(number, 2);
 
-            // Разделить на рубли и копейки
             int rubles = (int)number;
             int kopecks = (int)((number - rubles) * 100);
 
             var result = new StringBuilder();
 
-            // Конвертируем рубли
             result.Append(ConvertNumberToWords(rubles));
 
-            // Определяем склонение для слова "рубль"
             result.Append(" ");
             result.Append(GetRubleForm(rubles));
 
-            // Добавляем копейки
             result.Append(" ");
             if (kopecks < 10)
                 result.Append("0");
@@ -38,7 +30,6 @@ namespace bankrupt_piterjust.Helpers
             result.Append(" ");
             result.Append(GetKopeckForm(kopecks));
 
-            // Первая буква должна быть заглавной
             if (result.Length > 0)
             {
                 result[0] = char.ToUpper(result[0]);
@@ -54,7 +45,6 @@ namespace bankrupt_piterjust.Helpers
 
             var words = new StringBuilder();
 
-            // Миллионы
             if (number >= 1000000)
             {
                 int millions = number / 1000000;
@@ -66,7 +56,6 @@ namespace bankrupt_piterjust.Helpers
                     words.Append(" ");
             }
 
-            // Тысячи
             if (number >= 1000)
             {
                 int thousands = number / 1000;
@@ -78,7 +67,6 @@ namespace bankrupt_piterjust.Helpers
                     words.Append(" ");
             }
 
-            // Остаток
             if (number > 0)
             {
                 words.Append(ConvertLessThanThousand(number));
@@ -91,7 +79,6 @@ namespace bankrupt_piterjust.Helpers
         {
             var words = new StringBuilder();
 
-            // Сотни
             if (number >= 100)
             {
                 words.Append(hundreds[number / 100]);
@@ -100,7 +87,6 @@ namespace bankrupt_piterjust.Helpers
                     words.Append(" ");
             }
 
-            // Десятки и единицы
             if (number > 0)
             {
                 if (number < 20)
@@ -126,7 +112,6 @@ namespace bankrupt_piterjust.Helpers
         {
             var words = new StringBuilder();
 
-            // Сотни
             if (number >= 100)
             {
                 words.Append(hundreds[number / 100]);
@@ -135,13 +120,12 @@ namespace bankrupt_piterjust.Helpers
                     words.Append(" ");
             }
 
-            // Десятки и единицы
             if (number > 0)
             {
                 if (number < 20)
                 {
                     if (number < 10)
-                        words.Append(unitsForThousands[number]); // для тысяч женский род для 1 и 2
+                        words.Append(unitsForThousands[number]);
                     else
                         words.Append(units[number]);
                 }
@@ -153,7 +137,7 @@ namespace bankrupt_piterjust.Helpers
                     {
                         words.Append(" ");
                         if (unit < 3)
-                            words.Append(unitsForThousands[unit]); // для тысяч женский род для 1 и 2
+                            words.Append(unitsForThousands[unit]);
                         else
                             words.Append(units[unit]);
                     }

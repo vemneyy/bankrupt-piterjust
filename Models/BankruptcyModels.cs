@@ -8,8 +8,6 @@ namespace bankrupt_piterjust.Models
         public string? MiddleName { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
-
-        // Helper property to get full name
         public string FullName => $"{LastName} {FirstName} {MiddleName}".Trim();
     }
 
@@ -57,7 +55,7 @@ namespace bankrupt_piterjust.Models
         public int RepresentativeId { get; set; }
         public int CompanyId { get; set; }
         public int PersonId { get; set; }
-        public string Basis { get; set; } = string.Empty; // основание_действий_представителя
+        public string Basis { get; set; } = string.Empty;
     }
 
     public class Contract
@@ -88,7 +86,6 @@ namespace bankrupt_piterjust.Models
         public DateTime? DueDate { get; set; }
     }
 
-    // Модель для сотрудников
     public class Employee
     {
         public int EmployeeId { get; set; }
@@ -99,8 +96,6 @@ namespace bankrupt_piterjust.Models
         public string Login { get; set; } = string.Empty;
         public DateTime? CreatedDate { get; set; }
         public bool IsActive { get; set; } = true;
-
-        // Helper property to get full name
         public string FullName => $"{LastName} {FirstName} {MiddleName ?? ""}".Trim();
     }
 }
