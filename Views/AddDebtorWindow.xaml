@@ -381,15 +381,14 @@
                                     <DatePicker SelectedDate="{Binding ContractDate}" Style="{StaticResource FormDatePicker}"/>
                                 </StackPanel>
                             </Grid>
-
-                            <TextBlock Text="Финансовые условия" Style="{StaticResource HeaderTextBlock}" Margin="10,20,0,10"/>
+                            <TextBlock Text="Финансовые условия" Style="{StaticResource HeaderTextBlock}"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
-                                    <TextBlock Text="Сумма договора (руб.)" Style="{StaticResource FormTextBlock}"/>
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Language="ru-ru" Text="Общая "/><Run Language="ru-ru" Text="с"/><Run Text="умма договора (руб.)"/></TextBlock>
                                     <TextBox Text="{Binding TotalCost}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                                 <Button Grid.Column="1" Content="Сумма прописью" Command="{Binding CalculateTotalWordsCommand}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" Margin="0,0,0,10" Height="36" Width="150"/>
@@ -404,11 +403,11 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
-                                    <TextBlock Text="Сумма услуг (руб.)" Style="{StaticResource FormTextBlock}"/>
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Сумма "/><Run Language="ru-ru" Text="юридических "/><Run Text="услуг (руб.)"/></TextBlock>
                                     <TextBox Text="{Binding ServicesAmount}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Сумма расходов (руб.)" Style="{StaticResource FormTextBlock}"/>
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Сумма "/><Run Language="ru-ru" Text="обязательных "/><Run Text="расходов (руб.)"/></TextBlock>
                                     <TextBox Text="{Binding ExpensesAmount}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                             </Grid>
