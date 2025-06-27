@@ -366,15 +366,9 @@
                                     <TextBox Text="{Binding PassportDivisionCode, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DivisionCodeConverter}}" Style="{StaticResource FormTextBox}" MaxLength="7"/>
                                 </StackPanel>
                             </Grid>
-                            <TextBlock Text="Адреса" Style="{StaticResource HeaderTextBlock}"/>
                             <TextBlock Text="Адрес регистрации *" Style="{StaticResource FormTextBlock}"/>
                             <TextBox Text="{Binding RegistrationAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                            <CheckBox Content="Адрес проживания совпадает с адресом регистрации" IsChecked="{Binding SameAsRegistration}" Style="{StaticResource FormCheckBox}"/>
-                            <TextBlock Text="Адрес проживания" Style="{StaticResource FormTextBlock}" IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
-                            <TextBox Text="{Binding ResidenceAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}" IsEnabled="{Binding SameAsRegistration, Converter={StaticResource BooleanToInverseConverter}}"/>
-                            <CheckBox Content="Почтовый адрес совпадает с адресом проживания" IsChecked="{Binding SameAsResidence}" Style="{StaticResource FormCheckBox}"/>
-                            <TextBlock Text="Почтовый адрес" Style="{StaticResource FormTextBlock}" IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}"/>
-                            <TextBox Text="{Binding MailingAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}" IsEnabled="{Binding SameAsResidence, Converter={StaticResource BooleanToInverseConverter}}"/>
+                            
                         </StackPanel>
                     </Grid>
                 </TabItem>
