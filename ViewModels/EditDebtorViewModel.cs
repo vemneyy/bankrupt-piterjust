@@ -358,6 +358,7 @@ namespace bankrupt_piterjust.ViewModels
                 }
 
                 OnPropertyChanged(nameof(PaymentSchedule));
+                ScheduleMonths = _paymentSchedule.Count;
                 UpdateScheduleTotal();
             }
         }
@@ -419,6 +420,27 @@ namespace bankrupt_piterjust.ViewModels
 
                 SameAsRegistration = FormatAddress(ResidenceAddress) == FormatAddress(RegistrationAddress) && !ResidenceAddress.IsEmpty();
                 SameAsResidence = FormatAddress(MailingAddress) == FormatAddress(ResidenceAddress) && !MailingAddress.IsEmpty();
+
+                var fullRepo = new FullDatabaseRepository();
+                int debtorId = await fullRepo.GetDebtorIdByPersonIdAsync(_personId);
+                var contract = await fullRepo.GetLatestContractByDebtorIdAsync(debtorId);
+                if (contract != null)
+                {
+                    ContractNumber = contract.ContractNumber;
+                    ContractCity = contract.City;
+                    ContractDate = contract.ContractDate;
+                    TotalCost = contract.TotalCost;
+                    MandatoryExpenses = contract.MandatoryExpenses;
+                    ManagerFee = contract.ManagerFee;
+                    OtherExpenses = contract.OtherExpenses;
+                    Stage1Amount = contract.Stage1Cost;
+                    Stage2Amount = contract.Stage2Cost;
+                    Stage3Amount = contract.Stage3Cost;
+
+                    var schedule = await fullRepo.GetPaymentScheduleByContractIdAsync(contract.ContractId);
+                    PaymentSchedule = new ObservableCollection<PaymentSchedule>(schedule);
+                    ScheduleMonths = PaymentSchedule.Count;
+                }
             }
             catch (Exception ex)
             {
@@ -546,6 +568,7 @@ namespace bankrupt_piterjust.ViewModels
                 foreach (PaymentSchedule item in e.NewItems)
                     item.PropertyChanged += PaymentItem_PropertyChanged;
             }
+            ScheduleMonths = PaymentSchedule.Count;
             UpdateScheduleTotal();
         }
 
