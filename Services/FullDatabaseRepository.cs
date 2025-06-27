@@ -155,9 +155,7 @@ namespace bankrupt_piterjust.Services
                     debtor_id INTEGER NOT NULL REFERENCES debtor(debtor_id) ON DELETE CASCADE ON UPDATE CASCADE,
                     employee_id INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE ON UPDATE CASCADE,
                     total_cost NUMERIC(12, 2) NOT NULL,
-                    total_cost_words TEXT,
                     mandatory_expenses NUMERIC(12, 2) NOT NULL,
-                    mandatory_expenses_words TEXT,
                     manager_fee NUMERIC(12, 2) NOT NULL,
                     other_expenses NUMERIC(12, 2) NOT NULL,
                     first_stage_cost NUMERIC(12, 2),
@@ -438,10 +436,10 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 INSERT INTO contract (contract_number, city, contract_date, debtor_id, employee_id,
-                                    total_cost, total_cost_words, mandatory_expenses, mandatory_expenses_words,
+                                    total_cost, mandatory_expenses,
                                     manager_fee, other_expenses, first_stage_cost, second_stage_cost, third_stage_cost)
                 VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId,
-                        @totalCost, @totalCostWords, @mandatoryExpenses, @mandatoryExpensesWords,
+                        @totalCost, @mandatoryExpenses,
                         @managerFee, @otherExpenses, @stage1, @stage2, @stage3)
                 RETURNING contract_id";
 
@@ -453,9 +451,7 @@ namespace bankrupt_piterjust.Services
                 { "@debtorId", contract.DebtorId },
                 { "@employeeId", contract.EmployeeId },
                 { "@totalCost", contract.TotalCost },
-                { "@totalCostWords", contract.TotalCostWords ?? (object)DBNull.Value },
                 { "@mandatoryExpenses", contract.MandatoryExpenses },
-                { "@mandatoryExpensesWords", contract.MandatoryExpensesWords ?? (object)DBNull.Value },
                 { "@managerFee", contract.ManagerFee },
                 { "@otherExpenses", contract.OtherExpenses },
                 { "@stage1", contract.Stage1Cost },
@@ -623,8 +619,7 @@ namespace bankrupt_piterjust.Services
                 UPDATE contract SET 
                     contract_number = @contractNumber, city = @city, contract_date = @contractDate,
                     debtor_id = @debtorId, employee_id = @employeeId, total_cost = @totalCost,
-                    total_cost_words = @totalCostWords, mandatory_expenses = @mandatoryExpenses,
-                    mandatory_expenses_words = @mandatoryExpensesWords, manager_fee = @managerFee,
+                    mandatory_expenses = @mandatoryExpenses, manager_fee = @managerFee,
                     other_expenses = @otherExpenses,
                     first_stage_cost = @stage1,
                     second_stage_cost = @stage2,

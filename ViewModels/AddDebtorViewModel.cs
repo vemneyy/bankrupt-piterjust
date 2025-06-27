@@ -318,7 +318,7 @@ namespace bankrupt_piterjust.ViewModels
 
         // Payment schedule properties
         private int _scheduleMonths = 12;
-        private ObservableCollection<PaymentSchedule> _paymentSchedule = new();
+        private ObservableCollection<PaymentSchedule> _paymentSchedule = [];
 
         public int ScheduleMonths
         {

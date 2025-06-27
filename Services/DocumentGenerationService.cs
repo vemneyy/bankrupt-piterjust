@@ -88,13 +88,6 @@ namespace bankrupt_piterjust.Services
                 decimal servicesAmount = contractInfo.TotalCost - contractInfo.MandatoryExpenses;
                 decimal otherExpenses = contractInfo.OtherExpenses;
 
-                string contractTotalCostWords = !string.IsNullOrWhiteSpace(contractInfo.TotalCostWords)
-                    ? contractInfo.TotalCostWords!
-                    : NumberToWordsConverter.ConvertToWords(contractTotalCost);
-                string mandatoryExpensesWords = !string.IsNullOrWhiteSpace(contractInfo.MandatoryExpensesWords)
-                    ? contractInfo.MandatoryExpensesWords!
-                    : NumberToWordsConverter.ConvertToWords(mandatoryExpenses);
-
                 // Representative information
                 string representativeName = representative.FullName;
                 string representativePosition = representative.Position;
@@ -119,7 +112,7 @@ namespace bankrupt_piterjust.Services
                     { "<cтоимость_юридических_услуг>", servicesAmount.ToString("#,##0.00") }, // Changed from contractTotalCost to managerFee
                     { "<cтоимость_юридических_услуг_прописью>", NumberToWordsConverter.ConvertToWords(servicesAmount) }, // Changed from contractTotalCostWords to direct conversion
                     { "<сумма_обязательных_расходов>", mandatoryExpenses.ToString("#,##0.00") },
-                    { "<сумма_обязательных_расходов_прописью>", mandatoryExpensesWords },
+                    { "<сумма_обязательных_расходов_прописью>", NumberToWordsConverter.ConvertToWords(mandatoryExpenses) },
                     { "<размер_вознаграждения_фин_управляющего>", managerFee.ToString("#,##0.00") },
                     { "<прочие_расходы_банкротства>", otherExpenses.ToString("#,##0.00") },
                     { "<стоимость_первого_этапа>", contractInfo.Stage1Cost.ToString("#,##0.00") },

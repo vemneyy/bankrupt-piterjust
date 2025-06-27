@@ -225,4 +225,167 @@ namespace bankrupt_piterjust.Converters
             return 0m;
         }
     }
+
+    /// <summary>
+    /// Конвертер для форматирования мобильного телефона в формате +7 (921) 444-31-23
+    /// </summary>
+    public class PhoneConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return string.Empty;
+            
+            string input = value.ToString() ?? string.Empty;
+            return FormatPhone(input);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return string.Empty;
+            
+            string input = value.ToString() ?? string.Empty;
+            return FormatPhone(input);
+        }
+
+        private string FormatPhone(string input)
+        {
+            // Удаляем все символы кроме цифр
+            string digitsOnly = Regex.Replace(input, @"[^\d]", "");
+            
+            // Если пустая строка, возвращаем пустую
+            if (string.IsNullOrEmpty(digitsOnly)) return string.Empty;
+            
+            // Нормализуем номер: если начинается с 8 и длина 11, заменяем на 7
+            if (digitsOnly.StartsWith("8") && digitsOnly.Length == 11)
+            {
+                digitsOnly = "7" + digitsOnly.Substring(1);
+            }
+            
+            // Если номер начинается с 7 и длина больше 11, обрезаем
+            if (digitsOnly.StartsWith("7") && digitsOnly.Length > 11)
+            {
+                digitsOnly = digitsOnly.Substring(0, 11);
+            }
+            
+            // Если номер не начинается с 7 или 8
+            if (!digitsOnly.StartsWith("7") && !digitsOnly.StartsWith("8"))
+            {
+                // Если длина 10 цифр, добавляем 7 в начало
+                if (digitsOnly.Length == 10)
+                {
+                    digitsOnly = "7" + digitsOnly;
+                }
+                // Если больше 10, обрезаем до 10 и добавляем 7
+                else if (digitsOnly.Length > 10)
+                {
+                    digitsOnly = "7" + digitsOnly.Substring(0, 10);
+                }
+                // Если меньше 10, добавляем 7 в начало
+                else if (digitsOnly.Length > 0)
+                {
+                    digitsOnly = "7" + digitsOnly;
+                }
+            }
+            
+            // Теперь форматируем номер
+            if (digitsOnly.Length == 0) return string.Empty;
+            
+            // Номер должен начинаться с 7 после нормализации
+            if (!digitsOnly.StartsWith("7"))
+            {
+                return digitsOnly; // Возвращаем как есть если что-то пошло не так
+            }
+            
+            // Форматируем поэтапно
+            if (digitsOnly.Length == 1) return "+7";
+            if (digitsOnly.Length <= 4)
+            {
+                return $"+7 ({digitsOnly.Substring(1)}";
+            }
+            if (digitsOnly.Length <= 7)
+            {
+                string code = digitsOnly.Substring(1, 3);
+                string rest = digitsOnly.Substring(4);
+                return $"+7 ({code}) {rest}";
+            }
+            if (digitsOnly.Length <= 9)
+            {
+                string code = digitsOnly.Substring(1, 3);
+                string part1 = digitsOnly.Substring(4, 3);
+                string part2 = digitsOnly.Substring(7);
+                return $"+7 ({code}) {part1}-{part2}";
+            }
+            if (digitsOnly.Length == 10)
+            {
+                // Это случай когда у нас 10 цифр без 7, но мы уже добавили 7, значит теперь 11
+                string code = digitsOnly.Substring(1, 3);
+                string part1 = digitsOnly.Substring(4, 3);
+                string part2 = digitsOnly.Substring(7, 2);
+                string part3 = digitsOnly.Substring(9);
+                return $"+7 ({code}) {part1}-{part2}-{part3}";
+            }
+            if (digitsOnly.Length == 11)
+            {
+                string code = digitsOnly.Substring(1, 3);
+                string part1 = digitsOnly.Substring(4, 3);
+                string part2 = digitsOnly.Substring(7, 2);
+                string part3 = digitsOnly.Substring(9, 2);
+                return $"+7 ({code}) {part1}-{part2}-{part3}";
+            }
+            
+            return input; // Возвращаем исходную строку если не удалось форматировать
+        }
+    }
+
+    /// <summary>
+    /// Конвертер для валидации и форматирования email
+    /// </summary>
+    public class EmailConverter : IValueConverter
+    {
+        private static readonly Regex EmailRegex = new Regex(
+            @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+            RegexOptions.Compiled);
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value?.ToString() ?? string.Empty;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return string.Empty;
+            
+            string email = value.ToString() ?? string.Empty;
+            
+            // Приводим к нижнему регистру и удаляем лишние пробелы
+            email = email.Trim().ToLowerInvariant();
+            
+            return email;
+        }
+
+        public static bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return true; // Пустой email считается валидным (необязательное поле)
+            return EmailRegex.IsMatch(email);
+        }
+    }
+
+    /// <summary>
+    /// Конвертер для валидации email с визуальной индикацией ошибки
+    /// </summary>
+    public class EmailValidationConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return true;
+            
+            string email = value.ToString() ?? string.Empty;
+            return EmailConverter.IsValidEmail(email);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

@@ -34,6 +34,9 @@
         <conv:PassportNumberConverter     x:Key="PassportNumberConverter"/>
         <conv:DivisionCodeConverter       x:Key="DivisionCodeConverter"/>
         <conv:CurrencyConverter           x:Key="CurrencyConverter"/>
+        <conv:PhoneConverter              x:Key="PhoneConverter"/>
+        <conv:EmailConverter              x:Key="EmailConverter"/>
+        <conv:EmailValidationConverter    x:Key="EmailValidationConverter"/>
 
         <!-- Styles -->
         <Style x:Key="HeaderTextBlock" TargetType="TextBlock">
@@ -66,6 +69,15 @@
                 <Trigger Property="IsFocused" Value="True">
                     <Setter Property="BorderBrush" Value="#007BFF"/>
                 </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="FormTextBoxWithValidation" TargetType="TextBox" BasedOn="{StaticResource FormTextBox}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}, Converter={StaticResource EmailValidationConverter}}" Value="False">
+                    <Setter Property="BorderBrush" Value="#DC3545"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -312,11 +324,11 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                     <TextBlock Text="Телефон" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource PhoneConverter}}" Style="{StaticResource FormTextBox}" MaxLength="18"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="E-mail" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource EmailConverter}}" Style="{StaticResource FormTextBoxWithValidation}"/>
                                 </StackPanel>
                             </Grid>
                             <TextBlock Text="Паспортные данные" Style="{StaticResource HeaderTextBlock}"/>
@@ -412,10 +424,21 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Обязательные расходы (руб.)"/></TextBlock>
+                                    <TextBox Text="{Binding MandatoryExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Вознаграждение фин. управляющего (руб.)"/></TextBlock>
                                     <TextBox Text="{Binding ManagerFee, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
-                                <StackPanel Grid.Column="1">
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Прочие расходы (руб.)"/></TextBlock>
                                     <TextBox Text="{Binding OtherExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
