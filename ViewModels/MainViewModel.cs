@@ -294,7 +294,7 @@ namespace bankrupt_piterjust.ViewModels
 
             // Status change commands
             ShowStatusSelectionCommand = new RelayCommand(o => ShowStatusSelection(), o => SelectedDebtor != null);
-            ChangeStatusCommand = new RelayCommand(async o => await ChangeDebtorStatusAsync(), o => !string.IsNullOrEmpty(SelectedStatus));
+            ChangeStatusCommand = new RelayCommand(async o => await ChangeDebtorStatusAsync(), o => !string.IsNullOrEmpty(SelectedStatus) && SelectedDebtor?.PersonId.HasValue == true);
             CancelStatusSelectionCommand = new RelayCommand(o => IsStatusSelectionVisible = false);
 
             // Устанавливаем начальные активные вкладки
@@ -335,9 +335,10 @@ namespace bankrupt_piterjust.ViewModels
             IsStatusSelectionVisible = true;
         }
 
+        // Updated code to handle nullable value type safely
         private async Task ChangeDebtorStatusAsync()
         {
-            if (SelectedDebtor == null || string.IsNullOrEmpty(SelectedStatus) || SelectedDebtor.PersonId == null)
+            if (SelectedDebtor == null || string.IsNullOrEmpty(SelectedStatus) || !SelectedDebtor.PersonId.HasValue)
             {
                 MessageBox.Show("Не выбран должник или отсутствует идентификатор должника.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
