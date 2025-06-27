@@ -53,6 +53,14 @@ namespace bankrupt_piterjust.Models
         public string? Email { get; set; }
     }
 
+    public class Basis
+    {
+        public int BasisId { get; set; }
+        public string BasisType { get; set; } = string.Empty;
+        public string DocumentNumber { get; set; } = string.Empty;
+        public DateTime DocumentDate { get; set; }
+    }
+
     public class Employee
     {
         public int EmployeeId { get; set; }
@@ -61,7 +69,9 @@ namespace bankrupt_piterjust.Models
         public string PasswordHash { get; set; } = string.Empty;
         public DateTime? CreatedDate { get; set; }
         public bool IsActive { get; set; } = true;
+        public int? BasisId { get; set; }
         public string? Basis { get; set; }
+        public Basis? BasisInfo { get; set; }
         public int? PersonId { get; set; }
 
         // Navigation properties
