@@ -565,117 +565,120 @@
                 Padding="20" 
                 Width="320">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <!-- View mode -->
-                <StackPanel x:Name="ViewPanel">
-                    <StackPanel.Style>
-                        <Style TargetType="StackPanel">
-                            <Setter Property="Visibility" Value="Visible"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsEditMode}" Value="True">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </StackPanel.Style>
-                    <!-- Заголовок -->
-                    <TextBlock Text="Информация о должнике" 
-                              FontSize="18" 
-                              FontWeight="Bold" 
-                              Foreground="{StaticResource DarkTextBrush}"
-                              Margin="0,0,0,20"/>
+                <Grid>
+                    <!-- View mode -->
+                    <StackPanel x:Name="ViewPanel">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsEditMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <!-- Заголовок -->
+                        <TextBlock Text="Информация о должнике" 
+                                  FontSize="18" 
+                                  FontWeight="Bold" 
+                                  Foreground="{StaticResource DarkTextBrush}"
+                                  Margin="0,0,0,20"/>
 
-                    <!-- Основные данные -->
-                    <TextBlock Text="ФИО" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedDebtor.FullName}" Style="{StaticResource DetailValueStyle}"/>
+                        <!-- Основные данные -->
+                        <TextBlock Text="ФИО" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBlock Text="{Binding SelectedDebtor.FullName}" Style="{StaticResource DetailValueStyle}"/>
 
-                    <TextBlock Text="Регион" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedDebtor.Region}" Style="{StaticResource DetailValueStyle}"/>
+                        <TextBlock Text="Регион" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBlock Text="{Binding SelectedDebtor.Region}" Style="{StaticResource DetailValueStyle}"/>
 
-                    <TextBlock Text="Статус" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedDebtor.Status}" Style="{StaticResource DetailValueStyle}"/>
+                        <TextBlock Text="Статус" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBlock Text="{Binding SelectedDebtor.Status}" Style="{StaticResource DetailValueStyle}"/>
 
-                    <TextBlock Text="Категория" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedDebtor.MainCategory}" Style="{StaticResource DetailValueStyle}"/>
+                        <TextBlock Text="Категория" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBlock Text="{Binding SelectedDebtor.MainCategory}" Style="{StaticResource DetailValueStyle}"/>
 
-                    <TextBlock Text="Подкатегория" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedDebtor.FilterCategory}" Style="{StaticResource DetailValueStyle}"/>
+                        <TextBlock Text="Подкатегория" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBlock Text="{Binding SelectedDebtor.FilterCategory}" Style="{StaticResource DetailValueStyle}"/>
 
-                    <TextBlock Text="Дата" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedDebtor.Date}" Style="{StaticResource DetailValueStyle}"/>
+                        <TextBlock Text="Дата" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBlock Text="{Binding SelectedDebtor.Date}" Style="{StaticResource DetailValueStyle}"/>
 
-                    <!-- Кнопки действий -->
-                    <Button Content="Сгенерировать договор" 
-                            Command="{Binding GenerateContractCommand}" 
-                            Style="{StaticResource PrimaryButton}" 
-                            IsEnabled="{Binding CanGenerateContract}"
-                            Height="40"
-                            Margin="0,30,0,0"/>
+                        <!-- Кнопки действий -->
+                        <Button Content="Сгенерировать договор" 
+                                Command="{Binding GenerateContractCommand}" 
+                                Style="{StaticResource PrimaryButton}" 
+                                IsEnabled="{Binding CanGenerateContract}"
+                                Height="40"
+                                Margin="0,30,0,0"/>
 
-                    <Button Content="Добавить в архив"
-                            Command="{Binding ArchiveDebtorCommand}" 
-                            CommandParameter="{Binding SelectedDebtor}"
-                            Style="{StaticResource SecondaryButton}" 
-                            Height="40"
-                            Margin="0,10,0,0"
-                            Visibility="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringNotEqualsToVisibilityConverter}, ConverterParameter=Архив}"/>
+                        <Button Content="Добавить в архив"
+                                Command="{Binding ArchiveDebtorCommand}" 
+                                CommandParameter="{Binding SelectedDebtor}"
+                                Style="{StaticResource SecondaryButton}" 
+                                Height="40"
+                                Margin="0,10,0,0"
+                                Visibility="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringNotEqualsToVisibilityConverter}, ConverterParameter=Архив}"/>
 
-                    <Button Content="Восстановить из архива"
-                            Command="{Binding RestoreDebtorCommand}"
-                            CommandParameter="{Binding SelectedDebtor}"
-                            Style="{StaticResource SecondaryButton}"
-                            Height="40"
-                            Margin="0,10,0,0"
-                            Visibility="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив}"/>
+                        <Button Content="Восстановить из архива"
+                                Command="{Binding RestoreDebtorCommand}"
+                                CommandParameter="{Binding SelectedDebtor}"
+                                Style="{StaticResource SecondaryButton}"
+                                Height="40"
+                                Margin="0,10,0,0"
+                                Visibility="{Binding SelectedDebtor.MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив}"/>
 
-                    <Button Content="Редактировать"
-                            Command="{Binding EditDebtorCommand}"
-                            Style="{StaticResource SecondaryButton}"
-                            Height="40"
-                            Margin="0,20,0,0"/>
-                </StackPanel>
-                <!-- Edit mode -->
-                <StackPanel x:Name="EditPanel">
-                    <StackPanel.Style>
-                        <Style TargetType="StackPanel">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsEditMode}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </StackPanel.Style>
-                    <TextBlock Text="Редактирование" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
-
-                    <TextBlock Text="Фамилия" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBox Text="{Binding SelectedPerson.LastName}" Margin="0,2,0,10"/>
-
-                    <TextBlock Text="Имя" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBox Text="{Binding SelectedPerson.FirstName}" Margin="0,2,0,10"/>
-
-                    <TextBlock Text="Отчество" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBox Text="{Binding SelectedPerson.MiddleName}" Margin="0,2,0,10"/>
-
-                    <TextBlock Text="Телефон" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBox Text="{Binding SelectedPerson.Phone}" Margin="0,2,0,10"/>
-
-                    <TextBlock Text="Email" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBox Text="{Binding SelectedPerson.Email}" Margin="0,2,0,10"/>
-
-                    <TextBlock Text="Статус" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBox Text="{Binding SelectedDebtor.Status}" Margin="0,2,0,10"/>
-
-                    <TextBlock Text="Категория" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBox Text="{Binding SelectedDebtor.MainCategory}" Margin="0,2,0,10"/>
-
-                    <TextBlock Text="Подкатегория" Style="{StaticResource DetailLabelStyle}"/>
-                    <TextBox Text="{Binding SelectedDebtor.FilterCategory}" Margin="0,2,0,10"/>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                        <Button Content="Сохранить" Command="{Binding SaveDebtorCommand}" Style="{StaticResource PrimaryButton}" Width="120" Margin="0,0,10,0"/>
-                        <Button Content="Отмена" Command="{Binding CancelEditCommand}" Style="{StaticResource SecondaryButton}" Width="120"/>
+                        <Button Content="Редактировать"
+                                Command="{Binding EditDebtorCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                Height="40"
+                                Margin="0,20,0,0"/>
                     </StackPanel>
-                </StackPanel>
+
+                    <!-- Edit mode -->
+                    <StackPanel x:Name="EditPanel">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsEditMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock Text="Редактирование" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+
+                        <TextBlock Text="Фамилия" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedPerson.LastName}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Имя" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedPerson.FirstName}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Отчество" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedPerson.MiddleName}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Телефон" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedPerson.Phone}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Email" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedPerson.Email}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Статус" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedDebtor.Status}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Категория" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedDebtor.MainCategory}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Подкатегория" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedDebtor.FilterCategory}" Margin="0,2,0,10"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                            <Button Content="Сохранить" Command="{Binding SaveDebtorCommand}" Style="{StaticResource PrimaryButton}" Width="120" Margin="0,0,10,0"/>
+                            <Button Content="Отмена" Command="{Binding CancelEditCommand}" Style="{StaticResource SecondaryButton}" Width="120"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
             </ScrollViewer>
         </Border>
     </Grid>
