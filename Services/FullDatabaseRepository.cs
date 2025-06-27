@@ -817,10 +817,10 @@ namespace bankrupt_piterjust.Services
             string sql = "SELECT debtor_id FROM debtor WHERE person_id = @personId";
             var parameters = new Dictionary<string, object> { { "@personId", personId } };
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
-            
+
             if (result == null)
                 throw new Exception($"Должник с person_id {personId} не найден в базе данных.");
-                
+
             return result is Int64 value ? (int)value : Convert.ToInt32(result);
         }
 

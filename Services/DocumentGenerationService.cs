@@ -72,10 +72,10 @@ namespace bankrupt_piterjust.Services
                 File.Copy(templatePath, outputPath, true);
 
                 var repo = new FullDatabaseRepository();
-                
+
                 // First get debtor_id by person_id
                 int debtorIdFromPersonId = await repo.GetDebtorIdByPersonIdAsync(debtorId);
-                
+
                 var contractInfo = await repo.GetLatestContractByDebtorIdAsync(debtorIdFromPersonId);
                 if (contractInfo == null)
                     throw new Exception("Договор для должника не найден.");

@@ -3,9 +3,7 @@ using bankrupt_piterjust.Helpers;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
