@@ -3,6 +3,7 @@ using bankrupt_piterjust.Helpers;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
@@ -311,7 +312,27 @@ namespace bankrupt_piterjust.ViewModels
         public ObservableCollection<PaymentSchedule> PaymentSchedule
         {
             get => _paymentSchedule;
-            set { _paymentSchedule = value; OnPropertyChanged(nameof(PaymentSchedule)); }
+            set
+            {
+                if (_paymentSchedule != null)
+                {
+                    _paymentSchedule.CollectionChanged -= PaymentSchedule_CollectionChanged;
+                    foreach (var item in _paymentSchedule)
+                        item.PropertyChanged -= PaymentItem_PropertyChanged;
+                }
+
+                _paymentSchedule = value;
+
+                if (_paymentSchedule != null)
+                {
+                    _paymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
+                    foreach (var item in _paymentSchedule)
+                        item.PropertyChanged += PaymentItem_PropertyChanged;
+                }
+
+                OnPropertyChanged(nameof(PaymentSchedule));
+                UpdateScheduleTotal();
+            }
         }
 
         public ICommand GenerateScheduleCommand { get; }
@@ -337,6 +358,8 @@ namespace bankrupt_piterjust.ViewModels
             CalculateTotalWordsCommand = new RelayCommand(o => TotalCostWords = NumberToWordsConverter.ConvertToWords(TotalCost));
             CalculateMandatoryWordsCommand = new RelayCommand(o => MandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(MandatoryExpenses));
             GenerateScheduleCommand = new RelayCommand(o => GenerateSchedule());
+
+            PaymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
         }
 
         private void UpdateFullName()
@@ -541,6 +564,30 @@ namespace bankrupt_piterjust.ViewModels
         private void UpdateScheduleTotal()
         {
             ScheduleTotal = PaymentSchedule.Sum(p => p.Amount);
+        }
+
+        private void PaymentSchedule_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+            {
+                foreach (PaymentSchedule item in e.OldItems)
+                    item.PropertyChanged -= PaymentItem_PropertyChanged;
+            }
+            if (e.NewItems != null)
+            {
+                foreach (PaymentSchedule item in e.NewItems)
+                    item.PropertyChanged += PaymentItem_PropertyChanged;
+            }
+            UpdateScheduleTotal();
+        }
+
+        private void PaymentItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PaymentSchedule.Amount))
+            {
+                UpdateScheduleTotal();
+            }
+
         }
 
         // Status properties - readonly with default values
