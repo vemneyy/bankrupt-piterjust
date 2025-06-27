@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="ПитерЮст. Банкротство." Height="440" Width="400"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
-        Background="#F8F9FA" Icon="/fav.png"
+        Background="#F8F9FA" Icon="/Images/fav.png"
         KeyDown="Window_KeyDown">
     
     <Window.DataContext>

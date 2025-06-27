@@ -412,9 +412,9 @@
                                     <ColumnDefinition Width="395*"/>
                                     <ColumnDefinition Width="398*"/>
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Margin="-12,0,20,0">
+                                <StackPanel Grid.Column="0" Margin="-12,0,27,0">
                                     <TextBlock Text="Вознаграждение фин. управляющего (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                    <TextBox Text="{Binding ManagerFee}" Style="{StaticResource FormTextBox}" Width="384"/>
+                                    <TextBox Text="{Binding ManagerFee}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
                                 <StackPanel Grid.ColumnSpan="2" Margin="390,0,0,0">
                                     <TextBlock Text="Прочие расходы (руб.)" Style="{StaticResource FormTextBlock}"/>
