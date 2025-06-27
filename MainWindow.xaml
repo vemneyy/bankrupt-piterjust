@@ -507,7 +507,7 @@
                             </DataGridTemplateColumn.HeaderStyle>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="{Binding Status}" Style="{StaticResource StatusButton}" Margin="5,2"/>
+                                    <Button Content="{Binding Status}" Height="25" Style="{StaticResource StatusButton}" Margin="5,2"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -522,53 +522,6 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Date}" Margin="10,0" VerticalAlignment="Center" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="Auto">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Style="{StaticResource ActionButton}"
-                                        Margin="5,0" 
-                                        Width="32" Height="32"
-                                        Command="{Binding DataContext.GenerateContractCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                        ToolTip="Сгенерировать договор">
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE1A5;" FontSize="16"/>
-                                    </Button>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="Auto">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <!-- Кнопка архивации видна для неархивных должников -->
-                                    <Button 
-                                    Style="{StaticResource ActionButton}"
-                                    Margin="5,0" 
-                                    Width="32" Height="32"
-                                    Command="{Binding DataContext.ArchiveDebtorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="Добавить в архив"
-                                    Visibility="{Binding MainCategory, Converter={StaticResource StringNotEqualsToVisibilityConverter}, ConverterParameter=Архив}">
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8F2;" FontSize="16"/>
-                                    </Button>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="Auto">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <!-- Кнопка восстановления видна только для архивных должников -->
-                                    <Button 
-                                    Style="{StaticResource ActionButton}"
-                                    Margin="5,0" 
-                                    Width="32" Height="32"
-                                    Command="{Binding DataContext.RestoreDebtorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="Восстановить из архива"
-                                    Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Архив}">
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EE;" FontSize="16"/>
-                                    </Button>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
