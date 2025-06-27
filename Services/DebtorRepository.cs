@@ -582,7 +582,7 @@ namespace bankrupt_piterjust.Services
         public async Task ReplaceAddressesAsync(int personId, IEnumerable<Address> addresses)
         {
             string deleteSql = "DELETE FROM address WHERE person_id=@pid";
-            await _databaseService.ExecuteNonQueryAsync(deleteSql, new Dictionary<string, object>{{"@pid", personId}});
+            await _databaseService.ExecuteNonQueryAsync(deleteSql, new Dictionary<string, object> { { "@pid", personId } });
 
             if (addresses == null) return;
             foreach (var address in addresses)

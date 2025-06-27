@@ -1,5 +1,4 @@
 using bankrupt_piterjust.Commands;
-using bankrupt_piterjust.Helpers;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using System.Collections.ObjectModel;
@@ -223,64 +222,71 @@ namespace bankrupt_piterjust.ViewModels
         public decimal TotalCost
         {
             get => _totalCost;
-            set { 
-                _totalCost = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(TotalCost)); 
-                UpdateContractSums(); 
+            set
+            {
+                _totalCost = Math.Round(value, 2);
+                OnPropertyChanged(nameof(TotalCost));
+                UpdateContractSums();
             }
         }
 
         public decimal MandatoryExpenses
         {
             get => _mandatoryExpenses;
-            set { 
-                _mandatoryExpenses = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(MandatoryExpenses)); 
-                UpdateContractSums(); 
+            set
+            {
+                _mandatoryExpenses = Math.Round(value, 2);
+                OnPropertyChanged(nameof(MandatoryExpenses));
+                UpdateContractSums();
             }
         }
 
         public decimal ManagerFee
         {
             get => _managerFee;
-            set { 
-                _managerFee = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(ManagerFee)); 
-                UpdateContractSums(); 
+            set
+            {
+                _managerFee = Math.Round(value, 2);
+                OnPropertyChanged(nameof(ManagerFee));
+                UpdateContractSums();
             }
         }
 
         public decimal OtherExpenses
         {
             get => _otherExpenses;
-            set { 
-                _otherExpenses = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(OtherExpenses)); 
-                UpdateContractSums(); 
+            set
+            {
+                _otherExpenses = Math.Round(value, 2);
+                OnPropertyChanged(nameof(OtherExpenses));
+                UpdateContractSums();
             }
         }
 
         public decimal ServicesAmount
         {
             get => _servicesAmount;
-            set { 
-                _servicesAmount = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(ServicesAmount)); 
+            set
+            {
+                _servicesAmount = Math.Round(value, 2);
+                OnPropertyChanged(nameof(ServicesAmount));
             }
         }
 
         public decimal ExpensesAmount
         {
             get => _expensesAmount;
-            set { 
-                _expensesAmount = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(ExpensesAmount)); 
+            set
+            {
+                _expensesAmount = Math.Round(value, 2);
+                OnPropertyChanged(nameof(ExpensesAmount));
             }
         }
 
         public decimal Stage1Amount
         {
             get => _stage1Amount;
+
             set {
                 var newValue = Math.Round(value, 2);
                 if (newValue + Stage2Amount + Stage3Amount > ServicesAmount)
@@ -296,6 +302,7 @@ namespace bankrupt_piterjust.ViewModels
         public decimal Stage2Amount
         {
             get => _stage2Amount;
+
             set {
                 var newValue = Math.Round(value, 2);
                 if (Stage1Amount + newValue + Stage3Amount > ServicesAmount)
@@ -304,6 +311,7 @@ namespace bankrupt_piterjust.ViewModels
                     return;
                 }
                 _stage2Amount = newValue;
+
                 OnPropertyChanged(nameof(Stage2Amount));
             }
         }
@@ -311,6 +319,7 @@ namespace bankrupt_piterjust.ViewModels
         public decimal Stage3Amount
         {
             get => _stage3Amount;
+
             set {
                 var newValue = Math.Round(value, 2);
                 if (Stage1Amount + Stage2Amount + newValue > ServicesAmount)
@@ -319,6 +328,7 @@ namespace bankrupt_piterjust.ViewModels
                     return;
                 }
                 _stage3Amount = newValue;
+
                 OnPropertyChanged(nameof(Stage3Amount));
             }
         }
@@ -326,9 +336,10 @@ namespace bankrupt_piterjust.ViewModels
         public decimal ScheduleTotal
         {
             get => _scheduleTotal;
-            set { 
-                _scheduleTotal = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(ScheduleTotal)); 
+            set
+            {
+                _scheduleTotal = Math.Round(value, 2);
+                OnPropertyChanged(nameof(ScheduleTotal));
             }
         }
 
@@ -384,9 +395,9 @@ namespace bankrupt_piterjust.ViewModels
                 }
             });
             GenerateScheduleCommand = new RelayCommand(o => GenerateSchedule());
-            
+
             PaymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
-            
+
             _ = LoadDataAsync();
         }
 
