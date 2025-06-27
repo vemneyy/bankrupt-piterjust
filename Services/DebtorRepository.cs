@@ -46,6 +46,7 @@ namespace bankrupt_piterjust.Services
                     last_name VARCHAR(100) NOT NULL,
                     first_name VARCHAR(100) NOT NULL,
                     middle_name VARCHAR(100),
+                    is_male BOOLEAN DEFAULT true,
                     phone VARCHAR(20),
                     email VARCHAR(100)
                 )";
@@ -66,10 +67,18 @@ namespace bankrupt_piterjust.Services
                     
                     -- Check if email column exists
                     IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns 
+                        SELECT 1 FROM information_schema.columns
                         WHERE table_name='person' AND column_name='email'
                     ) THEN
                         ALTER TABLE person ADD COLUMN email VARCHAR(100);
+                    END IF;
+
+                    -- Check if is_male column exists
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='person' AND column_name='is_male'
+                    ) THEN
+                        ALTER TABLE person ADD COLUMN is_male BOOLEAN DEFAULT true;
                     END IF;
                 END $$;";
 
@@ -197,7 +206,8 @@ namespace bankrupt_piterjust.Services
                     FirstName = row["first_name"].ToString() ?? string.Empty,
                     MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                     Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
-                    Email = row["email"] != DBNull.Value ? row["email"].ToString() : null
+                    Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
+                    IsMale = row.Table.Columns.Contains("is_male") && row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
                 };
 
                 var debtor = Debtor.FromPerson(person);
@@ -263,8 +273,8 @@ namespace bankrupt_piterjust.Services
 
             // Insert person first to get the person_id
             string insertPersonSql = @"
-                INSERT INTO person (last_name, first_name, middle_name, phone, email)
-                VALUES (@lastName, @firstName, @middleName, @phone, @email)
+                INSERT INTO person (last_name, first_name, middle_name, is_male, phone, email)
+                VALUES (@lastName, @firstName, @middleName, @isMale, @phone, @email)
                 RETURNING person_id";
 
             var personParams = new Dictionary<string, object>
@@ -273,7 +283,8 @@ namespace bankrupt_piterjust.Services
                 { "@firstName", person.FirstName },
                 { "@middleName", person.MiddleName != null ? person.MiddleName : DBNull.Value },
                 { "@phone", person.Phone != null ? person.Phone : DBNull.Value },
-                { "@email", person.Email != null ? person.Email : DBNull.Value }
+                { "@email", person.Email != null ? person.Email : DBNull.Value },
+                { "@isMale", person.IsMale }
             };
 
             // Fix Int64 to Int32 conversion
@@ -365,7 +376,8 @@ namespace bankrupt_piterjust.Services
                 FirstName = row["first_name"].ToString() ?? string.Empty,
                 MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                 Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
-                Email = row["email"] != DBNull.Value ? row["email"].ToString() : null
+                Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
+                IsMale = row.Table.Columns.Contains("is_male") && row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
             };
         }
 
@@ -502,7 +514,7 @@ namespace bankrupt_piterjust.Services
 
         public async Task UpdatePersonAsync(Person person)
         {
-            string sql = @"UPDATE person SET last_name=@ln, first_name=@fn, middle_name=@mn, phone=@ph, email=@em WHERE person_id=@id";
+            string sql = @"UPDATE person SET last_name=@ln, first_name=@fn, middle_name=@mn, is_male=@isMale, phone=@ph, email=@em WHERE person_id=@id";
             var p = new Dictionary<string, object>
             {
                 {"@ln", person.LastName},
@@ -510,6 +522,7 @@ namespace bankrupt_piterjust.Services
                 {"@mn", person.MiddleName != null ? person.MiddleName : DBNull.Value},
                 {"@ph", person.Phone != null ? person.Phone : DBNull.Value},
                 {"@em", person.Email != null ? person.Email : DBNull.Value},
+                {"@isMale", person.IsMale},
                 {"@id", person.PersonId}
             };
             await _databaseService.ExecuteNonQueryAsync(sql, p);

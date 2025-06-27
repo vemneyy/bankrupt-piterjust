@@ -689,6 +689,11 @@
                         <TextBlock Text="Отчество" Style="{StaticResource DetailLabelStyle}"/>
                         <TextBox Text="{Binding SelectedPerson.MiddleName}" Margin="0,2,0,10"/>
 
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <RadioButton Content="Мужской" IsChecked="{Binding SelectedPerson.IsMale}" Style="{StaticResource TabButton}"/>
+                            <RadioButton Content="Женский" IsChecked="{Binding SelectedPerson.IsMale, Converter={StaticResource BooleanToInverseConverter}}" Style="{StaticResource TabButton}" Margin="10,0,0,0"/>
+                        </StackPanel>
+
                         <TextBlock Text="Телефон" Style="{StaticResource DetailLabelStyle}"/>
                         <TextBox Text="{Binding SelectedPerson.Phone}" Margin="0,2,0,10"/>
 

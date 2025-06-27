@@ -36,10 +36,24 @@ namespace bankrupt_piterjust.Services
                     last_name VARCHAR(100) NOT NULL,
                     first_name VARCHAR(100) NOT NULL,
                     middle_name VARCHAR(100),
+                    is_male BOOLEAN DEFAULT true,
                     phone VARCHAR(20),
                     email VARCHAR(100)
                 )";
             await _databaseService.ExecuteNonQueryAsync(sql);
+
+            string checkColumnsSql = @"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='person' AND column_name='is_male'
+                    ) THEN
+                        ALTER TABLE person ADD COLUMN is_male BOOLEAN DEFAULT true;
+                    END IF;
+                END $$;";
+
+            await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
         }
 
         private async Task EnsurePassportTableExistsAsync()

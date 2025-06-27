@@ -18,6 +18,7 @@ namespace bankrupt_piterjust.ViewModels
         private string _lastName = string.Empty;
         private string _firstName = string.Empty;
         private string _middleName = string.Empty;
+        private bool _isMale = true;
         private string _phone = string.Empty;
         private string _email = string.Empty;
 
@@ -83,6 +84,12 @@ namespace bankrupt_piterjust.ViewModels
         {
             get => _middleName;
             set { _middleName = value; OnPropertyChanged(nameof(MiddleName)); UpdateFullName(); }
+        }
+
+        public bool IsMale
+        {
+            get => _isMale;
+            set { _isMale = value; OnPropertyChanged(nameof(IsMale)); }
         }
 
         public string Phone
@@ -316,6 +323,7 @@ namespace bankrupt_piterjust.ViewModels
                     LastName = LastName,
                     FirstName = FirstName,
                     MiddleName = MiddleName,
+                    IsMale = IsMale,
                     Phone = Phone,
                     Email = Email
                 };
