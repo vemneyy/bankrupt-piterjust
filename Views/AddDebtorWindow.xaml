@@ -14,6 +14,7 @@
         Width="900"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
+        Icon="/Images/icon.png"
         Background="#F8F9FA">
 
     <Window.DataContext>

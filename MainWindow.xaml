@@ -10,7 +10,7 @@
         Title="ПитерЮст. Банкротство." Height="720" Width="1280"
         Background="#F8F9FA"
         FontFamily="Segoe UI"
-        MinWidth="800" MinHeight="600" Icon="/Images/fav.png">
+        MinWidth="800" MinHeight="600" Icon="/Images/icon.png">
 
     <Window.DataContext>
         <!-- Подключаем ViewModel -->

@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="Настройки подключения к базе данных" Height="640" Width="450"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="#F8F9FA" Icon="/Images/fav.png"
+        Background="#F8F9FA" Icon="/Images/icon.png"
         ShowInTaskbar="False">
 
     <Window.DataContext>

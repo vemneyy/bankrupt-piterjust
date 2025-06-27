@@ -18,10 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="Images\fav.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+    <None Remove="Views\icon.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +29,10 @@
 
   <ItemGroup>
     <Folder Include="Documents\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\icon.png" />
   </ItemGroup>
 
 </Project>
