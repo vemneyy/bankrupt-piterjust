@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
     <RootNamespace>bankrupt_piterjust</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -16,10 +16,25 @@
     <PackageIcon>fav.png</PackageIcon>
     <NeutralLanguage>ru</NeutralLanguage>
     <PackageProjectUrl>https://питерюст.рф/</PackageProjectUrl>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <ApplicationIcon>Images\icon.ico</ApplicationIcon>
+    <AssemblyName>ПитерЮст. Банкротство.</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Views\icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Images\icon.ico" />
   </ItemGroup>
 
   <ItemGroup>

@@ -512,7 +512,7 @@
                         </Style>
                     </DataGrid.CellStyle>
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="ФИО должника" Width="2.5*">
+                        <DataGridTemplateColumn Header="ФИО должника" Width="1.5*">
                             <DataGridTemplateColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
                                     <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
@@ -561,7 +561,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Дата" Width="*">
+                        <DataGridTemplateColumn Header="Дата заключения договора" Width="*">
                             <DataGridTemplateColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
                                     <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
@@ -642,21 +642,13 @@
                         <TextBlock Text="Регион" Style="{StaticResource DetailLabelStyle}"/>
                         <TextBlock Text="{Binding SelectedDebtor.Region}" Style="{StaticResource DetailValueStyle}"/>
 
-                        <TextBlock Text="Статус" Style="{StaticResource DetailLabelStyle}"/>
-                        <Button Command="{Binding ShowStatusSelectionCommand}" 
-                                Style="{StaticResource StatusButton}" 
-                                Content="{Binding SelectedDebtor.Status}" 
-                                HorizontalAlignment="Left" 
-                                Margin="0,5,0,5"
-                                Padding="12,6"/>
-
                         <TextBlock Text="Категория" Style="{StaticResource DetailLabelStyle}"/>
                         <TextBlock Text="{Binding SelectedDebtor.MainCategory}" Style="{StaticResource DetailValueStyle}"/>
 
                         <TextBlock Text="Подкатегория" Style="{StaticResource DetailLabelStyle}"/>
                         <TextBlock Text="{Binding SelectedDebtor.FilterCategory}" Style="{StaticResource DetailValueStyle}"/>
 
-                        <TextBlock Text="Дата" Style="{StaticResource DetailLabelStyle}"/>
+                        <TextBlock Text="Дата заключения договора" Style="{StaticResource DetailLabelStyle}"/>
                         <TextBlock Text="{Binding SelectedDebtor.Date}" Style="{StaticResource DetailValueStyle}"/>
 
                         <!-- Кнопки действий -->
