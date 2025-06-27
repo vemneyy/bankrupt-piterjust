@@ -21,7 +21,6 @@ namespace bankrupt_piterjust.Services
             await EnsurePersonTableExistsAsync();
             await EnsurePassportTableExistsAsync();
             await EnsureAddressTableExistsAsync();
-            await EnsureCompanyTableExistsAsync();
             await EnsureEmployeeTableExistsAsync();
             await EnsureStatusTablesExistAsync();
             await EnsureContractTableExistsAsync();
@@ -88,23 +87,6 @@ namespace bankrupt_piterjust.Services
                     person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
                     address_type address_type_enum NOT NULL,
                     address_text TEXT NOT NULL
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
-        }
-
-        private async Task EnsureCompanyTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS company (
-                    company_id SERIAL PRIMARY KEY,
-                    name VARCHAR(255) NOT NULL,
-                    inn VARCHAR(20) NOT NULL,
-                    kpp VARCHAR(20),
-                    ogrn VARCHAR(20),
-                    okpo VARCHAR(20),
-                    address TEXT,
-                    phone VARCHAR(20),
-                    email VARCHAR(100)
                 )";
             await _databaseService.ExecuteNonQueryAsync(sql);
         }

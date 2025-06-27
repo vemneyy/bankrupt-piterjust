@@ -344,6 +344,10 @@ namespace bankrupt_piterjust.ViewModels
             NewDebtor = new Debtor();
             _fullName = string.Empty;
 
+            // Pre-fill default values for fees
+            ManagerFee = 25000m; // Default manager fee
+            OtherExpenses = 20000m; // Default other expenses
+
             SaveCommand = new RelayCommand(async o => await SaveDataAsync(), CanSave);
             CancelCommand = new RelayCommand(o =>
             {
@@ -539,13 +543,14 @@ namespace bankrupt_piterjust.ViewModels
             if (ScheduleMonths <= 0)
                 return;
 
-            decimal monthly = ScheduleMonths > 0 ? Math.Round(ManagerFee / ScheduleMonths, 2) : 0m;
+            // Generate schedule based on TotalCost (legal services cost) instead of ManagerFee
+            decimal monthly = ScheduleMonths > 0 ? Math.Round(ServicesAmount / ScheduleMonths, 2) : 0m;
             for (int i = 1; i <= ScheduleMonths; i++)
             {
                 PaymentSchedule.Add(new PaymentSchedule
                 {
                     Stage = i,
-                    Description = $"Платеж {i}",
+                    Description = "Оплата консультационных юридических услуг",
                     Amount = monthly,
                     DueDate = ContractDate.AddMonths(i - 1)
                 });
@@ -555,7 +560,9 @@ namespace bankrupt_piterjust.ViewModels
 
         private void UpdateContractSums()
         {
+            // Total expenses include mandatory expenses, manager fee, and other expenses
             ExpensesAmount = MandatoryExpenses + ManagerFee + OtherExpenses;
+            // Services amount is the total cost minus all expenses
             ServicesAmount = TotalCost - ExpensesAmount;
         }
 

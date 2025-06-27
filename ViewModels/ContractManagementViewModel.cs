@@ -346,6 +346,10 @@ namespace bankrupt_piterjust.ViewModels
             Employees = employees;
             Debtors = debtors;
 
+            // Pre-fill default values for fees
+            _managerFee = 25000m; // Default manager fee
+            _otherExpenses = 5000m; // Default other expenses
+
             SaveCommand = new RelayCommand(async o => await SaveAsync(), CanSave);
             CancelCommand = new RelayCommand(o => CloseDialog(false));
         }

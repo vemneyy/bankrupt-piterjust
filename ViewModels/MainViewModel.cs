@@ -291,6 +291,9 @@ namespace bankrupt_piterjust.ViewModels
             EditDebtorCommand = new RelayCommand(o => IsEditMode = true, o => SelectedDebtor != null);
             SaveDebtorCommand = new RelayCommand(async o => await SaveDebtorDetailsAsync(), o => IsEditMode);
             CancelEditCommand = new RelayCommand(o => CancelEdit(), o => IsEditMode);
+            ManageContractsCommand = new RelayCommand(o => ManageContracts());
+            ManageCompaniesCommand = new RelayCommand(o => ManageCompanies());
+            ManageEmployeesCommand = new RelayCommand(o => ManageEmployees());
 
             // Status change commands
             ShowStatusSelectionCommand = new RelayCommand(o => ShowStatusSelection(), o => SelectedDebtor != null);
@@ -687,6 +690,21 @@ namespace bankrupt_piterjust.ViewModels
                     OnPropertyChanged(nameof(SelectedDebtor));
                 }
             }
+        }
+
+        private void ManageContracts()
+        {
+            MessageBox.Show("Функционал управления договорами будет добавлен в следующих версиях", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void ManageCompanies()
+        {
+            MessageBox.Show("Функционал управления компаниями будет добавлен в следующих версиях", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void ManageEmployees()
+        {
+            MessageBox.Show("Функционал управления сотрудниками будет добавлен в следующих версиях", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

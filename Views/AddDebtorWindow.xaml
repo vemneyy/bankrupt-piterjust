@@ -403,12 +403,27 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Обязательные расходы (руб.)"/></TextBlock>
+                                    <TextBox Text="{Binding MandatoryExpenses}" Style="{StaticResource FormTextBox}"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Сумма прописью" Command="{Binding CalculateMandatoryWordsCommand}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" Margin="0,0,0,10" Height="36" Width="150"/>
+                            </Grid>
+
+                            <TextBlock Text="Обязательные расходы прописью" Style="{StaticResource FormTextBlock}"/>
+                            <TextBox Text="{Binding MandatoryExpensesWords}" Style="{StaticResource FormTextBox}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Padding="10"/>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Сумма "/><Run Language="ru-ru" Text="юридических "/><Run Text="услуг (руб.)"/></TextBlock>
-                                    <TextBox Text="{Binding ServicesAmount}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBox Text="{Binding ServicesAmount}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Сумма "/><Run Language="ru-ru" Text="обязательных "/><Run Text="расходов (руб.)"/></TextBlock>
-                                    <TextBox Text="{Binding ExpensesAmount}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Общая сумма "/><Run Language="ru-ru" Text="расходов "/><Run Text="(руб.)"/></TextBlock>
+                                    <TextBox Text="{Binding ExpensesAmount}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
                                 </StackPanel>
                             </Grid>
 
