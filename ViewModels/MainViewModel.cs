@@ -368,19 +368,23 @@ namespace bankrupt_piterjust.ViewModels
                 // Hide status selection
                 IsStatusSelectionVisible = false;
 
-                // Refresh counts and filters
+                // Refresh counts
                 UpdateTabCounts();
-                ApplyFilters();
 
-                // If filter changed, update selection
-                if (SelectedDebtor.FilterCategory != oldStatus &&
+                // If filter changed, update selected tab before filtering
+                if (SelectedDebtor != null &&
+                    SelectedDebtor.FilterCategory != oldStatus &&
                     SelectedMainTab?.Name == "Клиенты" &&
-                    SelectedFilterTab != null && CurrentFilterTabs != null && SelectedFilterTab.Name != "Все")
+                    SelectedFilterTab != null && CurrentFilterTabs != null &&
+                    SelectedFilterTab.Name != "Все")
                 {
                     SelectedFilterTab = CurrentFilterTabs.FirstOrDefault(t => t.Name == SelectedDebtor.FilterCategory) ??
                                        CurrentFilterTabs.FirstOrDefault(t => t.Name == "Все") ??
                                        CurrentFilterTabs.FirstOrDefault();
                 }
+
+                // Apply filters after potential tab change
+                ApplyFilters();
             }
             catch (Exception ex)
             {
