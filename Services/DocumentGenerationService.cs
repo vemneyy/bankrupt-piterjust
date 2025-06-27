@@ -487,7 +487,7 @@ namespace bankrupt_piterjust.Services
             if (!string.IsNullOrWhiteSpace(address.City)) parts.Add(address.City);
             if (!string.IsNullOrWhiteSpace(address.Locality)) parts.Add(address.Locality);
             if (!string.IsNullOrWhiteSpace(address.Street)) parts.Add(address.Street);
-            if (!string.IsNullOrWhiteSpace(address.HouseNumber)) parts.Add(address.HouseNumber);
+            if (!string.IsNullOrWhiteSpace(address.HouseNumber)) parts.Add("д." + address.HouseNumber);
             if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
             if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
             return string.Join(", ", parts);
