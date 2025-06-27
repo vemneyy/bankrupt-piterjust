@@ -5,6 +5,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Win32;
 using System.IO;
+using System.Globalization;
 using System.Text;
 using System.Windows;
 
@@ -88,6 +89,9 @@ namespace bankrupt_piterjust.Services
                 decimal servicesAmount = contractInfo.TotalCost - contractInfo.MandatoryExpenses;
                 decimal otherExpenses = contractInfo.OtherExpenses;
 
+                // Get payment schedule for this contract
+                var paymentSchedule = await repo.GetPaymentScheduleByContractIdAsync(contractInfo.ContractId);
+
                 // Representative information
                 string representativeName = representative.FullName;
                 string representativePosition = representative.Position;
@@ -138,6 +142,12 @@ namespace bankrupt_piterjust.Services
                     {
                         int tagsReplaced = ReplaceTextInDocument(document, replacement.Key, replacement.Value);
                         totalReplacements += tagsReplaced;
+                    }
+
+                    // Insert payment schedule into table if available
+                    if (paymentSchedule.Any())
+                    {
+                        FillPaymentScheduleTable(document, paymentSchedule);
                     }
 
                     if (totalReplacements == 0)
@@ -457,6 +467,63 @@ namespace bankrupt_piterjust.Services
             public Text Text { get; set; }
             public int TextStartIndex { get; set; }
             public int TextEndIndex { get; set; }
+        }
+
+        /// <summary>
+        /// Inserts payment schedule rows into the contract document table.
+        /// Looks for a row containing the payment tags and duplicates it for
+        /// each payment in the schedule.
+        /// </summary>
+        private void FillPaymentScheduleTable(WordprocessingDocument document, IEnumerable<PaymentSchedule> payments)
+        {
+            var body = document.MainDocumentPart.Document.Body;
+            if (body == null)
+                return;
+
+            var templateRow = body.Descendants<TableRow>()
+                .FirstOrDefault(r => r.InnerText.Contains("<номер_платежа>") || r.InnerText.Contains("<платеж_до_даты>"));
+            if (templateRow == null)
+                return;
+
+            var table = templateRow.Ancestors<Table>().FirstOrDefault();
+            if (table == null)
+                return;
+
+            TableRow lastRow = templateRow;
+            foreach (var p in payments)
+            {
+                var newRow = (TableRow)templateRow.CloneNode(true);
+                var replacements = new Dictionary<string, string>
+                {
+                    {"<номер_платежа>", p.Stage.ToString()},
+                    {"<платеж_до_даты>", FormatDueDate(p.DueDate)},
+                    {"<наименование_работ>", p.Description},
+                    {"<сумма_платежа>", p.Amount.ToString("#,##0.00")}
+                };
+
+                foreach (var rep in replacements)
+                {
+                    ProcessTextElements(newRow, rep.Key, rep.Value);
+                }
+
+                table.InsertAfter(newRow, lastRow);
+                lastRow = newRow;
+            }
+
+            templateRow.Remove();
+        }
+
+        /// <summary>
+        /// Formats a due date as "до 12 января 2025 года".
+        /// </summary>
+        private string FormatDueDate(DateTime? date)
+        {
+            if (!date.HasValue)
+                return string.Empty;
+
+            var culture = new CultureInfo("ru-RU");
+            string formatted = date.Value.ToString("d MMMM yyyy", culture);
+            return $"до {formatted} года";
         }
     }
 }
