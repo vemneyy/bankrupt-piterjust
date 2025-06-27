@@ -98,7 +98,8 @@ namespace bankrupt_piterjust.ViewModels
                 Debtors.Clear();
                 foreach (var debtor in debtorData.Where(d => d.PersonId.HasValue))
                 {
-                    var person = await _repository.GetPersonByIdAsync(debtor.PersonId.Value);
+                    var personId = debtor.PersonId!.Value;
+                    var person = await _repository.GetPersonByIdAsync(personId);
                     if (person != null)
                     {
                         Debtors.Add(person);
