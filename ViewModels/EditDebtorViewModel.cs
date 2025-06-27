@@ -1,0 +1,598 @@
+using bankrupt_piterjust.Commands;
+using bankrupt_piterjust.Helpers;
+using bankrupt_piterjust.Models;
+using bankrupt_piterjust.Services;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows;
+using System.Windows.Input;
+
+namespace bankrupt_piterjust.ViewModels
+{
+    public class EditDebtorViewModel : INotifyPropertyChanged
+    {
+        private readonly DebtorRepository _repository;
+        private readonly int _personId;
+        private bool _isBusy;
+
+        // Person properties
+        private string _lastName = string.Empty;
+        private string _firstName = string.Empty;
+        private string _middleName = string.Empty;
+        private bool _isMale = true;
+        private string _phone = string.Empty;
+        private string _email = string.Empty;
+
+        // Passport properties
+        private string _passportSeries = string.Empty;
+        private string _passportNumber = string.Empty;
+        private string _passportIssuedBy = string.Empty;
+        private string _passportDivisionCode = string.Empty;
+        private DateTime _passportIssueDate = DateTime.Now.AddYears(-5);
+
+        // Address properties
+        private string _registrationAddress = string.Empty;
+        private string _residenceAddress = string.Empty;
+        private bool _sameAsRegistration = false;
+        private string _mailingAddress = string.Empty;
+        private bool _sameAsResidence = false;
+
+        // Contract properties
+        private string _contractNumber = string.Empty;
+        private string _contractCity = "Санкт-Петербург";
+        private DateTime _contractDate = DateTime.Now;
+        private decimal _totalCost;
+        private string _totalCostWords = string.Empty;
+        private decimal _mandatoryExpenses;
+        private string _mandatoryExpensesWords = string.Empty;
+        private decimal _managerFee;
+        private decimal _otherExpenses;
+        private decimal _servicesAmount;
+        private decimal _expensesAmount;
+        private decimal _stage1Amount;
+        private decimal _stage2Amount;
+        private decimal _stage3Amount;
+        private decimal _scheduleTotal;
+
+        // Default status values - No UI selection needed as per requirements
+        private readonly string _status = "Сбор документов";
+        private readonly string _mainCategory = "Клиенты";
+        private readonly string _filterCategory = "Сбор документов";
+
+        // Результат - новый должник
+
+        // Commands
+        public ICommand SaveCommand { get; }
+        public ICommand CancelCommand { get; }
+        public ICommand CalculateTotalWordsCommand { get; }
+        public ICommand CalculateMandatoryWordsCommand { get; }
+
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); }
+        }
+
+        #region Person Properties
+        public string LastName
+        {
+            get => _lastName;
+            set { _lastName = value; OnPropertyChanged(nameof(LastName)); UpdateFullName(); }
+        }
+
+        public string FirstName
+        {
+            get => _firstName;
+            set { _firstName = value; OnPropertyChanged(nameof(FirstName)); UpdateFullName(); }
+        }
+
+        public string MiddleName
+        {
+            get => _middleName;
+            set { _middleName = value; OnPropertyChanged(nameof(MiddleName)); UpdateFullName(); }
+        }
+
+        public bool IsMale
+        {
+            get => _isMale;
+            set { _isMale = value; OnPropertyChanged(nameof(IsMale)); }
+        }
+
+        public string Phone
+        {
+            get => _phone;
+            set { _phone = value; OnPropertyChanged(nameof(Phone)); }
+        }
+
+        public string Email
+        {
+            get => _email;
+            set { _email = value; OnPropertyChanged(nameof(Email)); }
+        }
+
+        private string _fullName;
+        public string FullName
+        {
+            get => _fullName;
+            private set { _fullName = value; OnPropertyChanged(nameof(FullName)); }
+        }
+        #endregion
+
+        #region Passport Properties
+        public string PassportSeries
+        {
+            get => _passportSeries;
+            set { _passportSeries = value; OnPropertyChanged(nameof(PassportSeries)); }
+        }
+
+        public string PassportNumber
+        {
+            get => _passportNumber;
+            set { _passportNumber = value; OnPropertyChanged(nameof(PassportNumber)); }
+        }
+
+        public string PassportIssuedBy
+        {
+            get => _passportIssuedBy;
+            set { _passportIssuedBy = value; OnPropertyChanged(nameof(PassportIssuedBy)); }
+        }
+
+        public string PassportDivisionCode
+        {
+            get => _passportDivisionCode;
+            set { _passportDivisionCode = value; OnPropertyChanged(nameof(PassportDivisionCode)); }
+        }
+
+        public DateTime PassportIssueDate
+        {
+            get => _passportIssueDate;
+            set { _passportIssueDate = value; OnPropertyChanged(nameof(PassportIssueDate)); }
+        }
+        #endregion
+
+        #region Address Properties
+        public string RegistrationAddress
+        {
+            get => _registrationAddress;
+            set
+            {
+                _registrationAddress = value;
+                OnPropertyChanged(nameof(RegistrationAddress));
+                if (_sameAsRegistration)
+                    ResidenceAddress = value;
+            }
+        }
+
+        public string ResidenceAddress
+        {
+            get => _residenceAddress;
+            set
+            {
+                _residenceAddress = value;
+                OnPropertyChanged(nameof(ResidenceAddress));
+                if (_sameAsResidence)
+                    MailingAddress = value;
+            }
+        }
+
+        public bool SameAsRegistration
+        {
+            get => _sameAsRegistration;
+            set
+            {
+                _sameAsRegistration = value;
+                OnPropertyChanged(nameof(SameAsRegistration));
+                if (value)
+                    ResidenceAddress = RegistrationAddress;
+            }
+        }
+
+        public string MailingAddress
+        {
+            get => _mailingAddress;
+            set { _mailingAddress = value; OnPropertyChanged(nameof(MailingAddress)); }
+        }
+
+        public bool SameAsResidence
+        {
+            get => _sameAsResidence;
+            set
+            {
+                _sameAsResidence = value;
+                OnPropertyChanged(nameof(SameAsResidence));
+                if (value)
+                    MailingAddress = ResidenceAddress;
+            }
+        }
+        #endregion
+
+        #region Contract Properties
+        public string ContractNumber
+        {
+            get => _contractNumber;
+            set { _contractNumber = value; OnPropertyChanged(nameof(ContractNumber)); }
+        }
+
+        public string ContractCity
+        {
+            get => _contractCity;
+            set { _contractCity = value; OnPropertyChanged(nameof(ContractCity)); }
+        }
+
+        public DateTime ContractDate
+        {
+            get => _contractDate;
+            set { _contractDate = value; OnPropertyChanged(nameof(ContractDate)); }
+        }
+
+        public decimal TotalCost
+        {
+            get => _totalCost;
+            set { _totalCost = value; OnPropertyChanged(nameof(TotalCost)); UpdateContractSums(); }
+        }
+
+        public string TotalCostWords
+        {
+            get => _totalCostWords;
+            set { _totalCostWords = value; OnPropertyChanged(nameof(TotalCostWords)); }
+        }
+
+        public decimal MandatoryExpenses
+        {
+            get => _mandatoryExpenses;
+            set { _mandatoryExpenses = value; OnPropertyChanged(nameof(MandatoryExpenses)); UpdateContractSums(); }
+        }
+
+        public string MandatoryExpensesWords
+        {
+            get => _mandatoryExpensesWords;
+            set { _mandatoryExpensesWords = value; OnPropertyChanged(nameof(MandatoryExpensesWords)); }
+        }
+
+        public decimal ManagerFee
+        {
+            get => _managerFee;
+            set { _managerFee = value; OnPropertyChanged(nameof(ManagerFee)); UpdateContractSums(); }
+        }
+
+        public decimal OtherExpenses
+        {
+            get => _otherExpenses;
+            set { _otherExpenses = value; OnPropertyChanged(nameof(OtherExpenses)); UpdateContractSums(); }
+        }
+
+        public decimal ServicesAmount
+        {
+            get => _servicesAmount;
+            set { _servicesAmount = value; OnPropertyChanged(nameof(ServicesAmount)); }
+        }
+
+        public decimal ExpensesAmount
+        {
+            get => _expensesAmount;
+            set { _expensesAmount = value; OnPropertyChanged(nameof(ExpensesAmount)); }
+        }
+
+        public decimal Stage1Amount
+        {
+            get => _stage1Amount;
+            set { _stage1Amount = value; OnPropertyChanged(nameof(Stage1Amount)); }
+        }
+
+        public decimal Stage2Amount
+        {
+            get => _stage2Amount;
+            set { _stage2Amount = value; OnPropertyChanged(nameof(Stage2Amount)); }
+        }
+
+        public decimal Stage3Amount
+        {
+            get => _stage3Amount;
+            set { _stage3Amount = value; OnPropertyChanged(nameof(Stage3Amount)); }
+        }
+
+        public decimal ScheduleTotal
+        {
+            get => _scheduleTotal;
+            set { _scheduleTotal = value; OnPropertyChanged(nameof(ScheduleTotal)); }
+        }
+
+        // Payment schedule properties
+        private int _scheduleMonths = 12;
+        private ObservableCollection<PaymentSchedule> _paymentSchedule = new();
+
+        public int ScheduleMonths
+        {
+            get => _scheduleMonths;
+            set { _scheduleMonths = value; OnPropertyChanged(nameof(ScheduleMonths)); }
+        }
+
+        public ObservableCollection<PaymentSchedule> PaymentSchedule
+        {
+            get => _paymentSchedule;
+            set
+            {
+                if (_paymentSchedule != null)
+                {
+                    _paymentSchedule.CollectionChanged -= PaymentSchedule_CollectionChanged;
+                    foreach (var item in _paymentSchedule)
+                        item.PropertyChanged -= PaymentItem_PropertyChanged;
+                }
+
+                _paymentSchedule = value;
+
+                if (_paymentSchedule != null)
+                {
+                    _paymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
+                    foreach (var item in _paymentSchedule)
+                        item.PropertyChanged += PaymentItem_PropertyChanged;
+                }
+
+                OnPropertyChanged(nameof(PaymentSchedule));
+                UpdateScheduleTotal();
+            }
+        }
+
+        public ICommand GenerateScheduleCommand { get; }
+        #endregion
+
+        public EditDebtorViewModel(int personId)
+        {
+            _repository = new DebtorRepository();
+
+            // Initialize non-nullable properties and fields
+            _fullName = string.Empty;
+            _personId = personId;
+
+            SaveCommand = new RelayCommand(async o => await SaveDataAsync(), CanSave);
+            CancelCommand = new RelayCommand(o =>
+            {
+                var window = Window.GetWindow(o as DependencyObject);
+                if (window != null)
+                {
+                    window.DialogResult = false;
+                }
+            });
+            CalculateTotalWordsCommand = new RelayCommand(o => TotalCostWords = NumberToWordsConverter.ConvertToWords(TotalCost));
+            CalculateMandatoryWordsCommand = new RelayCommand(o => MandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(MandatoryExpenses));
+            GenerateScheduleCommand = new RelayCommand(o => GenerateSchedule());
+            _ = LoadDataAsync();
+
+            PaymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
+        }
+
+        private async Task LoadDataAsync()
+        {
+            try
+            {
+                var person = await _repository.GetPersonByIdAsync(_personId);
+                if (person != null)
+                {
+                    LastName = person.LastName;
+                    FirstName = person.FirstName;
+                    MiddleName = person.MiddleName ?? string.Empty;
+                    IsMale = person.IsMale;
+                    Phone = person.Phone ?? string.Empty;
+                    Email = person.Email ?? string.Empty;
+                }
+                var passport = await _repository.GetPassportByPersonIdAsync(_personId);
+                if (passport != null)
+                {
+                    PassportSeries = passport.Series;
+                    PassportNumber = passport.Number;
+                    PassportIssuedBy = passport.IssuedBy;
+                    PassportDivisionCode = passport.DivisionCode ?? string.Empty;
+                    PassportIssueDate = passport.IssueDate;
+                }
+                var addresses = await _repository.GetAddressesByPersonIdAsync(_personId);
+                foreach (var addr in addresses)
+                {
+                    switch (addr.AddressType)
+                    {
+                        case AddressType.Registration:
+                            RegistrationAddress = addr.AddressText;
+                            break;
+                        case AddressType.Residence:
+                            ResidenceAddress = addr.AddressText;
+                            break;
+                        case AddressType.Mailing:
+                            MailingAddress = addr.AddressText;
+                            break;
+                    }
+                }
+                SameAsRegistration = ResidenceAddress == RegistrationAddress && !string.IsNullOrEmpty(ResidenceAddress);
+                SameAsResidence = MailingAddress == ResidenceAddress && !string.IsNullOrEmpty(MailingAddress);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        {
+            try
+            {
+                var person = await _repository.GetPersonByIdAsync(_personId);
+                if (person != null)
+                {
+                    LastName = person.LastName;
+                    FirstName = person.FirstName;
+                    MiddleName = person.MiddleName ?? string.Empty;
+                    IsMale = person.IsMale;
+                    Phone = person.Phone ?? string.Empty;
+                    Email = person.Email ?? string.Empty;
+                }
+                var passport = await _repository.GetPassportByPersonIdAsync(_personId);
+                if (passport != null)
+                {
+                    PassportSeries = passport.Series;
+                    PassportNumber = passport.Number;
+                    PassportIssuedBy = passport.IssuedBy;
+                    PassportDivisionCode = passport.DivisionCode ?? string.Empty;
+                    PassportIssueDate = passport.IssueDate;
+                }
+                var addresses = await _repository.GetAddressesByPersonIdAsync(_personId);
+                foreach (var addr in addresses)
+                {
+                    switch (addr.AddressType)
+                    {
+                        case AddressType.Registration:
+                            RegistrationAddress = addr.AddressText;
+                            break;
+                        case AddressType.Residence:
+                            ResidenceAddress = addr.AddressText;
+                            break;
+                        case AddressType.Mailing:
+                            MailingAddress = addr.AddressText;
+                            break;
+                    }
+                }
+                SameAsRegistration = ResidenceAddress == RegistrationAddress && !string.IsNullOrEmpty(ResidenceAddress);
+                SameAsResidence = MailingAddress == ResidenceAddress && !string.IsNullOrEmpty(MailingAddress);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void UpdateFullName()
+        {
+            FullName = $"{LastName} {FirstName} {MiddleName}".Trim();
+        }
+
+        private bool CanSave(object? parameter)
+        {
+            // Basic validation
+            return !string.IsNullOrWhiteSpace(LastName) &&
+                   !string.IsNullOrWhiteSpace(FirstName) &&
+                   !string.IsNullOrWhiteSpace(RegistrationAddress);
+        }
+
+        private async Task SaveDataAsync()
+        {
+            try
+            {
+                IsBusy = true;
+
+                var person = new Person
+                {
+                    PersonId = _personId,
+                    LastName = LastName,
+                    FirstName = FirstName,
+                    MiddleName = string.IsNullOrWhiteSpace(MiddleName) ? null : MiddleName,
+                    IsMale = IsMale,
+                    Phone = string.IsNullOrWhiteSpace(Phone) ? null : Phone,
+                    Email = string.IsNullOrWhiteSpace(Email) ? null : Email
+                };
+
+                var passport = new Passport
+                {
+                    PersonId = _personId,
+                    Series = PassportSeries,
+                    Number = PassportNumber,
+                    IssuedBy = PassportIssuedBy,
+                    DivisionCode = string.IsNullOrWhiteSpace(PassportDivisionCode) ? null : PassportDivisionCode,
+                    IssueDate = PassportIssueDate
+                };
+
+                var addresses = new List<Address>();
+                if (!string.IsNullOrWhiteSpace(RegistrationAddress))
+                {
+                    addresses.Add(new Address { PersonId = _personId, AddressType = AddressType.Registration, AddressText = RegistrationAddress });
+                }
+                if (!SameAsRegistration && !string.IsNullOrWhiteSpace(ResidenceAddress))
+                {
+                    addresses.Add(new Address { PersonId = _personId, AddressType = AddressType.Residence, AddressText = ResidenceAddress });
+                }
+                if (!SameAsResidence && !string.IsNullOrWhiteSpace(MailingAddress))
+                {
+                    addresses.Add(new Address { PersonId = _personId, AddressType = AddressType.Mailing, AddressText = MailingAddress });
+                }
+
+                await _repository.UpdatePersonAsync(person);
+                await _repository.UpsertPassportAsync(passport);
+                await _repository.ReplaceAddressesAsync(_personId, addresses);
+
+                var window = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
+                if (window != null)
+                {
+                    window.DialogResult = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+        {
+            return !string.IsNullOrWhiteSpace(ContractNumber) &&
+        private void GenerateSchedule()
+        {
+            PaymentSchedule.Clear();
+            if (ScheduleMonths <= 0)
+                return;
+
+            decimal monthly = ScheduleMonths > 0 ? Math.Round(ManagerFee / ScheduleMonths, 2) : 0m;
+            for (int i = 1; i <= ScheduleMonths; i++)
+            {
+                PaymentSchedule.Add(new PaymentSchedule
+                {
+                    Stage = i,
+                    Description = $"Платеж {i}",
+                    Amount = monthly,
+                    DueDate = ContractDate.AddMonths(i - 1)
+                });
+            }
+            UpdateScheduleTotal();
+        }
+
+        private void UpdateContractSums()
+        {
+            ExpensesAmount = MandatoryExpenses + ManagerFee + OtherExpenses;
+            ServicesAmount = TotalCost - ExpensesAmount;
+        }
+
+        private void UpdateScheduleTotal()
+        {
+            ScheduleTotal = PaymentSchedule.Sum(p => p.Amount);
+        }
+
+        private void PaymentSchedule_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+            {
+                foreach (PaymentSchedule item in e.OldItems)
+                    item.PropertyChanged -= PaymentItem_PropertyChanged;
+            }
+            if (e.NewItems != null)
+            {
+                foreach (PaymentSchedule item in e.NewItems)
+                    item.PropertyChanged += PaymentItem_PropertyChanged;
+            }
+            UpdateScheduleTotal();
+        }
+
+        private void PaymentItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(bankrupt_piterjust.Models.PaymentSchedule.Amount))
+            {
+                UpdateScheduleTotal();
+            }
+
+        }
+
+        // Status properties - readonly with default values
+        public string Status => _status;
+        public string MainCategory => _mainCategory;
+        public string FilterCategory => _filterCategory;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}

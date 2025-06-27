@@ -288,7 +288,7 @@ namespace bankrupt_piterjust.ViewModels
             RefreshDataCommand = new RelayCommand(async o => await LoadDataAsync());
             GenerateContractCommand = new RelayCommand(async o => await GenerateContractAsync(), o => CanGenerateContract);
             ShowLoginWindowCommand = new RelayCommand(o => ShowLoginWindow());
-            EditDebtorCommand = new RelayCommand(o => IsEditMode = true, o => SelectedDebtor != null);
+            EditDebtorCommand = new RelayCommand(o => EditDebtor(), o => SelectedDebtor?.PersonId != null);
             SaveDebtorCommand = new RelayCommand(async o => await SaveDebtorDetailsAsync(), o => IsEditMode);
             CancelEditCommand = new RelayCommand(o => CancelEdit(), o => IsEditMode);
 
@@ -630,6 +630,19 @@ namespace bankrupt_piterjust.ViewModels
                 SelectedDebtor = newDebtor;
             }
         }
+        private void EditDebtor()
+        {
+            if (SelectedDebtor?.PersonId == null)
+                return;
+
+            var editWindow = new EditDebtorWindow(SelectedDebtor.PersonId.Value);
+            editWindow.Owner = Application.Current?.MainWindow;
+            if (editWindow.ShowDialog() == true)
+            {
+                _ = LoadDataAsync();
+            }
+        }
+
 
         private void ArchiveDebtor(object parameter)
         {
