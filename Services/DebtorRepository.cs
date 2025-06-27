@@ -223,7 +223,8 @@ namespace bankrupt_piterjust.Services
             };
 
             // Fix Int64 to Int32 conversion
-            object scalarResult = await _databaseService.ExecuteScalarAsync<object>(insertPersonSql, personParams);
+            object? v = await _databaseService.ExecuteScalarAsync<object>(insertPersonSql, personParams);
+            object scalarResult = v!;
             int personId = scalarResult is Int64 value ? (int)value : Convert.ToInt32(scalarResult);
 
             // Insert passport data

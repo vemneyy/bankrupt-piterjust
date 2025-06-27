@@ -177,7 +177,7 @@ namespace bankrupt_piterjust.Services
                 }
             }
 
-            return null;
+            return null!;
         }
 
         /// <summary>

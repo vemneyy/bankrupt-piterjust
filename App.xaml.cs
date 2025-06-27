@@ -10,7 +10,7 @@ namespace bankrupt_piterjust
     /// </summary>
     public partial class App : Application
     {
-        private DatabaseService _databaseService;
+        private DatabaseService? _databaseService;
 
         protected override async void OnStartup(StartupEventArgs e)
         {
@@ -51,7 +51,7 @@ namespace bankrupt_piterjust
             }
         }
 
-        private void EnsureDocumentDirectoriesExist()
+        private static void EnsureDocumentDirectoriesExist()
         {
             // Create Documents directory for templates if it doesn't exist
             string documentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents");
@@ -82,12 +82,16 @@ namespace bankrupt_piterjust
                     // Set current employee in session
                     UserSessionService.Instance.SetCurrentEmployee(loginWindow.AuthenticatedEmployee);
 
-                    // Reset database connection before showing main window
-                    await _databaseService.ResetConnectionAsync();
+                    if (_databaseService != null)
+                    {
+                        await _databaseService.ResetConnectionAsync();
+                    }
 
                     // Create main window and make it the application's main window
-                    var mainWindow = new MainWindow();
-                    mainWindow.Title = $"ПитерЮст. Банкротство. - {loginWindow.AuthenticatedEmployee.FullName}, {loginWindow.AuthenticatedEmployee.Position}";
+                    var mainWindow = new MainWindow
+                    {
+                        Title = $"ПитерЮст. Банкротство. - {loginWindow.AuthenticatedEmployee.FullName}, {loginWindow.AuthenticatedEmployee.Position}"
+                    };
 
                     // Assign the main window and restore normal shutdown behaviour
                     MainWindow = mainWindow;

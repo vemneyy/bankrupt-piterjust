@@ -272,8 +272,19 @@ namespace bankrupt_piterjust.ViewModels
         {
             _repository = new DebtorRepository();
 
+            // Initialize non-nullable properties and fields
+            NewDebtor = new Debtor();
+            _fullName = string.Empty;
+
             SaveCommand = new RelayCommand(async o => await SaveDataAsync(), CanSave);
-            CancelCommand = new RelayCommand(o => { Window.GetWindow((DependencyObject)o).DialogResult = false; });
+            CancelCommand = new RelayCommand(o =>
+            {
+                var window = Window.GetWindow(o as DependencyObject);
+                if (window != null)
+                {
+                    window.DialogResult = false;
+                }
+            });
             CalculateTotalWordsCommand = new RelayCommand(o => TotalCostWords = NumberToWordsConverter.ConvertToWords(TotalCost));
             CalculateMandatoryWordsCommand = new RelayCommand(o => MandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(MandatoryExpenses));
         }
@@ -283,7 +294,7 @@ namespace bankrupt_piterjust.ViewModels
             FullName = $"{LastName} {FirstName} {MiddleName}".Trim();
         }
 
-        private bool CanSave(object parameter)
+        private bool CanSave(object? parameter)
         {
             // Basic validation
             return !string.IsNullOrWhiteSpace(LastName) &&

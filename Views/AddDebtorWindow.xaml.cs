@@ -7,7 +7,7 @@ namespace bankrupt_piterjust.Views
 {
     public partial class AddDebtorWindow : Window
     {
-        public Debtor NewDebtor => (DataContext as AddDebtorViewModel)?.NewDebtor;
+        public Debtor? NewDebtor => (DataContext as AddDebtorViewModel)?.NewDebtor;
 
         public AddDebtorWindow()
         {

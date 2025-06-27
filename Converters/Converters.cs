@@ -49,9 +49,9 @@ namespace bankrupt_piterjust.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool boolValue && boolValue && parameter != null)
-                return parameter.ToString();
+                return parameter.ToString()!;
 
-            return null;
+            return null!;
         }
     }
     public class BooleanToVisibilityConverter : IValueConverter

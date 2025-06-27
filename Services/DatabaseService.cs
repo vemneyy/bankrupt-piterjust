@@ -9,7 +9,7 @@ namespace bankrupt_piterjust.Services
         private string _connectionString = string.Empty;
         private bool _connectionTested = false;
         private bool _connectionAvailable = false;
-        private readonly object _connectionLock = new object();
+        private readonly object _connectionLock = new();
 
         public DatabaseService()
         {
@@ -83,7 +83,7 @@ namespace bankrupt_piterjust.Services
         /// <summary>
         /// Execute a SQL command that does not return data
         /// </summary>
-        public async Task<int> ExecuteNonQueryAsync(string sql, Dictionary<string, object> parameters = null)
+        public async Task<int> ExecuteNonQueryAsync(string sql, Dictionary<string, object>? parameters = null)
         {
             if (!await TestConnectionAsync())
                 return 0;
@@ -122,7 +122,7 @@ namespace bankrupt_piterjust.Services
         /// <summary>
         /// Execute a SQL query that returns a single value
         /// </summary>
-        public async Task<T> ExecuteScalarAsync<T>(string sql, Dictionary<string, object> parameters = null)
+        public async Task<T?> ExecuteScalarAsync<T>(string sql, Dictionary<string, object>? parameters = null)
         {
             if (!await TestConnectionAsync())
                 return default;
@@ -153,7 +153,7 @@ namespace bankrupt_piterjust.Services
                     return (T)(object)(int)longValue;
 
                 // General case
-                return (T)Convert.ChangeType(result, typeof(T));
+                return (T?)Convert.ChangeType(result, typeof(T));
             }
             catch (Exception ex)
             {
@@ -172,7 +172,7 @@ namespace bankrupt_piterjust.Services
         /// <summary>
         /// Execute a SQL query that returns a data reader
         /// </summary>
-        public async Task<DataTable> ExecuteReaderAsync(string sql, Dictionary<string, object> parameters = null)
+        public async Task<DataTable> ExecuteReaderAsync(string sql, Dictionary<string, object>? parameters = null)
         {
             if (!await TestConnectionAsync())
                 return new DataTable(); // Return empty table when connection fails

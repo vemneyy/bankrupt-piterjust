@@ -4,7 +4,7 @@ namespace bankrupt_piterjust.Services
 {
     public class UserSessionService
     {
-        private static readonly Lazy<UserSessionService> _instance = new Lazy<UserSessionService>(() => new UserSessionService());
+        private static readonly Lazy<UserSessionService> _instance = new(() => new UserSessionService());
 
         public static UserSessionService Instance => _instance.Value;
 

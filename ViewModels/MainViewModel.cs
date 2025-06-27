@@ -60,7 +60,9 @@ namespace bankrupt_piterjust.ViewModels
                     // Обновляем список вкладок фильтров
                     CurrentFilterTabs = _filterTabsByCategory[_selectedMainTab.Name];
                     // Устанавливаем "Все" как активный фильтр по умолчанию
-                    SelectedFilterTab = CurrentFilterTabs.FirstOrDefault();
+                    // Fix for CS8601: Possible null reference assignment.
+                    // Fix for CS8601: Possible null reference assignment.
+                    SelectedFilterTab = CurrentFilterTabs?.FirstOrDefault() ?? new TabItem { Name = "Все" };
 
                     UpdateTabCounts();
                     ApplyFilters(); // Apply filters when main tab changes
@@ -213,43 +215,43 @@ namespace bankrupt_piterjust.ViewModels
             DebtorsView = new ObservableCollection<Debtor>();
             MainTabs = new ObservableCollection<TabItem>
             {
-                new TabItem { Name = "Лиды" },
-                new TabItem { Name = "Клиенты" },
-                new TabItem { Name = "Отказ" },
-                new TabItem { Name = "Архив" }
+                new() { Name = "Лиды" },
+                new() { Name = "Клиенты" },
+                new() { Name = "Отказ" },
+                new() { Name = "Архив" }
             };
 
             _filterTabsByCategory = new Dictionary<string, ObservableCollection<TabItem>>
             {
                 { "Лиды", new ObservableCollection<TabItem>
                     {
-                        new TabItem { Name = "Все" },
-                        new TabItem { Name = "Консультация не назначена" },
-                        new TabItem { Name = "Консультация назначена" },
-                        new TabItem { Name = "Повторная консультация" }
+                        new() { Name = "Все" },
+                        new() { Name = "Консультация не назначена" },
+                        new() { Name = "Консультация назначена" },
+                        new() { Name = "Повторная консультация" }
                     }
                 },
                 { "Клиенты", new ObservableCollection<TabItem>
                     {
-                        new TabItem { Name = "Все" },
-                        new TabItem { Name = "Сбор документов" },
-                        new TabItem { Name = "Подготовка заявления" },
-                        new TabItem { Name = "На рассмотрении" },
-                        new TabItem { Name = "Ходатайство" },
-                        new TabItem { Name = "Заседание" },
-                        new TabItem { Name = "Процедура введена" }
+                        new() { Name = "Все" },
+                        new() { Name = "Сбор документов" },
+                        new() { Name = "Подготовка заявления" },
+                        new() { Name = "На рассмотрении" },
+                        new() { Name = "Ходатайство" },
+                        new() { Name = "Заседание" },
+                        new() { Name = "Процедура введена" }
                     }
                 },
                 { "Отказ", new ObservableCollection<TabItem>
                     {
-                        new TabItem { Name = "Все" },
-                        new TabItem { Name = "Мой отказ" },
-                        new TabItem { Name = "Отказ должника" }
+                        new() { Name = "Все" },
+                        new() { Name = "Мой отказ" },
+                        new() { Name = "Отказ должника" }
                     }
                 },
                 { "Архив", new ObservableCollection<TabItem>
                     {
-                        new TabItem { Name = "Все" }
+                        new() { Name = "Все" }
                     }
                 }
             };
@@ -266,7 +268,8 @@ namespace bankrupt_piterjust.ViewModels
             CancelEditCommand = new RelayCommand(o => CancelEdit(), o => IsEditMode);
 
             // Устанавливаем начальные активные вкладки
-            SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты");
+            // Fix for CS8601: Possible null reference assignment.
+            SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты") ?? new TabItem { Name = "Клиенты" };
 
             // Загружаем данные асинхронно
             _ = LoadDataAsync();
@@ -399,54 +402,7 @@ namespace bankrupt_piterjust.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-
-                // Если база недоступна, используем тестовые данные
-                LoadDummyData();
             }
-        }
-
-        private void LoadDummyData()
-        {
-            // Тестовые данные для отладки
-            _allDebtors = new List<Debtor>
-            {
-                new Debtor
-                {
-                    PersonId = 1,
-                    FullName = "Лисина Ирина Викторовна",
-                    Region = "Ленинградская область",
-                    Status = "Подать заявление",
-                    MainCategory = "Клиенты",
-                    FilterCategory = "Подготовка заявления",
-                    PreviousMainCategory = null,
-                    Date = DateTime.Now.ToString("dd.MM.yyyy")
-                },
-                new Debtor
-                {
-                    PersonId = 2,
-                    FullName = "Петров Петр Петрович",
-                    Region = "г. Санкт-Петербург",
-                    Status = "Собрать документы",
-                    MainCategory = "Клиенты",
-                    FilterCategory = "Сбор документов",
-                    PreviousMainCategory = null,
-                    Date = DateTime.Now.ToString("dd.MM.yyyy")
-                },
-                new Debtor
-                {
-                    PersonId = 3,
-                    FullName = "Иванов Иван Иванович",
-                    Region = "Московская область",
-                    Status = "В архив",
-                    MainCategory = "Архив",
-                    FilterCategory = "Все",
-                    PreviousMainCategory = "Клиенты",
-                    Date = DateTime.Now.ToString("dd.MM.yyyy")
-                }
-            };
-
-            UpdateTabCounts();
-            ApplyFilters();
         }
 
         private void ApplyFilters()
