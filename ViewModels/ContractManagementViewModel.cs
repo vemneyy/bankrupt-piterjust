@@ -378,9 +378,7 @@ namespace bankrupt_piterjust.ViewModels
             SelectedEmployee = Employees.FirstOrDefault(e => e.EmployeeId == contract.EmployeeId);
             SelectedDebtor = Debtors.FirstOrDefault(d => d.PersonId == contract.DebtorId); // Note: This assumes DebtorId is PersonId
             TotalCost = contract.TotalCost;
-            TotalCostWords = contract.TotalCostWords ?? string.Empty;
             MandatoryExpenses = contract.MandatoryExpenses;
-            MandatoryExpensesWords = contract.MandatoryExpensesWords ?? string.Empty;
             ManagerFee = contract.ManagerFee;
             OtherExpenses = contract.OtherExpenses;
         }
@@ -407,9 +405,7 @@ namespace bankrupt_piterjust.ViewModels
                     DebtorId = debtorId,
                     EmployeeId = SelectedEmployee!.EmployeeId,
                     TotalCost = TotalCost,
-                    TotalCostWords = TotalCostWords,
                     MandatoryExpenses = MandatoryExpenses,
-                    MandatoryExpensesWords = MandatoryExpensesWords,
                     ManagerFee = ManagerFee,
                     OtherExpenses = OtherExpenses
                 };

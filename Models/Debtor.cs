@@ -14,16 +14,12 @@ namespace bankrupt_piterjust.Models
 
         public int? PersonId { get; set; }
 
-        public static Debtor FromPerson(Person person, Debtor debtor)
+        public static Debtor FromPerson(Person person)
         {
             return new Debtor
             {
                 PersonId = person.PersonId,
-                FullName = person.FullName,
-                Status =  debtor.Status,
-                MainCategory = debtor.MainCategory,
-                FilterCategory = debtor.FilterCategory,
-                Date = debtor.Date
+                FullName = person.FullName
             };
         }
     }
