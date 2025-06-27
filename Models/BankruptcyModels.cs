@@ -50,12 +50,21 @@ namespace bankrupt_piterjust.Models
         public string? Email { get; set; }
     }
 
-    public class CompanyRepresentative
+    public class Employee
     {
-        public int RepresentativeId { get; set; }
-        public int CompanyId { get; set; }
-        public int PersonId { get; set; }
-        public string Basis { get; set; } = string.Empty;
+        public int EmployeeId { get; set; }
+        public string Position { get; set; } = string.Empty;
+        public string Login { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty;
+        public DateTime? CreatedDate { get; set; }
+        public bool IsActive { get; set; } = true;
+        public string? Basis { get; set; }
+        public int? PersonId { get; set; }
+        
+        // Navigation properties
+        public Person? Person { get; set; }
+        
+        public string FullName => Person?.FullName ?? $"{Login}";
     }
 
     public class Contract
@@ -64,15 +73,18 @@ namespace bankrupt_piterjust.Models
         public string ContractNumber { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public DateTime ContractDate { get; set; }
-        public int CustomerId { get; set; }
-        public int ExecutorCompanyId { get; set; }
-        public int RepresentativeId { get; set; }
+        public int DebtorId { get; set; }
+        public int EmployeeId { get; set; }
         public decimal TotalCost { get; set; }
-        public string TotalCostWords { get; set; } = string.Empty;
+        public string? TotalCostWords { get; set; }
         public decimal MandatoryExpenses { get; set; }
-        public string MandatoryExpensesWords { get; set; } = string.Empty;
+        public string? MandatoryExpensesWords { get; set; }
         public decimal ManagerFee { get; set; }
         public decimal OtherExpenses { get; set; }
+        
+        // Navigation properties
+        public Employee? Employee { get; set; }
+        public Person? Debtor { get; set; }
     }
 
     public class PaymentSchedule
@@ -82,20 +94,48 @@ namespace bankrupt_piterjust.Models
         public int Stage { get; set; }
         public string Description { get; set; } = string.Empty;
         public decimal Amount { get; set; }
-        public string AmountWords { get; set; } = string.Empty;
+        public string? AmountWords { get; set; }
         public DateTime? DueDate { get; set; }
+        
+        // Navigation property
+        public Contract? Contract { get; set; }
     }
 
-    public class Employee
+    public class Status
     {
-        public int EmployeeId { get; set; }
-        public string LastName { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string? MiddleName { get; set; }
-        public string Position { get; set; } = string.Empty;
-        public string Login { get; set; } = string.Empty;
-        public DateTime? CreatedDate { get; set; }
-        public bool IsActive { get; set; } = true;
-        public string FullName => $"{LastName} {FirstName} {MiddleName ?? ""}".Trim();
+        public int StatusId { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public class MainCategory
+    {
+        public int MainCategoryId { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public class FilterCategory
+    {
+        public int FilterCategoryId { get; set; }
+        public int MainCategoryId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        
+        // Navigation property
+        public MainCategory? MainCategory { get; set; }
+    }
+
+    public class DebtorEntity
+    {
+        public int DebtorId { get; set; }
+        public int PersonId { get; set; }
+        public int StatusId { get; set; }
+        public int MainCategoryId { get; set; }
+        public int FilterCategoryId { get; set; }
+        public DateTime CreatedDate { get; set; }
+        
+        // Navigation properties
+        public Person? Person { get; set; }
+        public Status? Status { get; set; }
+        public MainCategory? MainCategory { get; set; }
+        public FilterCategory? FilterCategory { get; set; }
     }
 }

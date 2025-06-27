@@ -6,10 +6,12 @@ namespace bankrupt_piterjust.Services
     public class DebtorRepository
     {
         private readonly DatabaseService _databaseService;
+        private readonly FullDatabaseRepository _fullRepository;
 
         public DebtorRepository()
         {
             _databaseService = new DatabaseService();
+            _fullRepository = new FullDatabaseRepository();
             // Ensure tables exist when repository is initialized
             _ = EnsureTablesExistAsync();
         }

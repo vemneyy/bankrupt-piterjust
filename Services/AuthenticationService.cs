@@ -27,17 +27,19 @@ namespace bankrupt_piterjust.Services
 
                 string sql = @"
                     SELECT 
-                        employee_id, 
-                        last_name, 
-                        first_name, 
-                        middle_name, 
-                        position, 
-                        login,
-                        created_date, 
-                        is_active,
-                        (password_hash = crypt(@password, password_hash)) as password_matches
-                    FROM employee 
-                    WHERE login = @login AND is_active = true";
+    e.employee_id, 
+    p.last_name, 
+    p.first_name, 
+    p.middle_name, 
+    e.position, 
+    e.login,
+    e.created_date, 
+    e.is_active,
+    (e.password_hash = crypt(@password, e.password_hash)) AS password_matches
+FROM employee e
+JOIN person p ON e.person_id = p.person_id
+WHERE e.login = @login AND e.is_active = true;
+";
 
                 var parameters = new Dictionary<string, object>
                 {
@@ -60,16 +62,22 @@ namespace bankrupt_piterjust.Services
                     return null;
                 }
 
+                // Create a Person object for the Employee
+                var person = new Person
+                {
+                    LastName = row["last_name"].ToString()!,
+                    FirstName = row["first_name"].ToString()!,
+                    MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null
+                };
+
                 return new Employee
                 {
                     EmployeeId = row["employee_id"] is Int64 value ? (int)value : Convert.ToInt32(row["employee_id"]),
-                    LastName = row["last_name"].ToString()!,
-                    FirstName = row["first_name"].ToString()!,
-                    MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                     Position = row["position"].ToString()!,
                     Login = row["login"].ToString()!,
                     CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
-                    IsActive = Convert.ToBoolean(row["is_active"])
+                    IsActive = Convert.ToBoolean(row["is_active"]),
+                    Person = person
                 };
             }
             catch (Exception ex)

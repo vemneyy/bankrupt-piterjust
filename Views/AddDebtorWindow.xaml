@@ -438,48 +438,6 @@
                         </StackPanel>
                     </Grid>
                 </TabItem>
-
-                <!-- Статус -->
-                <TabItem Header="Статус" Style="{StaticResource ModernTabItem}">
-                    <!-- ... (содержимое вкладки без изменений) ... -->
-                    <Grid Margin="15,20,15,10">
-                        <StackPanel>
-                            <TextBlock Text="Статус в программе" Style="{StaticResource HeaderTextBlock}"/>
-                            <TextBlock Text="Текст кнопки статуса" Style="{StaticResource FormTextBlock}"/>
-                            <TextBox Text="{Binding Status, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                            <TextBlock Text="Основная категория" Style="{StaticResource HeaderTextBlock}"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,5,0,15">
-                                <RadioButton Content="Лиды" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Лиды}" Style="{StaticResource TabButton}"/>
-                                <RadioButton Content="Клиенты" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Клиенты}" Style="{StaticResource TabButton}"/>
-                                <RadioButton Content="Отказ" GroupName="MainCategory" IsChecked="{Binding MainCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Отказ}" Style="{StaticResource TabButton}"/>
-                            </StackPanel>
-                            <TextBlock Text="Фильтр" Style="{StaticResource HeaderTextBlock}"/>
-                            <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Лиды}">
-                                <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
-                                    <RadioButton Content="Консультация не назначена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Консультация не назначена}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                    <RadioButton Content="Консультация назначена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Консультация назначена}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                    <RadioButton Content="Повторная консультация" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Повторная консультация}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                </WrapPanel>
-                            </StackPanel>
-                            <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Клиенты}">
-                                <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
-                                    <RadioButton Content="Сбор документов" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Сбор документов}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                    <RadioButton Content="Подготовка заявления" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Подготовка заявления}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                    <RadioButton Content="На рассмотрении" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=На рассмотрении}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                    <RadioButton Content="Ходатайство" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Ходатайство}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                    <RadioButton Content="Заседание" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Заседание}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                    <RadioButton Content="Процедура введена" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Процедура введена}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                </WrapPanel>
-                            </StackPanel>
-                            <StackPanel Visibility="{Binding MainCategory, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter=Отказ}">
-                                <WrapPanel Orientation="Horizontal" Margin="0,5,0,15">
-                                    <RadioButton Content="Мой отказ" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Мой отказ}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                    <RadioButton Content="Отказ должника" GroupName="FilterCategory" IsChecked="{Binding FilterCategory, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Отказ должника}" Style="{StaticResource TabButton}" Margin="0,0,5,5"/>
-                                </WrapPanel>
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-                </TabItem>
             </TabControl>
         </ScrollViewer>
 

@@ -204,6 +204,9 @@ namespace bankrupt_piterjust.ViewModels
         public ICommand EditDebtorCommand { get; }
         public ICommand SaveDebtorCommand { get; }
         public ICommand CancelEditCommand { get; }
+        public ICommand ManageContractsCommand { get; }
+        public ICommand ManageCompaniesCommand { get; }
+        public ICommand ManageEmployeesCommand { get; }
 
         public MainViewModel()
         {
@@ -267,6 +270,7 @@ namespace bankrupt_piterjust.ViewModels
             SaveDebtorCommand = new RelayCommand(async o => await SaveDebtorDetailsAsync(), o => IsEditMode);
             CancelEditCommand = new RelayCommand(o => CancelEdit(), o => IsEditMode);
 
+
             // Устанавливаем начальные активные вкладки
             // Fix for CS8601: Possible null reference assignment.
             SelectedMainTab = MainTabs.FirstOrDefault(t => t.Name == "Клиенты") ?? new TabItem { Name = "Клиенты" };
@@ -290,6 +294,7 @@ namespace bankrupt_piterjust.ViewModels
                 }
             }
         }
+
 
         // Loads detailed information about the selected debtor
         private async Task LoadDebtorDetailsAsync(int personId)

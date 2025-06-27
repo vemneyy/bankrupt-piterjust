@@ -47,10 +47,10 @@ namespace bankrupt_piterjust.ViewModels
         private decimal _managerFee;
         private decimal _otherExpenses;
 
-        // Status properties (UI)
-        private string _status = "Подать заявление";
+        // Status properties - Default values set, no UI selection needed
+        private string _status = "Сбор документов";
         private string _mainCategory = "Клиенты";
-        private string _filterCategory = "Подготовка заявления";
+        private string _filterCategory = "Сбор документов";
 
         // Результат - новый должник
         public Debtor NewDebtor { get; private set; }
@@ -268,26 +268,6 @@ namespace bankrupt_piterjust.ViewModels
         public ICommand GenerateScheduleCommand { get; }
         #endregion
 
-        #region Status Properties
-        public string Status
-        {
-            get => _status;
-            set { _status = value; OnPropertyChanged(nameof(Status)); }
-        }
-
-        public string MainCategory
-        {
-            get => _mainCategory;
-            set { _mainCategory = value; OnPropertyChanged(nameof(MainCategory)); }
-        }
-
-        public string FilterCategory
-        {
-            get => _filterCategory;
-            set { _filterCategory = value; OnPropertyChanged(nameof(FilterCategory)); }
-        }
-        #endregion
-
         public AddDebtorViewModel()
         {
             _repository = new DebtorRepository();
@@ -328,6 +308,8 @@ namespace bankrupt_piterjust.ViewModels
             try
             {
                 IsBusy = true;
+
+                var fullRepository = new FullDatabaseRepository();
 
                 // Create models from UI data
                 var person = new Person
@@ -380,8 +362,53 @@ namespace bankrupt_piterjust.ViewModels
                     });
                 }
 
-                // Save to database
+                // Save person and debtor to database
                 int personId = await _repository.AddPersonWithDetailsAsync(person, passport, addresses, Status, MainCategory, FilterCategory);
+
+                // Save contract if contract fields are filled
+                if (ShouldSaveContract())
+                {
+                    int debtorId = await fullRepository.GetDebtorIdByPersonIdAsync(personId);
+                    
+                    // Get current employee ID (you may need to implement this based on current user session)
+                    int employeeId = GetCurrentEmployeeId();
+
+                    var contract = new Contract
+                    {
+                        ContractNumber = ContractNumber,
+                        City = ContractCity,
+                        ContractDate = ContractDate,
+                        DebtorId = debtorId,
+                        EmployeeId = employeeId,
+                        TotalCost = TotalCost,
+                        TotalCostWords = TotalCostWords,
+                        MandatoryExpenses = MandatoryExpenses,
+                        MandatoryExpensesWords = MandatoryExpensesWords,
+                        ManagerFee = ManagerFee,
+                        OtherExpenses = OtherExpenses
+                    };
+
+                    int contractId = await fullRepository.CreateContractAsync(contract);
+
+                    // Save payment schedule if it exists
+                    if (PaymentSchedule.Any())
+                    {
+                        foreach (var payment in PaymentSchedule)
+                        {
+                            var schedule = new PaymentSchedule
+                            {
+                                ContractId = contractId,
+                                Stage = payment.Stage,
+                                Description = payment.Description,
+                                Amount = payment.Amount,
+                                AmountWords = payment.AmountWords,
+                                DueDate = payment.DueDate
+                            };
+
+                            await fullRepository.CreatePaymentScheduleAsync(schedule);
+                        }
+                    }
+                }
 
                 // Create a Debtor object for UI display
                 NewDebtor = new Debtor
@@ -412,6 +439,25 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
+        private bool ShouldSaveContract()
+        {
+            return !string.IsNullOrWhiteSpace(ContractNumber) && 
+                   (TotalCost > 0 || MandatoryExpenses > 0 || ManagerFee > 0 || OtherExpenses > 0);
+        }
+
+        private int GetCurrentEmployeeId()
+        {
+            // Get employee ID from user session
+            var currentEmployee = UserSessionService.Instance.CurrentEmployee;
+            if (currentEmployee != null)
+            {
+                return currentEmployee.EmployeeId;
+            }
+            
+            // Default to 1 if no employee is logged in (you might want to handle this differently)
+            return 1;
+        }
+
         private void GenerateSchedule()
         {
             PaymentSchedule.Clear();
@@ -430,6 +476,11 @@ namespace bankrupt_piterjust.ViewModels
                 });
             }
         }
+
+        // Status properties - Kept as public properties but without UI binding
+        public string Status => _status;
+        public string MainCategory => _mainCategory;
+        public string FilterCategory => _filterCategory;
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
