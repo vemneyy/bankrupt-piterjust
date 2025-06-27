@@ -469,14 +469,17 @@ namespace bankrupt_piterjust.ViewModels
                 var addresses = new List<Address>();
                 if (!RegistrationAddress.IsEmpty())
                 {
+
                     addresses.Add(RegistrationAddress);
                 }
                 if (!SameAsRegistration && !ResidenceAddress.IsEmpty())
                 {
+
                     addresses.Add(ResidenceAddress);
                 }
                 if (!SameAsResidence && !MailingAddress.IsEmpty())
                 {
+
                     addresses.Add(MailingAddress);
                 }
 

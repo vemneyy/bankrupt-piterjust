@@ -612,6 +612,7 @@ namespace bankrupt_piterjust.Services
             {
                 string insertSql = @"INSERT INTO address (
                                         person_id,
+
                                         postal_code,
                                         country,
                                         region,

@@ -198,6 +198,7 @@ namespace bankrupt_piterjust.ViewModels
         public string? ResidenceAddress => SelectedAddresses != null && SelectedAddresses.Count > 1 ? FormatAddress(SelectedAddresses[1]) : null;
         public string? MailingAddress => SelectedAddresses != null && SelectedAddresses.Count > 2 ? FormatAddress(SelectedAddresses[2]) : null;
 
+
         // Loading state
         private bool _isLoading;
         public bool IsLoading
