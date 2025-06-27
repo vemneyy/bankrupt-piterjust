@@ -475,7 +475,7 @@ namespace bankrupt_piterjust.ViewModels
                 {
                     PersonId = personId,
                     FullName = FullName,
-                    Region = FormatAddress(RegistrationAddress),
+                    Region = RegistrationAddress.Region ?? string.Empty,
                     Status = Status,
                     MainCategory = MainCategory,
                     FilterCategory = FilterCategory,
