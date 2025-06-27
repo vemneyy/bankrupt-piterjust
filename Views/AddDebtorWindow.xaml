@@ -560,6 +560,24 @@
                                                  Style="{StaticResource FormTextBox}"/>
                                     </StackPanel>
                                 </Grid>
+
+                                <TextBlock Text="Количество месяцев оплаты"
+                                           Style="{StaticResource FormTextBlock}"/>
+                                <TextBox Text="{Binding PaymentMonths, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource FormTextBox}"/>
+                                <Button Content="Сгенерировать график"
+                                        Command="{Binding GenerateScheduleCommand}"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Height="36"
+                                        Margin="0,5,0,10" Width="200"/>
+
+                                <DataGrid ItemsSource="{Binding PaymentSchedule}" AutoGenerateColumns="False"
+                                          CanUserAddRows="False" Margin="0,10,0,0" IsReadOnly="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Месяц" Binding="{Binding Stage}" Width="*"/>
+                                        <DataGridTextColumn Header="Сумма" Binding="{Binding Amount, StringFormat=N2}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
                             </StackPanel>
                         </Grid>
                     </TabItem>

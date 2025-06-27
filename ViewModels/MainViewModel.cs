@@ -340,14 +340,43 @@ namespace bankrupt_piterjust.ViewModels
         // Saves changes to the debtor details
         private async Task SaveDebtorDetailsAsync()
         {
-            // This would be implemented to save changes to person, passport, and addresses
-            // For now, just cancel edit mode
-            IsEditMode = false;
+            if (SelectedDebtor?.PersonId == null || SelectedPerson == null)
+                return;
 
-            // Reload the debtor data to reflect any changes
-            if (SelectedDebtor?.PersonId != null)
+            try
             {
-                await LoadDebtorDetailsAsync(SelectedDebtor.PersonId.Value);
+                // Update person
+                await _debtorRepository.UpdatePersonAsync(SelectedPerson);
+
+                // Update passport
+                if (SelectedPassport != null)
+                    await _debtorRepository.UpdatePassportAsync(SelectedPassport);
+
+                // Update addresses
+                if (SelectedAddresses != null)
+                {
+                    foreach (var addr in SelectedAddresses)
+                    {
+                        await _debtorRepository.UpdateAddressAsync(addr);
+                    }
+                }
+
+                // Update status information
+                await _debtorRepository.UpsertDebtorStatusAsync(
+                    SelectedDebtor.PersonId.Value,
+                    SelectedDebtor.MainCategory,
+                    SelectedDebtor.FilterCategory,
+                    SelectedDebtor.Status);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsEditMode = false;
+                if (SelectedDebtor?.PersonId != null)
+                    await LoadDebtorDetailsAsync(SelectedDebtor.PersonId.Value);
             }
         }
 

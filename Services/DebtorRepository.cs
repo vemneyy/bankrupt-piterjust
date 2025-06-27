@@ -27,6 +27,9 @@ namespace bankrupt_piterjust.Services
 
             // Ensure address table exists with address_type enum
             await EnsureAddressTableExistsAsync();
+
+            // Ensure table for debtor statuses exists
+            await EnsureDebtorStatusTableExistsAsync();
         }
 
         /// <summary>
@@ -119,14 +122,32 @@ namespace bankrupt_piterjust.Services
         }
 
         /// <summary>
+        /// Ensures that the debtor_status table exists
+        /// </summary>
+        private async Task EnsureDebtorStatusTableExistsAsync()
+        {
+            string createStatusTableSql = @"
+                CREATE TABLE IF NOT EXISTS debtor_status (
+                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
+                    main_category VARCHAR(50) NOT NULL,
+                    filter_category VARCHAR(100) NOT NULL,
+                    status VARCHAR(100) NOT NULL,
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )";
+
+            await _databaseService.ExecuteNonQueryAsync(createStatusTableSql);
+        }
+
+        /// <summary>
         /// Get all debtors from the database
         /// </summary>
         public async Task<List<Debtor>> GetAllDebtorsAsync()
         {
             string sql = "SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email, " +
-                         "a.address_text as region " +
+                         "a.address_text as region, ds.status, ds.main_category, ds.filter_category, ds.updated_at " +
                          "FROM person p " +
-                         "LEFT JOIN address a ON p.person_id = a.person_id AND a.address_type = 'registration'";
+                         "LEFT JOIN address a ON p.person_id = a.person_id AND a.address_type = 'registration' " +
+                         "LEFT JOIN debtor_status ds ON p.person_id = ds.person_id";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
             var debtors = new List<Debtor>();
@@ -154,11 +175,14 @@ namespace bankrupt_piterjust.Services
                     debtor.Region = row["region"].ToString() ?? string.Empty;
                 }
 
-                // Default values for UI display
-                debtor.Status = "Подать заявление";
-                debtor.MainCategory = "Клиенты";
-                debtor.FilterCategory = "Подготовка заявления";
-                debtor.Date = DateTime.Now.ToString("dd.MM.yyyy");
+                if (row["status"] != DBNull.Value)
+                    debtor.Status = row["status"].ToString() ?? string.Empty;
+                if (row["main_category"] != DBNull.Value)
+                    debtor.MainCategory = row["main_category"].ToString() ?? string.Empty;
+                if (row["filter_category"] != DBNull.Value)
+                    debtor.FilterCategory = row["filter_category"].ToString() ?? string.Empty;
+                if (row["updated_at"] != DBNull.Value)
+                    debtor.Date = Convert.ToDateTime(row["updated_at"]).ToString("dd.MM.yyyy");
 
                 debtors.Add(debtor);
             }
@@ -381,6 +405,89 @@ namespace bankrupt_piterjust.Services
             }
 
             return addresses;
+        }
+
+        /// <summary>
+        /// Inserts or updates status information for a debtor
+        /// </summary>
+        public async Task UpsertDebtorStatusAsync(int personId, string mainCategory, string filterCategory, string status)
+        {
+            await EnsureDebtorStatusTableExistsAsync();
+
+            string sql = @"
+                INSERT INTO debtor_status (person_id, main_category, filter_category, status, updated_at)
+                VALUES (@personId, @mainCategory, @filterCategory, @status, NOW())
+                ON CONFLICT (person_id) DO UPDATE
+                SET main_category = EXCLUDED.main_category,
+                    filter_category = EXCLUDED.filter_category,
+                    status = EXCLUDED.status,
+                    updated_at = NOW();";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@personId", personId },
+                { "@mainCategory", mainCategory },
+                { "@filterCategory", filterCategory },
+                { "@status", status }
+            };
+
+            await _databaseService.ExecuteNonQueryAsync(sql, parameters);
+        }
+
+        /// <summary>
+        /// Updates person information
+        /// </summary>
+        public async Task UpdatePersonAsync(Person person)
+        {
+            string sql = @"UPDATE person SET last_name=@lastName, first_name=@firstName, middle_name=@middleName, phone=@phone, email=@email WHERE person_id=@personId";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@lastName", person.LastName },
+                { "@firstName", person.FirstName },
+                { "@middleName", person.MiddleName != null ? person.MiddleName : DBNull.Value },
+                { "@phone", person.Phone != null ? person.Phone : DBNull.Value },
+                { "@email", person.Email != null ? person.Email : DBNull.Value },
+                { "@personId", person.PersonId }
+            };
+
+            await _databaseService.ExecuteNonQueryAsync(sql, parameters);
+        }
+
+        /// <summary>
+        /// Updates passport information
+        /// </summary>
+        public async Task UpdatePassportAsync(Passport passport)
+        {
+            string sql = @"UPDATE passport SET series=@series, number=@number, issued_by=@issuedBy, division_code=@divisionCode, issue_date=@issueDate WHERE passport_id=@passportId";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@series", passport.Series },
+                { "@number", passport.Number },
+                { "@issuedBy", passport.IssuedBy },
+                { "@divisionCode", passport.DivisionCode != null ? passport.DivisionCode : DBNull.Value },
+                { "@issueDate", passport.IssueDate },
+                { "@passportId", passport.PassportId }
+            };
+
+            await _databaseService.ExecuteNonQueryAsync(sql, parameters);
+        }
+
+        /// <summary>
+        /// Updates address information
+        /// </summary>
+        public async Task UpdateAddressAsync(Address address)
+        {
+            string sql = @"UPDATE address SET address_text=@addressText WHERE address_id=@addressId";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@addressText", address.AddressText },
+                { "@addressId", address.AddressId }
+            };
+
+            await _databaseService.ExecuteNonQueryAsync(sql, parameters);
         }
     }
 }

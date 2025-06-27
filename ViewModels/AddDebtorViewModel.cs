@@ -5,6 +5,7 @@ using bankrupt_piterjust.Services;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Collections.ObjectModel;
 
 namespace bankrupt_piterjust.ViewModels
 {
@@ -246,6 +247,17 @@ namespace bankrupt_piterjust.ViewModels
             get => _otherExpenses;
             set { _otherExpenses = value; OnPropertyChanged(nameof(OtherExpenses)); }
         }
+
+        private int _paymentMonths = 12;
+        public int PaymentMonths
+        {
+            get => _paymentMonths;
+            set { _paymentMonths = value; OnPropertyChanged(nameof(PaymentMonths)); }
+        }
+
+        public ObservableCollection<PaymentSchedule> PaymentSchedule { get; } = new();
+
+        public ICommand GenerateScheduleCommand { get; }
         #endregion
 
         #region Status Properties
@@ -276,6 +288,7 @@ namespace bankrupt_piterjust.ViewModels
             CancelCommand = new RelayCommand(o => { Window.GetWindow((DependencyObject)o).DialogResult = false; });
             CalculateTotalWordsCommand = new RelayCommand(o => TotalCostWords = NumberToWordsConverter.ConvertToWords(TotalCost));
             CalculateMandatoryWordsCommand = new RelayCommand(o => MandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(MandatoryExpenses));
+            GenerateScheduleCommand = new RelayCommand(o => GeneratePaymentSchedule());
         }
 
         private void UpdateFullName()
@@ -351,6 +364,9 @@ namespace bankrupt_piterjust.ViewModels
                 // Save to database
                 int personId = await _repository.AddPersonWithDetailsAsync(person, passport, addresses);
 
+                // Save status information
+                await _repository.UpsertDebtorStatusAsync(personId, MainCategory, FilterCategory, Status);
+
                 // Create a Debtor object for UI display
                 NewDebtor = new Debtor
                 {
@@ -377,6 +393,29 @@ namespace bankrupt_piterjust.ViewModels
             finally
             {
                 IsBusy = false;
+            }
+        }
+
+        private void GeneratePaymentSchedule()
+        {
+            PaymentSchedule.Clear();
+
+            if (PaymentMonths <= 0)
+                return;
+
+            decimal legalCost = TotalCost - OtherExpenses;
+            decimal monthly = Math.Round(legalCost / PaymentMonths, 2);
+
+            for (int i = 1; i <= PaymentMonths; i++)
+            {
+                PaymentSchedule.Add(new PaymentSchedule
+                {
+                    Stage = i,
+                    Description = $"Месяц {i}",
+                    Amount = monthly,
+                    AmountWords = NumberToWordsConverter.ConvertToWords(monthly),
+                    DueDate = ContractDate.AddMonths(i - 1)
+                });
             }
         }
 
