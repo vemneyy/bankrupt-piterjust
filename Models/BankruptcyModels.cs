@@ -40,19 +40,6 @@ namespace bankrupt_piterjust.Models
         public string AddressText { get; set; } = string.Empty;
     }
 
-    public class Company
-    {
-        public int CompanyId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Inn { get; set; } = string.Empty;
-        public string? Kpp { get; set; }
-        public string? Ogrn { get; set; }
-        public string? Okpo { get; set; }
-        public string? Address { get; set; }
-        public string? Phone { get; set; }
-        public string? Email { get; set; }
-    }
-
     public class Basis
     {
         public int BasisId { get; set; }
