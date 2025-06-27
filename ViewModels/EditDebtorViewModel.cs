@@ -1,5 +1,4 @@
 using bankrupt_piterjust.Commands;
-using bankrupt_piterjust.Helpers;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using System.Collections.ObjectModel;
@@ -223,94 +222,104 @@ namespace bankrupt_piterjust.ViewModels
         public decimal TotalCost
         {
             get => _totalCost;
-            set { 
-                _totalCost = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(TotalCost)); 
-                UpdateContractSums(); 
+            set
+            {
+                _totalCost = Math.Round(value, 2);
+                OnPropertyChanged(nameof(TotalCost));
+                UpdateContractSums();
             }
         }
 
         public decimal MandatoryExpenses
         {
             get => _mandatoryExpenses;
-            set { 
-                _mandatoryExpenses = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(MandatoryExpenses)); 
-                UpdateContractSums(); 
+            set
+            {
+                _mandatoryExpenses = Math.Round(value, 2);
+                OnPropertyChanged(nameof(MandatoryExpenses));
+                UpdateContractSums();
             }
         }
 
         public decimal ManagerFee
         {
             get => _managerFee;
-            set { 
-                _managerFee = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(ManagerFee)); 
-                UpdateContractSums(); 
+            set
+            {
+                _managerFee = Math.Round(value, 2);
+                OnPropertyChanged(nameof(ManagerFee));
+                UpdateContractSums();
             }
         }
 
         public decimal OtherExpenses
         {
             get => _otherExpenses;
-            set { 
-                _otherExpenses = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(OtherExpenses)); 
-                UpdateContractSums(); 
+            set
+            {
+                _otherExpenses = Math.Round(value, 2);
+                OnPropertyChanged(nameof(OtherExpenses));
+                UpdateContractSums();
             }
         }
 
         public decimal ServicesAmount
         {
             get => _servicesAmount;
-            set { 
-                _servicesAmount = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(ServicesAmount)); 
+            set
+            {
+                _servicesAmount = Math.Round(value, 2);
+                OnPropertyChanged(nameof(ServicesAmount));
             }
         }
 
         public decimal ExpensesAmount
         {
             get => _expensesAmount;
-            set { 
-                _expensesAmount = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(ExpensesAmount)); 
+            set
+            {
+                _expensesAmount = Math.Round(value, 2);
+                OnPropertyChanged(nameof(ExpensesAmount));
             }
         }
 
         public decimal Stage1Amount
         {
             get => _stage1Amount;
-            set { 
-                _stage1Amount = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(Stage1Amount)); 
+            set
+            {
+                _stage1Amount = Math.Round(value, 2);
+                OnPropertyChanged(nameof(Stage1Amount));
             }
         }
 
         public decimal Stage2Amount
         {
             get => _stage2Amount;
-            set { 
-                _stage2Amount = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(Stage2Amount)); 
+            set
+            {
+                _stage2Amount = Math.Round(value, 2);
+                OnPropertyChanged(nameof(Stage2Amount));
             }
         }
 
         public decimal Stage3Amount
         {
             get => _stage3Amount;
-            set { 
-                _stage3Amount = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(Stage3Amount)); 
+            set
+            {
+                _stage3Amount = Math.Round(value, 2);
+                OnPropertyChanged(nameof(Stage3Amount));
             }
         }
 
         public decimal ScheduleTotal
         {
             get => _scheduleTotal;
-            set { 
-                _scheduleTotal = Math.Round(value, 2); 
-                OnPropertyChanged(nameof(ScheduleTotal)); 
+            set
+            {
+                _scheduleTotal = Math.Round(value, 2);
+                OnPropertyChanged(nameof(ScheduleTotal));
             }
         }
 
@@ -366,9 +375,9 @@ namespace bankrupt_piterjust.ViewModels
                 }
             });
             GenerateScheduleCommand = new RelayCommand(o => GenerateSchedule());
-            
+
             PaymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
-            
+
             _ = LoadDataAsync();
         }
 

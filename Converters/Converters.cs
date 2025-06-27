@@ -125,7 +125,7 @@ namespace bankrupt_piterjust.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return string.Empty;
-            
+
             string input = value.ToString() ?? string.Empty;
             // Оставляем только цифры
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
@@ -147,7 +147,7 @@ namespace bankrupt_piterjust.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return string.Empty;
-            
+
             string input = value.ToString() ?? string.Empty;
             // Оставляем только цифры
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
@@ -164,15 +164,15 @@ namespace bankrupt_piterjust.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return string.Empty;
-            
+
             string input = value.ToString() ?? string.Empty;
             // Убираем все кроме цифр
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
-            
+
             if (digitsOnly.Length == 0) return string.Empty;
             if (digitsOnly.Length <= 3) return digitsOnly;
             if (digitsOnly.Length <= 6) return $"{digitsOnly.Substring(0, 3)}-{digitsOnly.Substring(3)}";
-            
+
             // Если больше 6 цифр, обрезаем
             return $"{digitsOnly.Substring(0, 3)}-{digitsOnly.Substring(3, 3)}";
         }
@@ -180,19 +180,19 @@ namespace bankrupt_piterjust.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return string.Empty;
-            
+
             string input = value.ToString() ?? string.Empty;
             // Убираем все кроме цифр
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
-            
+
             // Ограничиваем до 6 цифр
             if (digitsOnly.Length > 6)
                 digitsOnly = digitsOnly.Substring(0, 6);
-            
+
             // Форматируем с тире если есть более 3 цифр
             if (digitsOnly.Length > 3)
                 return $"{digitsOnly.Substring(0, 3)}-{digitsOnly.Substring(3)}";
-            
+
             return digitsOnly;
         }
     }
@@ -206,22 +206,22 @@ namespace bankrupt_piterjust.Converters
         {
             if (value is decimal decimalValue)
                 return decimalValue.ToString("F2", CultureInfo.GetCultureInfo("ru-RU"));
-            
+
             if (decimal.TryParse(value?.ToString(), out decimal parsedValue))
                 return parsedValue.ToString("F2", CultureInfo.GetCultureInfo("ru-RU"));
-            
+
             return "0,00";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return 0m;
-            
+
             string input = value.ToString() ?? string.Empty;
-            
+
             if (decimal.TryParse(input, NumberStyles.Number, CultureInfo.GetCultureInfo("ru-RU"), out decimal result))
                 return Math.Round(result, 2);
-            
+
             return 0m;
         }
     }
@@ -234,7 +234,7 @@ namespace bankrupt_piterjust.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return string.Empty;
-            
+
             string input = value.ToString() ?? string.Empty;
             return FormatPhone(input);
         }
@@ -242,7 +242,7 @@ namespace bankrupt_piterjust.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return string.Empty;
-            
+
             string input = value.ToString() ?? string.Empty;
             return FormatPhone(input);
         }
@@ -251,22 +251,22 @@ namespace bankrupt_piterjust.Converters
         {
             // Удаляем все символы кроме цифр
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
-            
+
             // Если пустая строка, возвращаем пустую
             if (string.IsNullOrEmpty(digitsOnly)) return string.Empty;
-            
+
             // Нормализуем номер: если начинается с 8 и длина 11, заменяем на 7
             if (digitsOnly.StartsWith("8") && digitsOnly.Length == 11)
             {
                 digitsOnly = "7" + digitsOnly.Substring(1);
             }
-            
+
             // Если номер начинается с 7 и длина больше 11, обрезаем
             if (digitsOnly.StartsWith("7") && digitsOnly.Length > 11)
             {
                 digitsOnly = digitsOnly.Substring(0, 11);
             }
-            
+
             // Если номер не начинается с 7 или 8
             if (!digitsOnly.StartsWith("7") && !digitsOnly.StartsWith("8"))
             {
@@ -286,16 +286,16 @@ namespace bankrupt_piterjust.Converters
                     digitsOnly = "7" + digitsOnly;
                 }
             }
-            
+
             // Теперь форматируем номер
             if (digitsOnly.Length == 0) return string.Empty;
-            
+
             // Номер должен начинаться с 7 после нормализации
             if (!digitsOnly.StartsWith("7"))
             {
                 return digitsOnly; // Возвращаем как есть если что-то пошло не так
             }
-            
+
             // Форматируем поэтапно
             if (digitsOnly.Length == 1) return "+7";
             if (digitsOnly.Length <= 4)
@@ -332,7 +332,7 @@ namespace bankrupt_piterjust.Converters
                 string part3 = digitsOnly.Substring(9, 2);
                 return $"+7 ({code}) {part1}-{part2}-{part3}";
             }
-            
+
             return input; // Возвращаем исходную строку если не удалось форматировать
         }
     }
@@ -354,12 +354,12 @@ namespace bankrupt_piterjust.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return string.Empty;
-            
+
             string email = value.ToString() ?? string.Empty;
-            
+
             // Приводим к нижнему регистру и удаляем лишние пробелы
             email = email.Trim().ToLowerInvariant();
-            
+
             return email;
         }
 
@@ -378,7 +378,7 @@ namespace bankrupt_piterjust.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return true;
-            
+
             string email = value.ToString() ?? string.Empty;
             return EmailConverter.IsValidEmail(email);
         }
