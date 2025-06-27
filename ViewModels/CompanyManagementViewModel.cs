@@ -44,7 +44,7 @@ namespace bankrupt_piterjust.ViewModels
         public CompanyManagementViewModel()
         {
             _repository = new FullDatabaseRepository();
-            Companies = new ObservableCollection<Company>();
+            Companies = [];
 
             RefreshCommand = new RelayCommand(async o => await LoadDataAsync());
             AddCompanyCommand = new RelayCommand(o => AddCompany());
@@ -331,8 +331,8 @@ namespace bankrupt_piterjust.ViewModels
         public EmployeeManagementViewModel()
         {
             _repository = new FullDatabaseRepository();
-            Employees = new ObservableCollection<Employee>();
-            Persons = new ObservableCollection<Person>();
+            Employees = [];
+            Persons = [];
 
             RefreshCommand = new RelayCommand(async o => await LoadDataAsync());
             AddEmployeeCommand = new RelayCommand(o => AddEmployee());

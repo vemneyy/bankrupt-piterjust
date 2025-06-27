@@ -247,19 +247,19 @@ namespace bankrupt_piterjust.ViewModels
         {
             _debtorRepository = new DebtorRepository();
             _documentGenerationService = new DocumentGenerationService();
-            _selectedAddresses = new ObservableCollection<Address>();
-            _availableStatuses = new ObservableCollection<string>();
+            _selectedAddresses = [];
+            _availableStatuses = [];
             _selectedStatus = string.Empty;
 
             // Инициализация коллекций для UI
-            DebtorsView = new ObservableCollection<Debtor>();
+            DebtorsView = [];
 
             // Remove "Лиды" and "Отказ" categories
-            MainTabs = new ObservableCollection<TabItem>
-            {
+            MainTabs =
+            [
                 new() { Name = "Клиенты" },
                 new() { Name = "Архив" }
-            };
+            ];
 
             _filterTabsByCategory = new Dictionary<string, ObservableCollection<TabItem>>
             {
