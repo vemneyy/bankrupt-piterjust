@@ -3,7 +3,9 @@ using bankrupt_piterjust.Helpers;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -46,6 +48,12 @@ namespace bankrupt_piterjust.ViewModels
         private string _mandatoryExpensesWords = string.Empty;
         private decimal _managerFee;
         private decimal _otherExpenses;
+        private decimal _servicesAmount;
+        private decimal _expensesAmount;
+        private decimal _stage1Amount;
+        private decimal _stage2Amount;
+        private decimal _stage3Amount;
+        private decimal _scheduleTotal;
 
         // Default status values - No UI selection needed as per requirements
         private readonly string _status = "Сбор документов";
@@ -222,7 +230,7 @@ namespace bankrupt_piterjust.ViewModels
         public decimal TotalCost
         {
             get => _totalCost;
-            set { _totalCost = value; OnPropertyChanged(nameof(TotalCost)); }
+            set { _totalCost = value; OnPropertyChanged(nameof(TotalCost)); UpdateContractSums(); }
         }
 
         public string TotalCostWords
@@ -234,7 +242,7 @@ namespace bankrupt_piterjust.ViewModels
         public decimal MandatoryExpenses
         {
             get => _mandatoryExpenses;
-            set { _mandatoryExpenses = value; OnPropertyChanged(nameof(MandatoryExpenses)); }
+            set { _mandatoryExpenses = value; OnPropertyChanged(nameof(MandatoryExpenses)); UpdateContractSums(); }
         }
 
         public string MandatoryExpensesWords
@@ -246,13 +254,49 @@ namespace bankrupt_piterjust.ViewModels
         public decimal ManagerFee
         {
             get => _managerFee;
-            set { _managerFee = value; OnPropertyChanged(nameof(ManagerFee)); }
+            set { _managerFee = value; OnPropertyChanged(nameof(ManagerFee)); UpdateContractSums(); }
         }
 
         public decimal OtherExpenses
         {
             get => _otherExpenses;
-            set { _otherExpenses = value; OnPropertyChanged(nameof(OtherExpenses)); }
+            set { _otherExpenses = value; OnPropertyChanged(nameof(OtherExpenses)); UpdateContractSums(); }
+        }
+
+        public decimal ServicesAmount
+        {
+            get => _servicesAmount;
+            set { _servicesAmount = value; OnPropertyChanged(nameof(ServicesAmount)); }
+        }
+
+        public decimal ExpensesAmount
+        {
+            get => _expensesAmount;
+            set { _expensesAmount = value; OnPropertyChanged(nameof(ExpensesAmount)); }
+        }
+
+        public decimal Stage1Amount
+        {
+            get => _stage1Amount;
+            set { _stage1Amount = value; OnPropertyChanged(nameof(Stage1Amount)); }
+        }
+
+        public decimal Stage2Amount
+        {
+            get => _stage2Amount;
+            set { _stage2Amount = value; OnPropertyChanged(nameof(Stage2Amount)); }
+        }
+
+        public decimal Stage3Amount
+        {
+            get => _stage3Amount;
+            set { _stage3Amount = value; OnPropertyChanged(nameof(Stage3Amount)); }
+        }
+
+        public decimal ScheduleTotal
+        {
+            get => _scheduleTotal;
+            set { _scheduleTotal = value; OnPropertyChanged(nameof(ScheduleTotal)); }
         }
 
         // Payment schedule properties
@@ -268,7 +312,27 @@ namespace bankrupt_piterjust.ViewModels
         public ObservableCollection<PaymentSchedule> PaymentSchedule
         {
             get => _paymentSchedule;
-            set { _paymentSchedule = value; OnPropertyChanged(nameof(PaymentSchedule)); }
+            set
+            {
+                if (_paymentSchedule != null)
+                {
+                    _paymentSchedule.CollectionChanged -= PaymentSchedule_CollectionChanged;
+                    foreach (var item in _paymentSchedule)
+                        item.PropertyChanged -= PaymentItem_PropertyChanged;
+                }
+
+                _paymentSchedule = value;
+
+                if (_paymentSchedule != null)
+                {
+                    _paymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
+                    foreach (var item in _paymentSchedule)
+                        item.PropertyChanged += PaymentItem_PropertyChanged;
+                }
+
+                OnPropertyChanged(nameof(PaymentSchedule));
+                UpdateScheduleTotal();
+            }
         }
 
         public ICommand GenerateScheduleCommand { get; }
@@ -294,6 +358,8 @@ namespace bankrupt_piterjust.ViewModels
             CalculateTotalWordsCommand = new RelayCommand(o => TotalCostWords = NumberToWordsConverter.ConvertToWords(TotalCost));
             CalculateMandatoryWordsCommand = new RelayCommand(o => MandatoryExpensesWords = NumberToWordsConverter.ConvertToWords(MandatoryExpenses));
             GenerateScheduleCommand = new RelayCommand(o => GenerateSchedule());
+
+            PaymentSchedule.CollectionChanged += PaymentSchedule_CollectionChanged;
         }
 
         private void UpdateFullName()
@@ -380,6 +446,7 @@ namespace bankrupt_piterjust.ViewModels
                     // Get current employee ID (you may need to implement this based on current user session)
                     int employeeId = GetCurrentEmployeeId();
 
+                    UpdateScheduleTotal();
                     var contract = new Contract
                     {
                         ContractNumber = ContractNumber,
@@ -392,7 +459,10 @@ namespace bankrupt_piterjust.ViewModels
                         MandatoryExpenses = MandatoryExpenses,
                         MandatoryExpensesWords = MandatoryExpensesWords,
                         ManagerFee = ManagerFee,
-                        OtherExpenses = OtherExpenses
+                        OtherExpenses = OtherExpenses,
+                        Stage1Cost = Stage1Amount,
+                        Stage2Cost = Stage2Amount,
+                        Stage3Cost = Stage3Amount
                     };
 
                     int contractId = await fullRepository.CreateContractAsync(contract);
@@ -481,6 +551,41 @@ namespace bankrupt_piterjust.ViewModels
                     Amount = monthly,
                     DueDate = ContractDate.AddMonths(i - 1)
                 });
+            }
+            UpdateScheduleTotal();
+        }
+
+        private void UpdateContractSums()
+        {
+            ExpensesAmount = MandatoryExpenses + ManagerFee + OtherExpenses;
+            ServicesAmount = TotalCost - ExpensesAmount;
+        }
+
+        private void UpdateScheduleTotal()
+        {
+            ScheduleTotal = PaymentSchedule.Sum(p => p.Amount);
+        }
+
+        private void PaymentSchedule_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+            {
+                foreach (PaymentSchedule item in e.OldItems)
+                    item.PropertyChanged -= PaymentItem_PropertyChanged;
+            }
+            if (e.NewItems != null)
+            {
+                foreach (PaymentSchedule item in e.NewItems)
+                    item.PropertyChanged += PaymentItem_PropertyChanged;
+            }
+            UpdateScheduleTotal();
+        }
+
+        private void PaymentItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PaymentSchedule.Amount))
+            {
+                UpdateScheduleTotal();
             }
         }
 

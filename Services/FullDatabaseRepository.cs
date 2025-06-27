@@ -177,9 +177,27 @@ namespace bankrupt_piterjust.Services
                     mandatory_expenses NUMERIC(12, 2) NOT NULL,
                     mandatory_expenses_words TEXT,
                     manager_fee NUMERIC(12, 2) NOT NULL,
-                    other_expenses NUMERIC(12, 2) NOT NULL
+                    other_expenses NUMERIC(12, 2) NOT NULL,
+                    first_stage_cost NUMERIC(12, 2),
+                    second_stage_cost NUMERIC(12, 2),
+                    third_stage_cost NUMERIC(12, 2)
                 )";
             await _databaseService.ExecuteNonQueryAsync(sql);
+
+            string checkColumnsSql = @"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contract' AND column_name='first_stage_cost') THEN
+                        ALTER TABLE contract ADD COLUMN first_stage_cost NUMERIC(12,2);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contract' AND column_name='second_stage_cost') THEN
+                        ALTER TABLE contract ADD COLUMN second_stage_cost NUMERIC(12,2);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contract' AND column_name='third_stage_cost') THEN
+                        ALTER TABLE contract ADD COLUMN third_stage_cost NUMERIC(12,2);
+                    END IF;
+                END $$;";
+            await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
         }
 
         private async Task EnsurePaymentScheduleTableExistsAsync()
@@ -437,12 +455,12 @@ namespace bankrupt_piterjust.Services
         public async Task<int> CreateContractAsync(Contract contract)
         {
             string sql = @"
-                INSERT INTO contract (contract_number, city, contract_date, debtor_id, employee_id, 
-                                    total_cost, total_cost_words, mandatory_expenses, mandatory_expenses_words, 
-                                    manager_fee, other_expenses)
-                VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId, 
-                        @totalCost, @totalCostWords, @mandatoryExpenses, @mandatoryExpensesWords, 
-                        @managerFee, @otherExpenses)
+                INSERT INTO contract (contract_number, city, contract_date, debtor_id, employee_id,
+                                    total_cost, total_cost_words, mandatory_expenses, mandatory_expenses_words,
+                                    manager_fee, other_expenses, first_stage_cost, second_stage_cost, third_stage_cost)
+                VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId,
+                        @totalCost, @totalCostWords, @mandatoryExpenses, @mandatoryExpensesWords,
+                        @managerFee, @otherExpenses, @stage1, @stage2, @stage3)
                 RETURNING contract_id";
 
             var parameters = new Dictionary<string, object>
@@ -457,7 +475,10 @@ namespace bankrupt_piterjust.Services
                 { "@mandatoryExpenses", contract.MandatoryExpenses },
                 { "@mandatoryExpensesWords", contract.MandatoryExpensesWords ?? (object)DBNull.Value },
                 { "@managerFee", contract.ManagerFee },
-                { "@otherExpenses", contract.OtherExpenses }
+                { "@otherExpenses", contract.OtherExpenses },
+                { "@stage1", contract.Stage1Cost },
+                { "@stage2", contract.Stage2Cost },
+                { "@stage3", contract.Stage3Cost }
             };
 
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
@@ -497,7 +518,10 @@ namespace bankrupt_piterjust.Services
                 MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
                 MandatoryExpensesWords = row["mandatory_expenses_words"] != DBNull.Value ? row["mandatory_expenses_words"].ToString() : null,
                 ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                OtherExpenses = Convert.ToDecimal(row["other_expenses"])
+                OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
+                Stage1Cost = row["first_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["first_stage_cost"]) : 0m,
+                Stage2Cost = row["second_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["second_stage_cost"]) : 0m,
+                Stage3Cost = row["third_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["third_stage_cost"]) : 0m
             };
 
             // Load employee info
@@ -567,7 +591,10 @@ namespace bankrupt_piterjust.Services
                     MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
                     MandatoryExpensesWords = row["mandatory_expenses_words"] != DBNull.Value ? row["mandatory_expenses_words"].ToString() : null,
                     ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                    OtherExpenses = Convert.ToDecimal(row["other_expenses"])
+                    OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
+                    Stage1Cost = row["first_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["first_stage_cost"]) : 0m,
+                    Stage2Cost = row["second_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["second_stage_cost"]) : 0m,
+                    Stage3Cost = row["third_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["third_stage_cost"]) : 0m
                 };
 
                 // Load employee info
@@ -616,7 +643,10 @@ namespace bankrupt_piterjust.Services
                     debtor_id = @debtorId, employee_id = @employeeId, total_cost = @totalCost,
                     total_cost_words = @totalCostWords, mandatory_expenses = @mandatoryExpenses,
                     mandatory_expenses_words = @mandatoryExpensesWords, manager_fee = @managerFee,
-                    other_expenses = @otherExpenses
+                    other_expenses = @otherExpenses,
+                    first_stage_cost = @stage1,
+                    second_stage_cost = @stage2,
+                    third_stage_cost = @stage3
                 WHERE contract_id = @contractId";
 
             var parameters = new Dictionary<string, object>
@@ -632,6 +662,9 @@ namespace bankrupt_piterjust.Services
                 { "@mandatoryExpensesWords", contract.MandatoryExpensesWords ?? (object)DBNull.Value },
                 { "@managerFee", contract.ManagerFee },
                 { "@otherExpenses", contract.OtherExpenses },
+                { "@stage1", contract.Stage1Cost },
+                { "@stage2", contract.Stage2Cost },
+                { "@stage3", contract.Stage3Cost },
                 { "@contractId", contract.ContractId }
             };
 
@@ -742,6 +775,39 @@ namespace bankrupt_piterjust.Services
             string sql = "DELETE FROM payment_schedule WHERE contract_id = @contractId";
             var parameters = new Dictionary<string, object> { { "@contractId", contractId } };
             await _databaseService.ExecuteNonQueryAsync(sql, parameters);
+        }
+
+        public async Task<Contract?> GetLatestContractByDebtorIdAsync(int debtorId)
+        {
+            string sql = @"
+                SELECT * FROM contract
+                WHERE debtor_id = @debtorId
+                ORDER BY contract_date DESC
+                LIMIT 1";
+
+            var parameters = new Dictionary<string, object> { { "@debtorId", debtorId } };
+            var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
+            if (dataTable.Rows.Count == 0) return null;
+
+            var row = dataTable.Rows[0];
+            return new Contract
+            {
+                ContractId = Convert.ToInt32(row["contract_id"]),
+                ContractNumber = row["contract_number"].ToString() ?? string.Empty,
+                City = row["city"].ToString() ?? string.Empty,
+                ContractDate = Convert.ToDateTime(row["contract_date"]),
+                DebtorId = Convert.ToInt32(row["debtor_id"]),
+                EmployeeId = Convert.ToInt32(row["employee_id"]),
+                TotalCost = Convert.ToDecimal(row["total_cost"]),
+                TotalCostWords = row["total_cost_words"] != DBNull.Value ? row["total_cost_words"].ToString() : null,
+                MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
+                MandatoryExpensesWords = row["mandatory_expenses_words"] != DBNull.Value ? row["mandatory_expenses_words"].ToString() : null,
+                ManagerFee = Convert.ToDecimal(row["manager_fee"]),
+                OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
+                Stage1Cost = row["first_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["first_stage_cost"]) : 0m,
+                Stage2Cost = row["second_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["second_stage_cost"]) : 0m,
+                Stage3Cost = row["third_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["third_stage_cost"]) : 0m
+            };
         }
         #endregion
 
