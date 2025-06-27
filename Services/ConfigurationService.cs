@@ -1,4 +1,4 @@
-using bankrupt_piterjust.Models;
+using bankrupt_piterjust.Configuration;
 using System.IO;
 using System.Text.Json;
 

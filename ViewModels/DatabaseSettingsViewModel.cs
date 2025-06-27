@@ -1,5 +1,5 @@
 using bankrupt_piterjust.Commands;
-using bankrupt_piterjust.Models;
+using bankrupt_piterjust.Configuration;
 using bankrupt_piterjust.Services;
 using Npgsql;
 using System.ComponentModel;

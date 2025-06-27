@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace bankrupt_piterjust.Models
+namespace bankrupt_piterjust.Configuration
 {
     public class DatabaseConfiguration : INotifyPropertyChanged
     {
@@ -50,11 +50,11 @@ namespace bankrupt_piterjust.Models
         {
             return new DatabaseConfiguration
             {
-                Host = this.Host,
-                Port = this.Port,
-                Database = this.Database,
-                Username = this.Username,
-                Password = this.Password
+                Host = Host,
+                Port = Port,
+                Database = Database,
+                Username = Username,
+                Password = Password
             };
         }
 
