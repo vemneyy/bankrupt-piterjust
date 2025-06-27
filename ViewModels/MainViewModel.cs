@@ -190,13 +190,13 @@ namespace bankrupt_piterjust.ViewModels
         }
 
         // Helper properties for addresses
-        public bool HasRegistrationAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Registration) ?? false;
-        public bool HasResidenceAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Residence) ?? false;
-        public bool HasMailingAddress => SelectedAddresses?.Any(a => a.AddressType == AddressType.Mailing) ?? false;
+        public bool HasRegistrationAddress => SelectedAddresses?.Any() ?? false;
+        public bool HasResidenceAddress => SelectedAddresses?.Count > 1;
+        public bool HasMailingAddress => SelectedAddresses?.Count > 2;
 
-        public string? RegistrationAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Registration)?.AddressText;
-        public string? ResidenceAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Residence)?.AddressText;
-        public string? MailingAddress => SelectedAddresses?.FirstOrDefault(a => a.AddressType == AddressType.Mailing)?.AddressText;
+        public string? RegistrationAddress => SelectedAddresses != null && SelectedAddresses.Count > 0 ? FormatAddress(SelectedAddresses[0]) : null;
+        public string? ResidenceAddress => SelectedAddresses != null && SelectedAddresses.Count > 1 ? FormatAddress(SelectedAddresses[1]) : null;
+        public string? MailingAddress => SelectedAddresses != null && SelectedAddresses.Count > 2 ? FormatAddress(SelectedAddresses[2]) : null;
 
         // Loading state
         private bool _isLoading;
@@ -718,6 +718,22 @@ namespace bankrupt_piterjust.ViewModels
         private void ManageEmployees()
         {
             MessageBox.Show("Функционал управления сотрудниками будет добавлен в следующих версиях", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private static string FormatAddress(Address address)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(address.PostalCode)) parts.Add(address.PostalCode);
+            if (!string.IsNullOrWhiteSpace(address.Country)) parts.Add(address.Country);
+            if (!string.IsNullOrWhiteSpace(address.Region)) parts.Add(address.Region);
+            if (!string.IsNullOrWhiteSpace(address.District)) parts.Add(address.District);
+            if (!string.IsNullOrWhiteSpace(address.City)) parts.Add(address.City);
+            if (!string.IsNullOrWhiteSpace(address.Locality)) parts.Add(address.Locality);
+            if (!string.IsNullOrWhiteSpace(address.Street)) parts.Add(address.Street);
+            if (!string.IsNullOrWhiteSpace(address.HouseNumber)) parts.Add(address.HouseNumber);
+            if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
+            if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
+            return string.Join(", ", parts);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

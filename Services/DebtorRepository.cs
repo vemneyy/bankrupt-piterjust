@@ -1,5 +1,6 @@
 using bankrupt_piterjust.Models;
 using System.Data;
+using System.Linq;
 
 namespace bankrupt_piterjust.Services
 {
@@ -105,28 +106,25 @@ namespace bankrupt_piterjust.Services
         }
 
         /// <summary>
-        /// Ensures that the address table exists with address_type enum
+        /// Ensures that the address table exists
         /// </summary>
         private async Task EnsureAddressTableExistsAsync()
         {
-            // First create the address_type_enum if it doesn't exist
-            string createEnumSql = @"
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'address_type_enum') THEN
-                        CREATE TYPE address_type_enum AS ENUM ('registration', 'residence', 'mailing');
-                    END IF;
-                END$$;";
-
-            await _databaseService.ExecuteNonQueryAsync(createEnumSql);
-
-            // Then create the address table
+            // Create the address table
             string createAddressTableSql = @"
                 CREATE TABLE IF NOT EXISTS address (
                     address_id SERIAL PRIMARY KEY,
-                    person_id INTEGER NOT NULL REFERENCES person(person_id),
-                    address_type address_type_enum NOT NULL,
-                    address_text TEXT NOT NULL
+                    person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
+                    postal_code VARCHAR(20),
+                    country VARCHAR(100) NOT NULL DEFAULT 'Россия',
+                    region VARCHAR(100),
+                    district VARCHAR(100),
+                    city VARCHAR(100),
+                    locality VARCHAR(100),
+                    street VARCHAR(100),
+                    house_number VARCHAR(20),
+                    building VARCHAR(20),
+                    apartment VARCHAR(20)
                 )";
 
             await _databaseService.ExecuteNonQueryAsync(createAddressTableSql);
@@ -179,13 +177,11 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
-                       a.address_text AS region,
                        s.name AS status,
                        mc.name AS main_category,
                        fc.name AS filter_category,
                        d.created_date
                 FROM person p
-                LEFT JOIN address a ON p.person_id = a.person_id AND a.address_type = 'registration'
                 LEFT JOIN debtor d ON d.person_id = p.person_id
                 LEFT JOIN status s ON s.status_id = d.status_id
                 LEFT JOIN main_category mc ON mc.main_category_id = d.main_category_id
@@ -212,8 +208,10 @@ namespace bankrupt_piterjust.Services
 
                 var debtor = Debtor.FromPerson(person);
 
-                if (row["region"] != DBNull.Value)
-                    debtor.Region = row["region"].ToString() ?? string.Empty;
+                var addrList = await GetAddressesByPersonIdAsync(personId);
+                var firstAddr = addrList.FirstOrDefault();
+                if (firstAddr != null)
+                    debtor.Region = FormatAddress(firstAddr);
 
                 debtor.Status = row["status"] != DBNull.Value ? row["status"].ToString() ?? string.Empty : "";
                 debtor.MainCategory = row["main_category"] != DBNull.Value ? row["main_category"].ToString() ?? string.Empty : "";
@@ -317,24 +315,45 @@ namespace bankrupt_piterjust.Services
             {
                 foreach (var address in addresses)
                 {
-                    // Convert AddressType enum to PostgreSQL enum value
-                    string addressTypeValue = address.AddressType switch
-                    {
-                        AddressType.Registration => "registration",
-                        AddressType.Residence => "residence",
-                        AddressType.Mailing => "mailing",
-                        _ => throw new ArgumentOutOfRangeException(nameof(address.AddressType), $"Unexpected address type: {address.AddressType}")
-                    };
-
                     string insertAddressSql = @"
-                        INSERT INTO address (person_id, address_type, address_text)
-                        VALUES (@personId, @addressType::address_type_enum, @addressText)";
+                        INSERT INTO address (
+                            person_id,
+                            postal_code,
+                            country,
+                            region,
+                            district,
+                            city,
+                            locality,
+                            street,
+                            house_number,
+                            building,
+                            apartment)
+                        VALUES (
+                            @personId,
+                            @postalCode,
+                            @country,
+                            @region,
+                            @district,
+                            @city,
+                            @locality,
+                            @street,
+                            @houseNumber,
+                            @building,
+                            @apartment)";
 
                     var addressParams = new Dictionary<string, object>
                     {
                         { "@personId", personId },
-                        { "@addressType", addressTypeValue },
-                        { "@addressText", address.AddressText }
+                        { "@postalCode", address.PostalCode ?? (object)DBNull.Value },
+                        { "@country", address.Country },
+                        { "@region", address.Region ?? (object)DBNull.Value },
+                        { "@district", address.District ?? (object)DBNull.Value },
+                        { "@city", address.City ?? (object)DBNull.Value },
+                        { "@locality", address.Locality ?? (object)DBNull.Value },
+                        { "@street", address.Street ?? (object)DBNull.Value },
+                        { "@houseNumber", address.HouseNumber ?? (object)DBNull.Value },
+                        { "@building", address.Building ?? (object)DBNull.Value },
+                        { "@apartment", address.Apartment ?? (object)DBNull.Value }
                     };
 
                     await _databaseService.ExecuteNonQueryAsync(insertAddressSql, addressParams);
@@ -421,7 +440,7 @@ namespace bankrupt_piterjust.Services
         /// </summary>
         public async Task<List<Address>> GetAddressesByPersonIdAsync(int personId)
         {
-            string sql = "SELECT * FROM address WHERE person_id = @personId";
+            string sql = "SELECT * FROM address WHERE person_id = @personId ORDER BY address_id";
 
             var parameters = new Dictionary<string, object>
             {
@@ -433,10 +452,6 @@ namespace bankrupt_piterjust.Services
 
             foreach (DataRow row in dataTable.Rows)
             {
-                // Parse the address type from string to enum
-                AddressType addressType;
-                Enum.TryParse(row["address_type"].ToString() ?? string.Empty, true, out addressType);
-
                 // Fix Int64 to Int32 conversion for both IDs
                 int addressId = row["address_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["address_id"]);
                 int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
@@ -445,8 +460,16 @@ namespace bankrupt_piterjust.Services
                 {
                     AddressId = addressId,
                     PersonId = pId,
-                    AddressType = addressType,
-                    AddressText = row["address_text"].ToString() ?? string.Empty
+                    PostalCode = row["postal_code"] != DBNull.Value ? row["postal_code"].ToString() : null,
+                    Country = row["country"].ToString() ?? "Россия",
+                    Region = row["region"] != DBNull.Value ? row["region"].ToString() : null,
+                    District = row["district"] != DBNull.Value ? row["district"].ToString() : null,
+                    City = row["city"] != DBNull.Value ? row["city"].ToString() : null,
+                    Locality = row["locality"] != DBNull.Value ? row["locality"].ToString() : null,
+                    Street = row["street"] != DBNull.Value ? row["street"].ToString() : null,
+                    HouseNumber = row["house_number"] != DBNull.Value ? row["house_number"].ToString() : null,
+                    Building = row["building"] != DBNull.Value ? row["building"].ToString() : null,
+                    Apartment = row["apartment"] != DBNull.Value ? row["apartment"].ToString() : null
                 });
             }
 
@@ -587,22 +610,63 @@ namespace bankrupt_piterjust.Services
             if (addresses == null) return;
             foreach (var address in addresses)
             {
-                string typeValue = address.AddressType switch
-                {
-                    AddressType.Registration => "registration",
-                    AddressType.Residence => "residence",
-                    AddressType.Mailing => "mailing",
-                    _ => "registration"
-                };
-                string insertSql = @"INSERT INTO address (person_id, address_type, address_text) VALUES (@pid, @type::address_type_enum, @text)";
+                string insertSql = @"INSERT INTO address (
+                                        person_id,
+                                        postal_code,
+                                        country,
+                                        region,
+                                        district,
+                                        city,
+                                        locality,
+                                        street,
+                                        house_number,
+                                        building,
+                                        apartment)
+                                    VALUES (
+                                        @pid,
+                                        @postalCode,
+                                        @country,
+                                        @region,
+                                        @district,
+                                        @city,
+                                        @locality,
+                                        @street,
+                                        @houseNumber,
+                                        @building,
+                                        @apartment)";
+
                 var p = new Dictionary<string, object>
                 {
                     {"@pid", personId},
-                    {"@type", typeValue},
-                    {"@text", address.AddressText}
+                    {"@postalCode", address.PostalCode ?? (object)DBNull.Value },
+                    {"@country", address.Country },
+                    {"@region", address.Region ?? (object)DBNull.Value },
+                    {"@district", address.District ?? (object)DBNull.Value },
+                    {"@city", address.City ?? (object)DBNull.Value },
+                    {"@locality", address.Locality ?? (object)DBNull.Value },
+                    {"@street", address.Street ?? (object)DBNull.Value },
+                    {"@houseNumber", address.HouseNumber ?? (object)DBNull.Value },
+                    {"@building", address.Building ?? (object)DBNull.Value },
+                    {"@apartment", address.Apartment ?? (object)DBNull.Value }
                 };
                 await _databaseService.ExecuteNonQueryAsync(insertSql, p);
             }
+        }
+
+        private static string FormatAddress(Address address)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(address.PostalCode)) parts.Add(address.PostalCode);
+            if (!string.IsNullOrWhiteSpace(address.Country)) parts.Add(address.Country);
+            if (!string.IsNullOrWhiteSpace(address.Region)) parts.Add(address.Region);
+            if (!string.IsNullOrWhiteSpace(address.District)) parts.Add(address.District);
+            if (!string.IsNullOrWhiteSpace(address.City)) parts.Add(address.City);
+            if (!string.IsNullOrWhiteSpace(address.Locality)) parts.Add(address.Locality);
+            if (!string.IsNullOrWhiteSpace(address.Street)) parts.Add(address.Street);
+            if (!string.IsNullOrWhiteSpace(address.HouseNumber)) parts.Add(address.HouseNumber);
+            if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
+            if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
+            return string.Join(", ", parts);
         }
     }
 }

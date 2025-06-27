@@ -86,21 +86,20 @@ namespace bankrupt_piterjust.Services
 
         private async Task EnsureAddressTableExistsAsync()
         {
-            string createEnumSql = @"
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'address_type_enum') THEN
-                        CREATE TYPE address_type_enum AS ENUM ('registration', 'residence', 'mailing');
-                    END IF;
-                END$$;";
-            await _databaseService.ExecuteNonQueryAsync(createEnumSql);
-
             string sql = @"
                 CREATE TABLE IF NOT EXISTS address (
                     address_id SERIAL PRIMARY KEY,
                     person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
-                    address_type address_type_enum NOT NULL,
-                    address_text TEXT NOT NULL
+                    postal_code VARCHAR(20),
+                    country VARCHAR(100) NOT NULL DEFAULT 'Россия',
+                    region VARCHAR(100),
+                    district VARCHAR(100),
+                    city VARCHAR(100),
+                    locality VARCHAR(100),
+                    street VARCHAR(100),
+                    house_number VARCHAR(20),
+                    building VARCHAR(20),
+                    apartment VARCHAR(20)
                 )";
             await _databaseService.ExecuteNonQueryAsync(sql);
         }

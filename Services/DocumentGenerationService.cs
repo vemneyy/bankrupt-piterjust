@@ -31,7 +31,7 @@ namespace bankrupt_piterjust.Services
 
                 // Get address information
                 var addresses = await debtorRepository.GetAddressesByPersonIdAsync(debtorId);
-                var registrationAddress = addresses.FirstOrDefault(a => a.AddressType == AddressType.Registration);
+                var registrationAddress = addresses.FirstOrDefault();
                 if (registrationAddress == null)
                     throw new Exception("Адрес регистрации должника не найден.");
 
@@ -109,7 +109,7 @@ namespace bankrupt_piterjust.Services
                     { "<кем_выдан_паспорт>", passport.IssuedBy },
                     { "<код_подразделения>", passport.DivisionCode ?? "-" }, // Use null-coalescing operator to provide a default value
                     { "<дата_выдачи>", passport.IssueDate.ToString("dd.MM.yyyy") },
-                    { "<адрес_регистрации_заказчика>", registrationAddress.AddressText },
+                    { "<адрес_регистрации_заказчика>", FormatAddress(registrationAddress) },
                     { "<фио_представителя_исполнителя>", representativeName },
                     { "<должность_представителя>", representativePosition },
                     { "<основание_действий_представителя>", representativeBasis },
@@ -524,6 +524,22 @@ namespace bankrupt_piterjust.Services
             var culture = new CultureInfo("ru-RU");
             string formatted = date.Value.ToString("d MMMM yyyy", culture);
             return $"до {formatted} года";
+        }
+
+        private static string FormatAddress(Address address)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(address.PostalCode)) parts.Add(address.PostalCode);
+            if (!string.IsNullOrWhiteSpace(address.Country)) parts.Add(address.Country);
+            if (!string.IsNullOrWhiteSpace(address.Region)) parts.Add(address.Region);
+            if (!string.IsNullOrWhiteSpace(address.District)) parts.Add(address.District);
+            if (!string.IsNullOrWhiteSpace(address.City)) parts.Add(address.City);
+            if (!string.IsNullOrWhiteSpace(address.Locality)) parts.Add(address.Locality);
+            if (!string.IsNullOrWhiteSpace(address.Street)) parts.Add(address.Street);
+            if (!string.IsNullOrWhiteSpace(address.HouseNumber)) parts.Add(address.HouseNumber);
+            if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
+            if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
+            return string.Join(", ", parts);
         }
     }
 }
