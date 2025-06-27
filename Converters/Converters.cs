@@ -202,26 +202,32 @@ namespace bankrupt_piterjust.Converters
     /// </summary>
     public class CurrencyConverter : IValueConverter
     {
+        private static readonly CultureInfo _culture = new("en-US")
+        {
+            NumberFormat = { NumberGroupSeparator = "'", NumberDecimalSeparator = "." }
+        };
+
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is decimal decimalValue)
-                return decimalValue.ToString("F2", CultureInfo.GetCultureInfo("ru-RU"));
-            
-            if (decimal.TryParse(value?.ToString(), out decimal parsedValue))
-                return parsedValue.ToString("F2", CultureInfo.GetCultureInfo("ru-RU"));
-            
-            return "0,00";
+                return decimalValue.ToString("N2", _culture);
+
+            if (decimal.TryParse(value?.ToString()?.Replace("'", string.Empty), NumberStyles.Any, _culture, out decimal parsedValue))
+                return parsedValue.ToString("N2", _culture);
+
+            return 0m.ToString("N2", _culture);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null) return 0m;
-            
+
             string input = value.ToString() ?? string.Empty;
-            
-            if (decimal.TryParse(input, NumberStyles.Number, CultureInfo.GetCultureInfo("ru-RU"), out decimal result))
+            input = input.Replace("'", string.Empty);
+
+            if (decimal.TryParse(input, NumberStyles.Any, _culture, out decimal result))
                 return Math.Round(result, 2);
-            
+
             return 0m;
         }
     }
