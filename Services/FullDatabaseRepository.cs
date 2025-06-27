@@ -19,6 +19,7 @@ namespace bankrupt_piterjust.Services
         private async Task EnsureAllTablesExistAsync()
         {
             await EnsurePersonTableExistsAsync();
+            await EnsureBasisTableExistsAsync();
             await EnsurePassportTableExistsAsync();
             await EnsureAddressTableExistsAsync();
             await EnsureEmployeeTableExistsAsync();
@@ -53,6 +54,19 @@ namespace bankrupt_piterjust.Services
                 END $$;";
 
             await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
+        }
+
+        private async Task EnsureBasisTableExistsAsync()
+        {
+            string sql = @"
+                CREATE TABLE IF NOT EXISTS basis (
+                    basis_id SERIAL PRIMARY KEY,
+                    basis_type VARCHAR(50) NOT NULL,
+                    document_number VARCHAR(50) NOT NULL,
+                    document_date DATE NOT NULL,
+                    CONSTRAINT basis_basis_type_check CHECK ((basis_type::text = ANY ((ARRAY['Доверенность', 'Приказ'])::text[])))
+                )";
+            await _databaseService.ExecuteNonQueryAsync(sql);
         }
 
         private async Task EnsurePassportTableExistsAsync()
@@ -411,7 +425,7 @@ namespace bankrupt_piterjust.Services
         public async Task UpdateEmployeeAsync(Employee employee)
         {
             string sql = @"
-                UPDATE employee SET 
+                UPDATE employee SET
                     position = @position, login = @login, password_hash = @passwordHash,
                     is_active = @isActive, basis = @basis, person_id = @personId
                 WHERE employee_id = @employeeId";
@@ -428,6 +442,26 @@ namespace bankrupt_piterjust.Services
             };
 
             await _databaseService.ExecuteNonQueryAsync(sql, parameters);
+        }
+
+        public async Task<string?> GetEmployeeBasisStringAsync(int employeeId)
+        {
+            string sql = @"
+                SELECT b.basis_type, b.document_number, b.document_date
+                FROM employee e
+                JOIN basis b ON e.basis_id = b.basis_id
+                WHERE e.employee_id = @eid";
+
+            var p = new Dictionary<string, object> { { "@eid", employeeId } };
+            var table = await _databaseService.ExecuteReaderAsync(sql, p);
+            if (table.Rows.Count == 0)
+                return null;
+
+            var row = table.Rows[0];
+            string type = row["basis_type"].ToString() ?? string.Empty;
+            string number = row["document_number"].ToString() ?? string.Empty;
+            DateTime date = Convert.ToDateTime(row["document_date"]);
+            return $"{type} № {number} от {date:dd.MM.yyyy}";
         }
         #endregion
 
