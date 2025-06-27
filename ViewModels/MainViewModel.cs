@@ -14,7 +14,7 @@ namespace bankrupt_piterjust.ViewModels
     // Модель для вкладок, чтобы хранить имя, счетчик и состояние
     public class TabItem : INotifyPropertyChanged
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         private int _count;
         public int Count
         {
@@ -31,7 +31,7 @@ namespace bankrupt_piterjust.ViewModels
 
     public class MainViewModel : INotifyPropertyChanged
     {
-        private List<Debtor> _allDebtors; // Полный список всех должников
+        private List<Debtor> _allDebtors = new(); // Полный список всех должников
         private readonly Dictionary<string, ObservableCollection<TabItem>> _filterTabsByCategory;
         private readonly DebtorRepository _debtorRepository;
         private readonly DocumentGenerationService _documentGenerationService;
@@ -39,14 +39,14 @@ namespace bankrupt_piterjust.ViewModels
         public ObservableCollection<Debtor> DebtorsView { get; set; } // Отображаемый список
         public ObservableCollection<TabItem> MainTabs { get; set; }
 
-        private ObservableCollection<TabItem> _currentFilterTabs;
+        private ObservableCollection<TabItem> _currentFilterTabs = new();
         public ObservableCollection<TabItem> CurrentFilterTabs
         {
             get => _currentFilterTabs;
             set { _currentFilterTabs = value; OnPropertyChanged(nameof(CurrentFilterTabs)); }
         }
 
-        private TabItem _selectedMainTab;
+        private TabItem _selectedMainTab = new();
         public TabItem SelectedMainTab
         {
             get => _selectedMainTab;
@@ -68,7 +68,7 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
-        private TabItem _selectedFilterTab;
+        private TabItem _selectedFilterTab = new();
         public TabItem SelectedFilterTab
         {
             get => _selectedFilterTab;
@@ -83,7 +83,7 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
-        private string _searchText;
+        private string _searchText = string.Empty;
         public string SearchText
         {
             get => _searchText;
@@ -293,6 +293,11 @@ namespace bankrupt_piterjust.ViewModels
             SaveDebtorCommand = new RelayCommand(async o => await SaveDebtorDetailsAsync(), o => IsEditMode);
             CancelEditCommand = new RelayCommand(o => CancelEdit(), o => IsEditMode);
 
+            // Placeholder management commands
+            ManageContractsCommand = new RelayCommand(o => { });
+            ManageCompaniesCommand = new RelayCommand(o => { });
+            ManageEmployeesCommand = new RelayCommand(o => { });
+
             // Status change commands
             ShowStatusSelectionCommand = new RelayCommand(o => ShowStatusSelection(), o => SelectedDebtor != null);
             ChangeStatusCommand = new RelayCommand(async o => await ChangeDebtorStatusAsync(), o => !string.IsNullOrEmpty(SelectedStatus) && SelectedDebtor?.PersonId.HasValue == true);
@@ -381,7 +386,8 @@ namespace bankrupt_piterjust.ViewModels
                 {
                     SelectedFilterTab = CurrentFilterTabs.FirstOrDefault(t => t.Name == SelectedDebtor.FilterCategory) ??
                                        CurrentFilterTabs.FirstOrDefault(t => t.Name == "Все") ??
-                                       CurrentFilterTabs.FirstOrDefault();
+                                       CurrentFilterTabs.FirstOrDefault() ??
+                                       new TabItem { Name = "Все" };
                 }
 
                 // Apply filters after potential tab change
@@ -539,11 +545,14 @@ namespace bankrupt_piterjust.ViewModels
                         debtor.Status = "Сбор документов";
 
                         // Update in database
-                        await _debtorRepository.UpdateDebtorInfoAsync(
-                            debtor.PersonId.Value,
-                            debtor.Status,
-                            debtor.MainCategory,
-                            debtor.FilterCategory);
+                        if (debtor.PersonId.HasValue)
+                        {
+                            await _debtorRepository.UpdateDebtorInfoAsync(
+                                debtor.PersonId.Value,
+                                debtor.Status,
+                                debtor.MainCategory,
+                                debtor.FilterCategory);
+                        }
                     }
                 }
 
@@ -645,9 +654,9 @@ namespace bankrupt_piterjust.ViewModels
         }
 
 
-        private void ArchiveDebtor(object parameter)
+        private void ArchiveDebtor(object? parameter)
         {
-            if (parameter is Debtor debtor && debtor.MainCategory != "Архив")
+            if (parameter is Debtor debtor && debtor.MainCategory != "Архив" && debtor.PersonId.HasValue)
             {
                 // Сохраняем текущую категорию перед архивацией
                 debtor.PreviousMainCategory = debtor.MainCategory;
@@ -676,9 +685,9 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
-        private void RestoreDebtor(object parameter)
+        private void RestoreDebtor(object? parameter)
         {
-            if (parameter is Debtor debtor && debtor.MainCategory == "Архив")
+            if (parameter is Debtor debtor && debtor.MainCategory == "Архив" && debtor.PersonId.HasValue)
             {
                 // Восстанавливаем из предыдущей категории, если есть
                 debtor.MainCategory = debtor.PreviousMainCategory ?? "Клиенты";

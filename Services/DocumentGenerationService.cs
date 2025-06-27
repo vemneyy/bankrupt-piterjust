@@ -104,7 +104,7 @@ namespace bankrupt_piterjust.Services
                     { "<адрес_регистрации_заказчика>", FormatAddress(registrationAddress) },
                     { "<фио_представителя_исполнителя>", representativeName },
                     { "<должность_представителя>", representativePosition },
-                    { "<основание_действий_представителя>", representativeBasis },
+                    { "<основание_действий_представителя>", representativeBasis ?? string.Empty },
                     { "<cтоимость_юридических_услуг>", servicesAmount.ToString("#,##0.00") }, // Changed from contractTotalCost to managerFee
                     { "<cтоимость_юридических_услуг_прописью>", NumberToWordsConverter.ConvertToWords(servicesAmount) }, // Changed from contractTotalCostWords to direct conversion
                     { "<сумма_обязательных_расходов>", mandatoryExpenses.ToString("#,##0.00") },
@@ -197,24 +197,27 @@ namespace bankrupt_piterjust.Services
                 totalReplacements += ProcessTextElements(document.MainDocumentPart.Document.Body, searchText, replaceText);
             }
 
-            foreach (var headerPart in document.MainDocumentPart.HeaderParts)
+            if (document.MainDocumentPart != null)
             {
-                totalReplacements += ProcessTextElements(headerPart.Header, searchText, replaceText);
-            }
+                foreach (var headerPart in document.MainDocumentPart.HeaderParts)
+                {
+                    totalReplacements += ProcessTextElements(headerPart.Header, searchText, replaceText);
+                }
 
-            foreach (var footerPart in document.MainDocumentPart.FooterParts)
-            {
-                totalReplacements += ProcessTextElements(footerPart.Footer, searchText, replaceText);
-            }
+                foreach (var footerPart in document.MainDocumentPart.FooterParts)
+                {
+                    totalReplacements += ProcessTextElements(footerPart.Footer, searchText, replaceText);
+                }
 
-            if (document.MainDocumentPart.FootnotesPart != null)
-            {
-                totalReplacements += ProcessTextElements(document.MainDocumentPart.FootnotesPart.Footnotes, searchText, replaceText);
-            }
+                if (document.MainDocumentPart.FootnotesPart != null)
+                {
+                    totalReplacements += ProcessTextElements(document.MainDocumentPart.FootnotesPart.Footnotes, searchText, replaceText);
+                }
 
-            if (document.MainDocumentPart.EndnotesPart != null)
-            {
-                totalReplacements += ProcessTextElements(document.MainDocumentPart.EndnotesPart.Endnotes, searchText, replaceText);
+                if (document.MainDocumentPart.EndnotesPart != null)
+                {
+                    totalReplacements += ProcessTextElements(document.MainDocumentPart.EndnotesPart.Endnotes, searchText, replaceText);
+                }
             }
 
             return totalReplacements;
@@ -414,8 +417,8 @@ namespace bankrupt_piterjust.Services
         /// </summary>
         private class RunInfo
         {
-            public Run Run { get; set; }
-            public Text Text { get; set; }
+            public Run Run { get; set; } = null!;
+            public Text Text { get; set; } = null!;
             public int TextStartIndex { get; set; }
             public int TextEndIndex { get; set; }
         }
@@ -427,7 +430,7 @@ namespace bankrupt_piterjust.Services
         /// </summary>
         private void FillPaymentScheduleTable(WordprocessingDocument document, IEnumerable<PaymentSchedule> payments)
         {
-            var body = document.MainDocumentPart.Document.Body;
+            var body = document.MainDocumentPart?.Document?.Body;
             if (body == null)
                 return;
 

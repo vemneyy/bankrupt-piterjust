@@ -358,7 +358,7 @@ namespace bankrupt_piterjust.ViewModels
                 }
 
                 OnPropertyChanged(nameof(PaymentSchedule));
-                ScheduleMonths = _paymentSchedule.Count;
+                ScheduleMonths = _paymentSchedule?.Count ?? 0;
                 UpdateScheduleTotal();
             }
         }

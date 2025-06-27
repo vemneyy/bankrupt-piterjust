@@ -431,7 +431,7 @@ namespace bankrupt_piterjust.Services
                 return table.Rows[0]["status_id"] is Int64 v ? (int)v : Convert.ToInt32(table.Rows[0]["status_id"]);
             }
             string insertSql = "INSERT INTO status(name) VALUES(@name) RETURNING status_id";
-            object result = await _databaseService.ExecuteScalarAsync<object>(insertSql, p);
+            object? result = await _databaseService.ExecuteScalarAsync<object>(insertSql, p);
             return result is Int64 val ? (int)val : Convert.ToInt32(result);
         }
 
@@ -444,7 +444,7 @@ namespace bankrupt_piterjust.Services
                 return table.Rows[0]["main_category_id"] is Int64 v ? (int)v : Convert.ToInt32(table.Rows[0]["main_category_id"]);
 
             string insertSql = "INSERT INTO main_category(name) VALUES(@name) RETURNING main_category_id";
-            object result = await _databaseService.ExecuteScalarAsync<object>(insertSql, p);
+            object? result = await _databaseService.ExecuteScalarAsync<object>(insertSql, p);
             return result is Int64 val ? (int)val : Convert.ToInt32(result);
         }
 
@@ -458,7 +458,7 @@ namespace bankrupt_piterjust.Services
 
             string insertSql = "INSERT INTO filter_category(name, main_category_id) VALUES(@name,@main) RETURNING filter_category_id";
             var pp = new Dictionary<string, object> { { "@name", name }, { "@main", mainCategoryId } };
-            object result = await _databaseService.ExecuteScalarAsync<object>(insertSql, pp);
+            object? result = await _databaseService.ExecuteScalarAsync<object>(insertSql, pp);
             return result is Int64 val ? (int)val : Convert.ToInt32(result);
         }
 
