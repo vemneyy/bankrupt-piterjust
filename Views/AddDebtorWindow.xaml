@@ -414,7 +414,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Общая сумма "/><Run Language="ru-ru" Text="расходов "/><Run Text="(руб.)"/></TextBlock>
-                                    <TextBox Text="{Binding ExpensesAmount, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
+                                    <TextBox Text="{Binding MandatoryExpenses, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
                                 </StackPanel>
                             </Grid>
 
@@ -424,21 +424,10 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
-                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Обязательные расходы (руб.)"/></TextBlock>
-                                    <TextBox Text="{Binding MandatoryExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="1">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Вознаграждение фин. управляющего (руб.)"/></TextBlock>
                                     <TextBox Text="{Binding ManagerFee, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>
-                            </Grid>
-
-                            <Grid Margin="0,10,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                <StackPanel Grid.Column="1">
                                     <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Прочие расходы (руб.)"/></TextBlock>
                                     <TextBox Text="{Binding OtherExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
                                 </StackPanel>

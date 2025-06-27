@@ -238,7 +238,6 @@ namespace bankrupt_piterjust.ViewModels
             set { 
                 _mandatoryExpenses = Math.Round(value, 2); 
                 OnPropertyChanged(nameof(MandatoryExpenses)); 
-                UpdateContractSums(); 
             }
         }
 
@@ -573,9 +572,9 @@ namespace bankrupt_piterjust.ViewModels
         private void UpdateContractSums()
         {
             // Total expenses include mandatory expenses, manager fee, and other expenses
-            ExpensesAmount = MandatoryExpenses + ManagerFee + OtherExpenses;
+            MandatoryExpenses = ManagerFee + OtherExpenses;
             // Services amount is the total cost minus all expenses
-            ServicesAmount = TotalCost - ExpensesAmount;
+            ServicesAmount = TotalCost - MandatoryExpenses;
         }
 
         private void UpdateScheduleTotal()

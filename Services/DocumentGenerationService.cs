@@ -92,10 +92,6 @@ namespace bankrupt_piterjust.Services
                 string representativeName = representative.FullName;
                 string representativePosition = representative.Position;
                 string? representativeBasis = await repo.GetEmployeeBasisStringAsync(representative.EmployeeId);
-                if (string.IsNullOrWhiteSpace(representativeBasis))
-                {
-                    representativeBasis = $"Доверенность № {new Random().Next(100, 999)} от {DateTime.Now.AddMonths(-1):dd.MM.yyyy}";
-                }
 
                 // Prepare replacement data
                 var replacements = new Dictionary<string, string>
