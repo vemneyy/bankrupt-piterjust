@@ -9,32 +9,32 @@ namespace bankrupt_piterjust.Helpers
     public static class NumberToWordsConverter
     {
         // Единицы и числа до 19 включительно
-        private static readonly string[] units = new string[] {
+        private static readonly string[] units = [
             "", "один", "два", "три", "четыре", "пять",
             "шесть", "семь", "восемь", "девять", "десять",
             "одиннадцать", "двенадцать", "тринадцать", "четырнадцать",
             "пятнадцать", "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать"
-        };
+        ];
 
         // Десятки
-        private static readonly string[] tens = new string[] {
+        private static readonly string[] tens = [
             "", "", "двадцать", "тридцать", "сорок",
             "пятьдесят", "шестьдесят", "семьдесят",
             "восемьдесят", "девяносто"
-        };
+        ];
 
         // Сотни
-        private static readonly string[] hundreds = new string[] {
+        private static readonly string[] hundreds = [
             "", "сто", "двести", "триста", "четыреста",
             "пятьсот", "шестьсот", "семьсот",
             "восемьсот", "девятьсот"
-        };
+        ];
 
         // Единицы женского рода для тысяч
-        private static readonly string[] unitsForThousands = new string[] {
+        private static readonly string[] unitsForThousands = [
             "", "одна", "две", "три", "четыре",
             "пять", "шесть", "семь", "восемь", "девять"
-        };
+        ];
 
         /// <summary>
         /// Преобразует десятичное число в текстовую строку с рублями и копейками.
@@ -132,7 +132,7 @@ namespace bankrupt_piterjust.Helpers
                     int unit = number % 10;
                     if (unit > 0)
                     {
-                        words.Append(" ");
+                        words.Append(' ');
                         words.Append(units[unit]);
                     }
                 }
@@ -171,7 +171,7 @@ namespace bankrupt_piterjust.Helpers
                     int unit = number % 10;
                     if (unit > 0)
                     {
-                        words.Append(" ");
+                        words.Append(' ');
                         if (unit < 3)
                             words.Append(unitsForThousands[unit]);
                         else

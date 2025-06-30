@@ -432,7 +432,7 @@ namespace bankrupt_piterjust.ViewModels
                 {
                     int debtorId = await fullRepository.GetDebtorIdByPersonIdAsync(personId);
 
-                    int employeeId = GetCurrentEmployeeId();
+                    int employeeId = CurrentEmployeeId;
 
                     UpdateScheduleTotal();
                     var contract = new Contract
@@ -504,14 +504,17 @@ namespace bankrupt_piterjust.ViewModels
                    (TotalCost > 0 || MandatoryExpenses > 0 || ManagerFee > 0 || OtherExpenses > 0);
         }
 
-        private int GetCurrentEmployeeId()
+        private static int CurrentEmployeeId
         {
-            var currentEmployee = UserSessionService.Instance.CurrentEmployee;
-            if (currentEmployee != null)
+            get
             {
-                return currentEmployee.EmployeeId;
+                var currentEmployee = UserSessionService.Instance.CurrentEmployee;
+                if (currentEmployee != null)
+                {
+                    return currentEmployee.EmployeeId;
+                }
+                return 1;
             }
-            return 1;
         }
 
         private void GenerateSchedule()

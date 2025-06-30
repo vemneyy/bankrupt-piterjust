@@ -172,7 +172,7 @@ namespace bankrupt_piterjust.Services
                     MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                     Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
                     Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
-                    IsMale = row.Table.Columns.Contains("is_male") && row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
+                    IsMale = !row.Table.Columns.Contains("is_male") || row["is_male"] == DBNull.Value || Convert.ToBoolean(row["is_male"])
                 };
 
                 var debtor = Debtor.FromPerson(person);
@@ -349,7 +349,7 @@ namespace bankrupt_piterjust.Services
                 MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                 Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
                 Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
-                IsMale = row.Table.Columns.Contains("is_male") && row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
+                IsMale = !row.Table.Columns.Contains("is_male") || row["is_male"] == DBNull.Value || Convert.ToBoolean(row["is_male"])
             };
         }
 

@@ -85,11 +85,11 @@ namespace bankrupt_piterjust.ViewModels
         private void UpdateCanLogin()
         {
             OnPropertyChanged(nameof(CanLogin));
-            LoginCommand.RaiseCanExecuteChanged();
-            DatabaseSettingsCommand.RaiseCanExecuteChanged();
+            RelayCommand.RaiseCanExecuteChanged();
+            RelayCommand.RaiseCanExecuteChanged();
         }
 
-        private void OpenDatabaseSettings(Window? parentWindow)
+        private static void OpenDatabaseSettings(Window? parentWindow)
         {
             try
             {
@@ -177,7 +177,7 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
-        private void CancelLogin(Window? window)
+        private static void CancelLogin(Window? window)
         {
             if (window != null)
             {

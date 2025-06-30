@@ -24,10 +24,7 @@ namespace bankrupt_piterjust.Services
 
         public DatabaseConfiguration GetDatabaseConfiguration()
         {
-            if (_databaseConfiguration == null)
-            {
-                _databaseConfiguration = LoadDatabaseConfiguration();
-            }
+            _databaseConfiguration ??= LoadDatabaseConfiguration();
             return _databaseConfiguration;
         }
 
@@ -42,13 +39,21 @@ namespace bankrupt_piterjust.Services
                 File.WriteAllText(ConfigFilePath, json);
                 _databaseConfiguration = configuration;
             }
+            catch (JsonException jsonEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"JSON serialization error: {jsonEx.Message}");
+            }
+            catch (IOException ioEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"IO error while saving configuration: {ioEx.Message}");
+            }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving configuration: {ex.Message}");
             }
         }
 
-        private DatabaseConfiguration LoadDatabaseConfiguration()
+        private static DatabaseConfiguration LoadDatabaseConfiguration()
         {
             try
             {
@@ -69,7 +74,7 @@ namespace bankrupt_piterjust.Services
             return new DatabaseConfiguration();
         }
 
-        private void EnsureConfigDirectoryExists()
+        private static void EnsureConfigDirectoryExists()
         {
             var directory = Path.GetDirectoryName(ConfigFilePath);
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))

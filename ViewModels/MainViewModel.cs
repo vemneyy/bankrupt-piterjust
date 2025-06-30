@@ -31,7 +31,7 @@ namespace bankrupt_piterjust.ViewModels
 
     public class MainViewModel : INotifyPropertyChanged
     {
-        private List<Debtor> _allDebtors = new(); // Полный список всех должников
+        private List<Debtor> _allDebtors = []; // Полный список всех должников
         private readonly Dictionary<string, ObservableCollection<TabItem>> _filterTabsByCategory;
         private readonly DebtorRepository _debtorRepository;
         private readonly DocumentGenerationService _documentGenerationService;
@@ -39,7 +39,7 @@ namespace bankrupt_piterjust.ViewModels
         public ObservableCollection<Debtor> DebtorsView { get; set; } // Отображаемый список
         public ObservableCollection<TabItem> MainTabs { get; set; }
 
-        private ObservableCollection<TabItem> _currentFilterTabs = new();
+        private ObservableCollection<TabItem> _currentFilterTabs = [];
         public ObservableCollection<TabItem> CurrentFilterTabs
         {
             get => _currentFilterTabs;
@@ -316,7 +316,7 @@ namespace bankrupt_piterjust.ViewModels
                 return;
 
             // Get statuses for the current main category
-            AvailableStatuses = new ObservableCollection<string>();
+            AvailableStatuses = [];
 
             // For Clients category, add all client statuses
             if (SelectedMainTab.Name == "Клиенты")
@@ -403,10 +403,12 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
-        private void ShowLoginWindow()
+        private static void ShowLoginWindow()
         {
-            var loginWindow = new LoginWindow();
-            loginWindow.Owner = Application.Current?.MainWindow;
+            var loginWindow = new LoginWindow
+            {
+                Owner = Application.Current?.MainWindow
+            };
 
             if (loginWindow.ShowDialog() == true && loginWindow.AuthenticatedEmployee != null)
             {
@@ -454,7 +456,7 @@ namespace bankrupt_piterjust.ViewModels
         {
             SelectedPerson = null;
             SelectedPassport = null;
-            SelectedAddresses = new ObservableCollection<Address>();
+            SelectedAddresses = [];
             IsEditMode = false;
         }
 
@@ -501,7 +503,7 @@ namespace bankrupt_piterjust.ViewModels
 
             try
             {
-                var outputPath = await _documentGenerationService.GenerateContractAsync(SelectedDebtor.PersonId.Value);
+                var outputPath = await DocumentGenerationService.GenerateContractAsync(SelectedDebtor.PersonId.Value);
 
                 if (!string.IsNullOrEmpty(outputPath))
                 {
@@ -533,7 +535,7 @@ namespace bankrupt_piterjust.ViewModels
             {
                 // Загрузка данных из базы через репозиторий
                 var debtors = await _debtorRepository.GetAllDebtorsAsync();
-                _allDebtors = debtors.ToList();
+                _allDebtors = [.. debtors];
 
                 // Update all debtors that were in Leads or Reject categories to Clients
                 foreach (var debtor in _allDebtors)
@@ -583,7 +585,7 @@ namespace bankrupt_piterjust.ViewModels
             // 3. Фильтруем по поисковой строке
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                filtered = filtered.Where(d => d.FullName.ToLower().Contains(SearchText.ToLower()));
+                filtered = filtered.Where(d => d.FullName.Contains(SearchText, StringComparison.CurrentCultureIgnoreCase));
             }
 
             // Обновляем отображаемую коллекцию
@@ -620,9 +622,11 @@ namespace bankrupt_piterjust.ViewModels
 
         private void AddDebtor()
         {
-            var addWindow = new AddDebtorWindow();
-            // Устанавливаем владельца, чтобы окно появилось по центру главного
-            addWindow.Owner = Application.Current?.MainWindow;
+            var addWindow = new AddDebtorWindow
+            {
+                // Устанавливаем владельца, чтобы окно появилось по центру главного
+                Owner = Application.Current?.MainWindow
+            };
 
             if (addWindow.ShowDialog() == true && addWindow.NewDebtor != null)
             {
@@ -645,8 +649,10 @@ namespace bankrupt_piterjust.ViewModels
             if (SelectedDebtor?.PersonId == null)
                 return;
 
-            var editWindow = new EditDebtorWindow(SelectedDebtor.PersonId.Value);
-            editWindow.Owner = Application.Current?.MainWindow;
+            var editWindow = new EditDebtorWindow(SelectedDebtor.PersonId.Value)
+            {
+                Owner = Application.Current?.MainWindow
+            };
             if (editWindow.ShowDialog() == true)
             {
                 _ = LoadDataAsync();

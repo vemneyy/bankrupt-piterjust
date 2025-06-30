@@ -13,32 +13,24 @@ namespace bankrupt_piterjust.Services
 {
     public class DocumentGenerationService
     {
-        public async Task<string?> GenerateContractAsync(int debtorId)
+        public static async Task<string?> GenerateContractAsync(int debtorId)
         {
             try
             {
                 var debtorRepository = new DebtorRepository();
 
                 // Get person information
-                var person = await debtorRepository.GetPersonByIdAsync(debtorId);
-                if (person == null)
-                    throw new Exception("Информация о должнике не найдена.");
+                var person = await debtorRepository.GetPersonByIdAsync(debtorId) ?? throw new Exception("Информация о должнике не найдена.");
 
                 // Get passport information
-                var passport = await debtorRepository.GetPassportByPersonIdAsync(debtorId);
-                if (passport == null)
-                    throw new Exception("Паспортные данные должника не найдены.");
+                var passport = await debtorRepository.GetPassportByPersonIdAsync(debtorId) ?? throw new Exception("Паспортные данные должника не найдены.");
 
                 // Get address information
                 var addresses = await debtorRepository.GetAddressesByPersonIdAsync(debtorId);
-                var registrationAddress = addresses.FirstOrDefault();
-                if (registrationAddress == null)
-                    throw new Exception("Адрес регистрации должника не найден.");
+                var registrationAddress = addresses.FirstOrDefault() ?? throw new Exception("Адрес регистрации должника не найден.");
 
                 // Get representative (authorized employee) information
-                var representative = UserSessionService.Instance.CurrentEmployee;
-                if (representative == null)
-                    throw new Exception("Информация об авторизованном сотруднике не найдена.");
+                var representative = UserSessionService.Instance.CurrentEmployee ?? throw new Exception("Информация об авторизованном сотруднике не найдена.");
 
                 // Get contract template path
                 string templatePath = FindTemplateFile();
@@ -74,10 +66,7 @@ namespace bankrupt_piterjust.Services
                 var repo = new FullDatabaseRepository();
                 int debtorIdFromPersonId = await repo.GetDebtorIdByPersonIdAsync(debtorId);
 
-                var contractInfo = await repo.GetLatestContractByDebtorIdAsync(debtorIdFromPersonId);
-                if (contractInfo == null)
-                    throw new Exception("Договор для должника не найден.");
-
+                var contractInfo = await repo.GetLatestContractByDebtorIdAsync(debtorIdFromPersonId) ?? throw new Exception("Договор для должника не найден.");
                 string contractNumber = $"{contractInfo.ContractNumber}-БФЛ{DateTime.Now:yy}";
 
                 decimal contractTotalCost = contractInfo.TotalCost;
@@ -137,7 +126,7 @@ namespace bankrupt_piterjust.Services
                     }
 
                     // Insert payment schedule into table if available
-                    if (paymentSchedule.Any())
+                    if (paymentSchedule.Count != 0)
                     {
                         FillPaymentScheduleTable(document, paymentSchedule);
                     }
@@ -160,7 +149,7 @@ namespace bankrupt_piterjust.Services
                 return null;
             }
         }
-        private string FindTemplateFile()
+        private static string FindTemplateFile()
         {
             string templateName = "Договор_Юридических_Услуг.docx";
 
@@ -169,13 +158,13 @@ namespace bankrupt_piterjust.Services
                 return templatePath;
 
             string solutionDir = AppDomain.CurrentDomain.BaseDirectory;
-            string[] possiblePaths = new string[]
-            {
+            string[] possiblePaths =
+            [
                 Path.Combine(solutionDir, "TemplatesDocx", templateName),
                 Path.Combine(solutionDir, "..", "TemplatesDocx", templateName),
                 Path.Combine(solutionDir, "..", "..", "TemplatesDocx", templateName),
                 Path.Combine(solutionDir, "..", "..", "..", "TemplatesDocx", templateName)
-            };
+            ];
 
             foreach (var path in possiblePaths)
             {
@@ -188,7 +177,7 @@ namespace bankrupt_piterjust.Services
             return null!;
         }
 
-        private int ReplaceTextInDocument(WordprocessingDocument document, string searchText, string replaceText)
+        private static int ReplaceTextInDocument(WordprocessingDocument document, string searchText, string replaceText)
         {
             int totalReplacements = 0;
 
@@ -223,7 +212,7 @@ namespace bankrupt_piterjust.Services
             return totalReplacements;
         }
 
-        private int ProcessTextElements<T>(T element, string searchText, string replaceText) where T : OpenXmlElement
+        private static int ProcessTextElements<T>(T element, string searchText, string replaceText) where T : OpenXmlElement
         {
             int totalReplacements = 0;
 
@@ -267,7 +256,7 @@ namespace bankrupt_piterjust.Services
             return totalReplacements;
         }
 
-        private int HandleSplitTags<T>(T element, string searchText, string replaceText) where T : OpenXmlElement
+        private static int HandleSplitTags<T>(T element, string searchText, string replaceText) where T : OpenXmlElement
         {
             int totalReplacements = 0;
 
@@ -344,7 +333,7 @@ namespace bankrupt_piterjust.Services
                                 if (i == 0) // First run containing part of the tag
                                 {
                                     // Replace from start index to the end of the text with the new value
-                                    string beforeTag = runInfo.Text.Text.Substring(0, runInfo.TextStartIndex);
+                                    string beforeTag = runInfo.Text.Text[..runInfo.TextStartIndex];
                                     runInfo.Text.Text = beforeTag + replaceText;
                                 }
                                 else if (i == runsToModify.Count - 1) // Last run containing part of the tag
@@ -352,7 +341,7 @@ namespace bankrupt_piterjust.Services
                                     // Keep only the text after the tag
                                     if (runInfo.TextEndIndex < runInfo.Text.Text.Length - 1)
                                     {
-                                        runInfo.Text.Text = runInfo.Text.Text.Substring(runInfo.TextEndIndex + 1);
+                                        runInfo.Text.Text = runInfo.Text.Text[(runInfo.TextEndIndex + 1)..];
                                     }
                                     else
                                     {
@@ -388,7 +377,7 @@ namespace bankrupt_piterjust.Services
                         tagIndex = tagStartIndex + replaceText.Length;
 
                         // Need to rebuild runs list as we've modified the structure
-                        runs = paragraph.Descendants<Run>().ToList();
+                        runs = [.. paragraph.Descendants<Run>()];
 
                         // Rebuild the paragraph text for the next iteration
                         paragraphText.Clear();
@@ -428,7 +417,7 @@ namespace bankrupt_piterjust.Services
         /// Looks for a row containing the payment tags and duplicates it for
         /// each payment in the schedule.
         /// </summary>
-        private void FillPaymentScheduleTable(WordprocessingDocument document, IEnumerable<PaymentSchedule> payments)
+        private static void FillPaymentScheduleTable(WordprocessingDocument document, IEnumerable<PaymentSchedule> payments)
         {
             var body = document.MainDocumentPart?.Document?.Body;
             if (body == null)
@@ -470,7 +459,7 @@ namespace bankrupt_piterjust.Services
         /// <summary>
         /// Formats a due date as "до 12 января 2025 года".
         /// </summary>
-        private string FormatDueDate(DateTime? date)
+        private static string FormatDueDate(DateTime? date)
         {
             if (!date.HasValue)
                 return string.Empty;

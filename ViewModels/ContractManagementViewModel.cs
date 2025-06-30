@@ -57,10 +57,10 @@ namespace bankrupt_piterjust.ViewModels
         public ContractManagementViewModel()
         {
             _repository = new FullDatabaseRepository();
-            Contracts = new ObservableCollection<Contract>();
-            Employees = new ObservableCollection<Employee>();
-            Debtors = new ObservableCollection<Person>();
-            _paymentSchedules = new ObservableCollection<PaymentSchedule>();
+            Contracts = [];
+            Employees = [];
+            Debtors = [];
+            _paymentSchedules = [];
 
             RefreshCommand = new RelayCommand(async o => await LoadDataAsync());
             AddContractCommand = new RelayCommand(o => AddContract());
@@ -137,9 +137,11 @@ namespace bankrupt_piterjust.ViewModels
 
         private void AddContract()
         {
-            var dialog = new ContractEditDialog();
-            dialog.Owner = Application.Current.MainWindow;
-            dialog.DataContext = new ContractEditViewModel(_repository, Employees.ToList(), Debtors.ToList());
+            var dialog = new ContractEditDialog
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = new ContractEditViewModel(_repository, [.. Employees], [.. Debtors])
+            };
 
             if (dialog.ShowDialog() == true)
             {
@@ -151,9 +153,11 @@ namespace bankrupt_piterjust.ViewModels
         {
             if (SelectedContract == null) return;
 
-            var dialog = new ContractEditDialog();
-            dialog.Owner = Application.Current.MainWindow;
-            dialog.DataContext = new ContractEditViewModel(_repository, Employees.ToList(), Debtors.ToList(), SelectedContract);
+            var dialog = new ContractEditDialog
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = new ContractEditViewModel(_repository, [.. Employees], [.. Debtors], SelectedContract)
+            };
 
             if (dialog.ShowDialog() == true)
             {
@@ -189,9 +193,11 @@ namespace bankrupt_piterjust.ViewModels
         {
             if (SelectedContract == null) return;
 
-            var dialog = new PaymentEditDialog();
-            dialog.Owner = Application.Current.MainWindow;
-            dialog.DataContext = new PaymentEditViewModel(_repository, SelectedContract.ContractId);
+            var dialog = new PaymentEditDialog
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = new PaymentEditViewModel(_repository, SelectedContract.ContractId)
+            };
 
             if (dialog.ShowDialog() == true)
             {
@@ -203,9 +209,11 @@ namespace bankrupt_piterjust.ViewModels
         {
             if (payment == null) return;
 
-            var dialog = new PaymentEditDialog();
-            dialog.Owner = Application.Current.MainWindow;
-            dialog.DataContext = new PaymentEditViewModel(_repository, payment);
+            var dialog = new PaymentEditDialog
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = new PaymentEditViewModel(_repository, payment)
+            };
 
             if (dialog.ShowDialog() == true)
             {
@@ -248,7 +256,7 @@ namespace bankrupt_piterjust.ViewModels
     {
         private readonly FullDatabaseRepository _repository;
         private readonly Contract? _originalContract;
-        private bool _isEditMode;
+        private readonly bool _isEditMode;
 
         public List<Employee> Employees { get; }
         public List<Person> Debtors { get; }
@@ -442,7 +450,7 @@ namespace bankrupt_piterjust.ViewModels
         private readonly FullDatabaseRepository _repository;
         private readonly PaymentSchedule? _originalPayment;
         private readonly int _contractId;
-        private bool _isEditMode;
+        private readonly bool _isEditMode;
 
         private int _stage = 1;
         private string _description = string.Empty;

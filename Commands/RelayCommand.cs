@@ -47,7 +47,7 @@ namespace bankrupt_piterjust.Commands
         /// Вызывает переоценку доступности команды.
         /// Принудительно инициирует событие CanExecuteChanged через CommandManager.
         /// </summary>
-        public void RaiseCanExecuteChanged()
+        public static void RaiseCanExecuteChanged()
         {
             CommandManager.InvalidateRequerySuggested();
         }

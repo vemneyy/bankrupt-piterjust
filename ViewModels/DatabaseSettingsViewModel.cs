@@ -53,9 +53,9 @@ namespace bankrupt_piterjust.ViewModels
         private void UpdateCanExecute()
         {
             OnPropertyChanged(nameof(CanTestConnection));
-            TestConnectionCommand.RaiseCanExecuteChanged();
-            SaveCommand.RaiseCanExecuteChanged();
-            CancelCommand.RaiseCanExecuteChanged();
+            RelayCommand.RaiseCanExecuteChanged();
+            RelayCommand.RaiseCanExecuteChanged();
+            RelayCommand.RaiseCanExecuteChanged();
         }
 
         private async Task TestConnectionAsync()
@@ -145,7 +145,7 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
-        private void CancelSettings(Window? window)
+        private static void CancelSettings(Window? window)
         {
             if (window != null)
             {

@@ -9,7 +9,7 @@ namespace bankrupt_piterjust.Services
         private string _connectionString = string.Empty;
         private bool _connectionTested = false;
         private bool _connectionAvailable = false;
-        private readonly object _connectionLock = new();
+        private readonly Lock _connectionLock = new();
 
         public DatabaseService()
         {

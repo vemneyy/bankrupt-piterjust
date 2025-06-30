@@ -302,7 +302,7 @@ namespace bankrupt_piterjust.Converters
         /// <summary>
         /// Форматирует строку с цифрами в формат +7 (XXX) XXX-XX-XX.
         /// </summary>
-        private string FormatPhone(string input)
+        private static string FormatPhone(string input)
         {
             string digitsOnly = Regex.Replace(input, @"[^\d]", "");
 
@@ -315,7 +315,7 @@ namespace bankrupt_piterjust.Converters
                 digitsOnly = "7" + digitsOnly;
 
             if (digitsOnly.Length < 2) return "+7";
-            if (digitsOnly.Length <= 4) return $"+7 ({digitsOnly[1..]}";
+            if (digitsOnly.Length <= 4) return $"+7 ({digitsOnly[1..]})";
             if (digitsOnly.Length <= 7) return $"+7 ({digitsOnly[1..4]}) {digitsOnly[4..]}";
             if (digitsOnly.Length <= 9) return $"+7 ({digitsOnly[1..4]}) {digitsOnly[4..7]}-{digitsOnly[7..]}";
             if (digitsOnly.Length == 10) return $"+7 ({digitsOnly[1..4]}) {digitsOnly[4..7]}-{digitsOnly[7..9]}-{digitsOnly[9..]}";
