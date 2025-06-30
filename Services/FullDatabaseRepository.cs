@@ -20,7 +20,7 @@ namespace bankrupt_piterjust.Services
             await EnsurePassportTableExistsAsync();
             await EnsureAddressTableExistsAsync();
             await EnsureEmployeeTableExistsAsync();
-            await EnsureStatusTablesExistAsync();
+            await EnsureCategoryTablesExistAsync();
             await EnsureContractTableExistsAsync();
             await EnsurePaymentScheduleTableExistsAsync();
         }
@@ -70,8 +70,7 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 CREATE TABLE IF NOT EXISTS passport (
-                    passport_id SERIAL PRIMARY KEY,
-                    person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
+                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
                     series VARCHAR(10) NOT NULL,
                     number VARCHAR(20) NOT NULL,
                     issued_by TEXT NOT NULL,
@@ -85,8 +84,7 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 CREATE TABLE IF NOT EXISTS address (
-                    address_id SERIAL PRIMARY KEY,
-                    person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
+                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
                     postal_code VARCHAR(20),
                     country VARCHAR(100) NOT NULL DEFAULT 'Россия',
                     region VARCHAR(100),
@@ -117,14 +115,8 @@ namespace bankrupt_piterjust.Services
             await _databaseService.ExecuteNonQueryAsync(sql);
         }
 
-        private async Task EnsureStatusTablesExistAsync()
+        private async Task EnsureCategoryTablesExistAsync()
         {
-            string createStatusSql = @"
-                CREATE TABLE IF NOT EXISTS status (
-                    status_id SERIAL PRIMARY KEY,
-                    name VARCHAR(100) UNIQUE NOT NULL
-                )";
-
             string createMainCategorySql = @"
                 CREATE TABLE IF NOT EXISTS main_category (
                     main_category_id SERIAL PRIMARY KEY,
@@ -135,20 +127,18 @@ namespace bankrupt_piterjust.Services
                 CREATE TABLE IF NOT EXISTS filter_category (
                     filter_category_id SERIAL PRIMARY KEY,
                     main_category_id INTEGER NOT NULL REFERENCES main_category(main_category_id),
-                    name VARCHAR(100) UNIQUE NOT NULL
+                    name VARCHAR(100) NOT NULL,
+                    UNIQUE(main_category_id, name)
                 )";
 
             string createDebtorSql = @"
                 CREATE TABLE IF NOT EXISTS debtor (
                     debtor_id SERIAL PRIMARY KEY,
                     person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
-                    status_id INTEGER NOT NULL REFERENCES status(status_id),
-                    main_category_id INTEGER NOT NULL REFERENCES main_category(main_category_id),
                     filter_category_id INTEGER NOT NULL REFERENCES filter_category(filter_category_id),
                     created_date DATE NOT NULL DEFAULT CURRENT_DATE
                 )";
 
-            await _databaseService.ExecuteNonQueryAsync(createStatusSql);
             await _databaseService.ExecuteNonQueryAsync(createMainCategorySql);
             await _databaseService.ExecuteNonQueryAsync(createFilterCategorySql);
             await _databaseService.ExecuteNonQueryAsync(createDebtorSql);
