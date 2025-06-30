@@ -2,7 +2,6 @@ namespace bankrupt_piterjust.Models
 {
     public class Passport
     {
-        public int PassportId { get; set; }
         public int PersonId { get; set; }
         public string Series { get; set; } = string.Empty;
         public string Number { get; set; } = string.Empty;

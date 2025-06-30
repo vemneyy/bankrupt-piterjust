@@ -4,7 +4,6 @@ namespace bankrupt_piterjust.Models
 {
     public class Address : INotifyPropertyChanged
     {
-        public int AddressId { get; set; }
         public int PersonId { get; set; }
 
 

@@ -20,7 +20,7 @@ namespace bankrupt_piterjust.Services
             await EnsurePersonTableExistsAsync();
             await EnsurePassportTableExistsAsync();
             await EnsureAddressTableExistsAsync();
-            await EnsureStatusTablesExistAsync();
+            await EnsureCategoryTablesExistAsync();
         }
 
         private async Task EnsurePersonTableExistsAsync()
@@ -73,8 +73,7 @@ namespace bankrupt_piterjust.Services
         {
             string createPassportTableSql = @"
                 CREATE TABLE IF NOT EXISTS passport (
-                    passport_id SERIAL PRIMARY KEY,
-                    person_id INTEGER NOT NULL REFERENCES person(person_id),
+                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
                     series VARCHAR(10) NOT NULL,
                     number VARCHAR(20) NOT NULL,
                     issued_by TEXT NOT NULL,
@@ -90,8 +89,7 @@ namespace bankrupt_piterjust.Services
 
             string createAddressTableSql = @"
                 CREATE TABLE IF NOT EXISTS address (
-                    address_id SERIAL PRIMARY KEY,
-                    person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
+                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
                     postal_code VARCHAR(20),
                     country VARCHAR(100) NOT NULL DEFAULT 'Россия',
                     region VARCHAR(100),
@@ -106,14 +104,8 @@ namespace bankrupt_piterjust.Services
 
             await _databaseService.ExecuteNonQueryAsync(createAddressTableSql);
         }
-        private async Task EnsureStatusTablesExistAsync()
+        private async Task EnsureCategoryTablesExistAsync()
         {
-            string createStatusSql = @"
-                CREATE TABLE IF NOT EXISTS status (
-                    status_id SERIAL PRIMARY KEY,
-                    name VARCHAR(100) UNIQUE NOT NULL
-                );";
-
             string createMainCategorySql = @"
                 CREATE TABLE IF NOT EXISTS main_category (
                     main_category_id SERIAL PRIMARY KEY,
@@ -124,20 +116,18 @@ namespace bankrupt_piterjust.Services
                 CREATE TABLE IF NOT EXISTS filter_category (
                     filter_category_id SERIAL PRIMARY KEY,
                     main_category_id INTEGER NOT NULL REFERENCES main_category(main_category_id),
-                    name VARCHAR(100) UNIQUE NOT NULL
+                    name VARCHAR(100) NOT NULL,
+                    UNIQUE(main_category_id, name)
                 );";
 
             string createDebtorSql = @"
                 CREATE TABLE IF NOT EXISTS debtor (
                     debtor_id SERIAL PRIMARY KEY,
                     person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
-                    status_id INTEGER NOT NULL REFERENCES status(status_id),
-                    main_category_id INTEGER NOT NULL REFERENCES main_category(main_category_id),
                     filter_category_id INTEGER NOT NULL REFERENCES filter_category(filter_category_id),
                     created_date DATE NOT NULL DEFAULT CURRENT_DATE
                 );";
 
-            await _databaseService.ExecuteNonQueryAsync(createStatusSql);
             await _databaseService.ExecuteNonQueryAsync(createMainCategorySql);
             await _databaseService.ExecuteNonQueryAsync(createFilterCategorySql);
             await _databaseService.ExecuteNonQueryAsync(createDebtorSql);
@@ -147,15 +137,14 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
-                       s.name AS status,
+                       fc.name AS status,
                        mc.name AS main_category,
                        fc.name AS filter_category,
                        d.created_date
                 FROM person p
                 LEFT JOIN debtor d ON d.person_id = p.person_id
-                LEFT JOIN status s ON s.status_id = d.status_id
-                LEFT JOIN main_category mc ON mc.main_category_id = d.main_category_id
-                LEFT JOIN filter_category fc ON fc.filter_category_id = d.filter_category_id";
+                LEFT JOIN filter_category fc ON fc.filter_category_id = d.filter_category_id
+                LEFT JOIN main_category mc ON mc.main_category_id = fc.main_category_id";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
             var debtors = new List<Debtor>();
@@ -317,8 +306,8 @@ namespace bankrupt_piterjust.Services
                 }
             }
 
-            // Insert debtor record with status and categories
-            await AddDebtorRecordAsync(personId, status, mainCategory, filterCategory);
+            // Insert debtor record with category information
+            await AddDebtorRecordAsync(personId, mainCategory, filterCategory);
 
             return personId;
         }
@@ -369,12 +358,10 @@ namespace bankrupt_piterjust.Services
 
             var row = dataTable.Rows[0];
 
-            int passportId = row["passport_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["passport_id"]);
             int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
 
             return new Passport
             {
-                PassportId = passportId,
                 PersonId = pId,
                 Series = row["series"].ToString() ?? string.Empty,
                 Number = row["number"].ToString() ?? string.Empty,
@@ -386,7 +373,7 @@ namespace bankrupt_piterjust.Services
 
         public async Task<List<Address>> GetAddressesByPersonIdAsync(int personId)
         {
-            string sql = "SELECT * FROM address WHERE person_id = @personId ORDER BY address_id";
+            string sql = "SELECT * FROM address WHERE person_id = @personId";
 
             var parameters = new Dictionary<string, object>
             {
@@ -398,12 +385,10 @@ namespace bankrupt_piterjust.Services
 
             foreach (DataRow row in dataTable.Rows)
             {
-                int addressId = row["address_id"] is Int64 value1 ? (int)value1 : Convert.ToInt32(row["address_id"]);
                 int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
 
                 addresses.Add(new Address
                 {
-                    AddressId = addressId,
                     PersonId = pId,
                     PostalCode = row["postal_code"] != DBNull.Value ? row["postal_code"].ToString() : null,
                     Country = row["country"].ToString() ?? "Россия",
@@ -421,19 +406,6 @@ namespace bankrupt_piterjust.Services
             return addresses;
         }
 
-        private async Task<int> GetOrCreateStatusIdAsync(string name)
-        {
-            string checkSql = "SELECT status_id FROM status WHERE name = @name";
-            var p = new Dictionary<string, object> { { "@name", name } };
-            var table = await _databaseService.ExecuteReaderAsync(checkSql, p);
-            if (table.Rows.Count > 0)
-            {
-                return table.Rows[0]["status_id"] is Int64 v ? (int)v : Convert.ToInt32(table.Rows[0]["status_id"]);
-            }
-            string insertSql = "INSERT INTO status(name) VALUES(@name) RETURNING status_id";
-            object? result = await _databaseService.ExecuteScalarAsync<object>(insertSql, p);
-            return result is Int64 val ? (int)val : Convert.ToInt32(result);
-        }
 
         private async Task<int> GetOrCreateMainCategoryIdAsync(string name)
         {
@@ -462,19 +434,16 @@ namespace bankrupt_piterjust.Services
             return result is Int64 val ? (int)val : Convert.ToInt32(result);
         }
 
-        private async Task AddDebtorRecordAsync(int personId, string status, string mainCategory, string filterCategory)
+        private async Task AddDebtorRecordAsync(int personId, string mainCategory, string filterCategory)
         {
-            int statusId = await GetOrCreateStatusIdAsync(status);
             int mainId = await GetOrCreateMainCategoryIdAsync(mainCategory);
             int filterId = await GetOrCreateFilterCategoryIdAsync(filterCategory, mainId);
 
-            string sql = @"INSERT INTO debtor(person_id, status_id, main_category_id, filter_category_id)
-                           VALUES(@pid,@sid,@mid,@fid)";
+            string sql = @"INSERT INTO debtor(person_id, filter_category_id)
+                           VALUES(@pid, @fid)";
             var param = new Dictionary<string, object>
             {
                 {"@pid", personId},
-                {"@sid", statusId},
-                {"@mid", mainId},
                 {"@fid", filterId}
             };
             await _databaseService.ExecuteNonQueryAsync(sql, param);
@@ -498,15 +467,12 @@ namespace bankrupt_piterjust.Services
 
         public async Task UpdateDebtorInfoAsync(int personId, string status, string mainCategory, string filterCategory)
         {
-            int statusId = await GetOrCreateStatusIdAsync(status);
             int mainId = await GetOrCreateMainCategoryIdAsync(mainCategory);
             int filterId = await GetOrCreateFilterCategoryIdAsync(filterCategory, mainId);
 
-            string sql = @"UPDATE debtor SET status_id=@sid, main_category_id=@mid, filter_category_id=@fid WHERE person_id=@pid";
+            string sql = @"UPDATE debtor SET filter_category_id=@fid WHERE person_id=@pid";
             var p = new Dictionary<string, object>
             {
-                {"@sid", statusId},
-                {"@mid", mainId},
                 {"@fid", filterId},
                 {"@pid", personId}
             };
@@ -533,7 +499,7 @@ namespace bankrupt_piterjust.Services
             }
             else
             {
-                string updateSql = @"UPDATE passport SET series=@series, number=@number, issued_by=@issuedBy, division_code=@divisionCode, issue_date=@issueDate WHERE passport_id=@id";
+                string updateSql = @"UPDATE passport SET series=@series, number=@number, issued_by=@issuedBy, division_code=@divisionCode, issue_date=@issueDate WHERE person_id=@pid";
                 var p = new Dictionary<string, object>
                 {
                     {"@series", passport.Series},
@@ -541,7 +507,7 @@ namespace bankrupt_piterjust.Services
                     {"@issuedBy", passport.IssuedBy},
                     {"@divisionCode", passport.DivisionCode != null ? passport.DivisionCode : DBNull.Value},
                     {"@issueDate", passport.IssueDate},
-                    {"@id", existing.PassportId}
+                    {"@pid", passport.PersonId}
                 };
                 await _databaseService.ExecuteNonQueryAsync(updateSql, p);
             }
