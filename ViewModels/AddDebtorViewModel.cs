@@ -470,7 +470,8 @@ namespace bankrupt_piterjust.ViewModels
                         TotalCost = TotalCost,
                         MandatoryExpenses = MandatoryExpenses,
                         ManagerFee = ManagerFee,
-                        OtherExpenses = OtherExpenses
+                        OtherExpenses = OtherExpenses,
+                        ServicesAmount = ServicesAmount
                     };
 
                     int contractId = await fullRepository.CreateContractAsync(contract);

@@ -12,6 +12,10 @@ namespace bankrupt_piterjust.Models
         public decimal MandatoryExpenses { get; set; }
         public decimal ManagerFee { get; set; }
         public decimal OtherExpenses { get; set; }
+        /// <summary>
+        /// Стоимость юридических услуг (общая сумма этапов).
+        /// </summary>
+        public decimal ServicesAmount { get; set; }
         public decimal Stage1Cost { get; set; }
         public decimal Stage2Cost { get; set; }
         public decimal Stage3Cost { get; set; }
