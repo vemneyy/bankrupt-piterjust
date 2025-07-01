@@ -595,6 +595,13 @@ namespace bankrupt_piterjust.Services
             }
             return list;
         }
+
+        public async Task DeleteContractStagesByContractIdAsync(int contractId)
+        {
+            string sql = "DELETE FROM contract_stage WHERE contract_id = @cid";
+            var p = new Dictionary<string, object> { { "@cid", contractId } };
+            await _databaseService.ExecuteNonQueryAsync(sql, p);
+        }
         #endregion
 
         #region Payment Schedule Methods
