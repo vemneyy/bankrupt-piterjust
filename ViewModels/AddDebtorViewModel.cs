@@ -13,6 +13,8 @@ namespace bankrupt_piterjust.ViewModels
         private readonly DebtorRepository _repository;
         private bool _isBusy;
 
+        public string WindowTitle => "Добавление должника";
+
         private string _lastName = string.Empty;
         private string _firstName = string.Empty;
         private string _middleName = string.Empty;

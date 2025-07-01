@@ -14,6 +14,8 @@ namespace bankrupt_piterjust.ViewModels
         private readonly int _personId;
         private bool _isBusy;
 
+        public string WindowTitle => "Редактирование должника";
+
         // Person properties
         private string _lastName = string.Empty;
         private string _firstName = string.Empty;

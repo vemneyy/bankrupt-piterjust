@@ -622,7 +622,7 @@ namespace bankrupt_piterjust.ViewModels
 
         private void AddDebtor()
         {
-            var addWindow = new AddDebtorWindow
+            var addWindow = new DebtorWindow
             {
                 // Устанавливаем владельца, чтобы окно появилось по центру главного
                 Owner = Application.Current?.MainWindow
@@ -649,7 +649,7 @@ namespace bankrupt_piterjust.ViewModels
             if (SelectedDebtor?.PersonId == null)
                 return;
 
-            var editWindow = new EditDebtorWindow(SelectedDebtor.PersonId.Value)
+            var editWindow = new DebtorWindow(SelectedDebtor.PersonId.Value)
             {
                 Owner = Application.Current?.MainWindow
             };
