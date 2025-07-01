@@ -110,10 +110,28 @@ namespace bankrupt_piterjust.Services
                     password_hash TEXT NOT NULL,
                     created_date DATE DEFAULT CURRENT_DATE,
                     is_active BOOLEAN DEFAULT true NOT NULL,
-                    basis VARCHAR(255),
+                    basis_id INTEGER REFERENCES basis(basis_id) ON DELETE SET NULL ON UPDATE CASCADE,
                     person_id INTEGER REFERENCES person(person_id) ON DELETE CASCADE ON UPDATE CASCADE
                 )";
             await _databaseService.ExecuteNonQueryAsync(sql);
+            
+            // Check if we need to migrate from basis VARCHAR to basis_id INTEGER
+            string checkColumnsSql = @"
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='employee' AND column_name='basis'
+                    ) AND NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='employee' AND column_name='basis_id'
+                    ) THEN
+                        ALTER TABLE employee ADD COLUMN basis_id INTEGER REFERENCES basis(basis_id) ON DELETE SET NULL ON UPDATE CASCADE;
+                        ALTER TABLE employee DROP COLUMN basis;
+                    END IF;
+                END $$;";
+
+            await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
         }
 
         private async Task EnsureCategoryTablesExistAsync()
@@ -197,8 +215,8 @@ namespace bankrupt_piterjust.Services
         public async Task<int> CreateEmployeeAsync(Employee employee)
         {
             string sql = @"
-                INSERT INTO employee (position, login, password_hash, created_date, is_active, basis, person_id)
-                VALUES (@position, @login, @passwordHash, @createdDate, @isActive, @basis, @personId)
+                INSERT INTO employee (position, login, password_hash, created_date, is_active, basis_id, person_id)
+                VALUES (@position, @login, @passwordHash, @createdDate, @isActive, @basisId, @personId)
                 RETURNING employee_id";
 
             var parameters = new Dictionary<string, object>
@@ -208,7 +226,7 @@ namespace bankrupt_piterjust.Services
                 { "@passwordHash", employee.PasswordHash },
                 { "@createdDate", employee.CreatedDate ?? (object)DBNull.Value },
                 { "@isActive", employee.IsActive },
-                { "@basis", employee.Basis ?? (object)DBNull.Value },
+                { "@basisId", employee.BasisId ?? (object)DBNull.Value },
                 { "@personId", employee.PersonId ?? (object)DBNull.Value }
             };
 
@@ -219,9 +237,11 @@ namespace bankrupt_piterjust.Services
         public async Task<Employee?> GetEmployeeByIdAsync(int employeeId)
         {
             string sql = @"
-                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email
+                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
+                       b.basis_type, b.document_number, b.document_date
                 FROM employee e
                 LEFT JOIN person p ON e.person_id = p.person_id
+                LEFT JOIN basis b ON e.basis_id = b.basis_id
                 WHERE e.employee_id = @employeeId";
 
             var parameters = new Dictionary<string, object> { { "@employeeId", employeeId } };
@@ -238,7 +258,7 @@ namespace bankrupt_piterjust.Services
                 PasswordHash = row["password_hash"].ToString() ?? string.Empty,
                 CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
                 IsActive = Convert.ToBoolean(row["is_active"]),
-                Basis = row["basis"] != DBNull.Value ? row["basis"].ToString() : null,
+                BasisId = row["basis_id"] != DBNull.Value ? Convert.ToInt32(row["basis_id"]) : null,
                 PersonId = row["person_id"] != DBNull.Value ? Convert.ToInt32(row["person_id"]) : null
             };
 
@@ -255,15 +275,31 @@ namespace bankrupt_piterjust.Services
                 };
             }
 
+            if (employee.BasisId.HasValue && row["basis_type"] != DBNull.Value)
+            {
+                employee.BasisInfo = new Basis
+                {
+                    BasisId = employee.BasisId.Value,
+                    BasisType = row["basis_type"].ToString() ?? string.Empty,
+                    DocumentNumber = row["document_number"].ToString() ?? string.Empty,
+                    DocumentDate = Convert.ToDateTime(row["document_date"])
+                };
+                
+                // For backward compatibility, also set the Basis string property
+                employee.Basis = $"{employee.BasisInfo.BasisType} № {employee.BasisInfo.DocumentNumber} от {employee.BasisInfo.DocumentDate:dd.MM.yyyy}";
+            }
+
             return employee;
         }
 
         public async Task<List<Employee>> GetAllEmployeesAsync()
         {
             string sql = @"
-                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email
+                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
+                       b.basis_type, b.document_number, b.document_date
                 FROM employee e
                 LEFT JOIN person p ON e.person_id = p.person_id
+                LEFT JOIN basis b ON e.basis_id = b.basis_id
                 ORDER BY e.position, p.last_name";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
@@ -279,7 +315,7 @@ namespace bankrupt_piterjust.Services
                     PasswordHash = row["password_hash"].ToString() ?? string.Empty,
                     CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
                     IsActive = Convert.ToBoolean(row["is_active"]),
-                    Basis = row["basis"] != DBNull.Value ? row["basis"].ToString() : null,
+                    BasisId = row["basis_id"] != DBNull.Value ? Convert.ToInt32(row["basis_id"]) : null,
                     PersonId = row["person_id"] != DBNull.Value ? Convert.ToInt32(row["person_id"]) : null
                 };
 
@@ -296,6 +332,20 @@ namespace bankrupt_piterjust.Services
                     };
                 }
 
+                if (employee.BasisId.HasValue && row["basis_type"] != DBNull.Value)
+                {
+                    employee.BasisInfo = new Basis
+                    {
+                        BasisId = employee.BasisId.Value,
+                        BasisType = row["basis_type"].ToString() ?? string.Empty,
+                        DocumentNumber = row["document_number"].ToString() ?? string.Empty,
+                        DocumentDate = Convert.ToDateTime(row["document_date"])
+                    };
+                    
+                    // For backward compatibility, also set the Basis string property
+                    employee.Basis = $"{employee.BasisInfo.BasisType} № {employee.BasisInfo.DocumentNumber} от {employee.BasisInfo.DocumentDate:dd.MM.yyyy}";
+                }
+
                 employees.Add(employee);
             }
 
@@ -307,7 +357,7 @@ namespace bankrupt_piterjust.Services
             string sql = @"
                 UPDATE employee SET
                     position = @position, login = @login, password_hash = @passwordHash,
-                    is_active = @isActive, basis = @basis, person_id = @personId
+                    is_active = @isActive, basis_id = @basisId, person_id = @personId
                 WHERE employee_id = @employeeId";
 
             var parameters = new Dictionary<string, object>
@@ -316,7 +366,7 @@ namespace bankrupt_piterjust.Services
                 { "@login", employee.Login },
                 { "@passwordHash", employee.PasswordHash },
                 { "@isActive", employee.IsActive },
-                { "@basis", employee.Basis ?? (object)DBNull.Value },
+                { "@basisId", employee.BasisId ?? (object)DBNull.Value },
                 { "@personId", employee.PersonId ?? (object)DBNull.Value },
                 { "@employeeId", employee.EmployeeId }
             };
@@ -329,12 +379,12 @@ namespace bankrupt_piterjust.Services
             string sql = @"
                 SELECT b.basis_type, b.document_number, b.document_date
                 FROM employee e
-                JOIN basis b ON e.basis_id = b.basis_id
+                LEFT JOIN basis b ON e.basis_id = b.basis_id
                 WHERE e.employee_id = @eid";
 
             var p = new Dictionary<string, object> { { "@eid", employeeId } };
             var table = await _databaseService.ExecuteReaderAsync(sql, p);
-            if (table.Rows.Count == 0)
+            if (table.Rows.Count == 0 || table.Rows[0]["basis_type"] == DBNull.Value)
                 return null;
 
             var row = table.Rows[0];
