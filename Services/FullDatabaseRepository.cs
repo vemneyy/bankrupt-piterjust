@@ -10,213 +10,14 @@ namespace bankrupt_piterjust.Services
         public FullDatabaseRepository()
         {
             _databaseService = new DatabaseService();
-            _ = EnsureAllTablesExistAsync();
-        }
-
-        private async Task EnsureAllTablesExistAsync()
-        {
-            await EnsurePersonTableExistsAsync();
-            await EnsureBasisTableExistsAsync();
-            await EnsurePassportTableExistsAsync();
-            await EnsureAddressTableExistsAsync();
-            await EnsureEmployeeTableExistsAsync();
-            await EnsureCategoryTablesExistAsync();
-            await EnsureContractTableExistsAsync();
-            await EnsureContractStageTableExistsAsync();
-            await EnsurePaymentScheduleTableExistsAsync();
-        }
-
-        private async Task EnsurePersonTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS person (
-                    person_id SERIAL PRIMARY KEY,
-                    last_name VARCHAR(100) NOT NULL,
-                    first_name VARCHAR(100) NOT NULL,
-                    middle_name VARCHAR(100),
-                    is_male BOOLEAN DEFAULT true,
-                    phone VARCHAR(20),
-                    email VARCHAR(100)
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
-
-            string checkColumnsSql = @"
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='person' AND column_name='is_male'
-                    ) THEN
-                        ALTER TABLE person ADD COLUMN is_male BOOLEAN DEFAULT true;
-                    END IF;
-                END $$;";
-
-            await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
-        }
-
-        private async Task EnsureBasisTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS basis (
-                    basis_id SERIAL PRIMARY KEY,
-                    basis_type VARCHAR(50) NOT NULL,
-                    document_number VARCHAR(50) NOT NULL,
-                    document_date DATE NOT NULL,
-                    CONSTRAINT basis_basis_type_check CHECK ((basis_type::text = ANY ((ARRAY['Доверенность', 'Приказ'])::text[])))
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
-        }
-
-        private async Task EnsurePassportTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS passport (
-                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
-                    series VARCHAR(10) NOT NULL,
-                    number VARCHAR(20) NOT NULL,
-                    issued_by TEXT NOT NULL,
-                    division_code VARCHAR(20),
-                    issue_date DATE NOT NULL
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
-        }
-
-        private async Task EnsureAddressTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS address (
-                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
-                    postal_code VARCHAR(20),
-                    country VARCHAR(100) NOT NULL DEFAULT 'Россия',
-                    region VARCHAR(100),
-                    district VARCHAR(100),
-                    city VARCHAR(100),
-                    locality VARCHAR(100),
-                    street VARCHAR(100),
-                    house_number VARCHAR(20),
-                    building VARCHAR(20),
-                    apartment VARCHAR(20)
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
-        }
-
-        private async Task EnsureEmployeeTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS employee (
-                    employee_id SERIAL PRIMARY KEY,
-                    position VARCHAR(100) NOT NULL,
-                    login VARCHAR(100) UNIQUE NOT NULL,
-                    password_hash TEXT NOT NULL,
-                    created_date DATE DEFAULT CURRENT_DATE,
-                    is_active BOOLEAN DEFAULT true NOT NULL,
-                    basis_id INTEGER REFERENCES basis(basis_id) ON DELETE SET NULL ON UPDATE CASCADE,
-                    person_id INTEGER REFERENCES person(person_id) ON DELETE CASCADE ON UPDATE CASCADE
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
-            
-            // Check if we need to migrate from basis VARCHAR to basis_id INTEGER
-            string checkColumnsSql = @"
-                DO $$
-                BEGIN
-                    IF EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='employee' AND column_name='basis'
-                    ) AND NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='employee' AND column_name='basis_id'
-                    ) THEN
-                        ALTER TABLE employee ADD COLUMN basis_id INTEGER REFERENCES basis(basis_id) ON DELETE SET NULL ON UPDATE CASCADE;
-                        ALTER TABLE employee DROP COLUMN basis;
-                    END IF;
-                END $$;";
-
-            await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
-        }
-
-        private async Task EnsureCategoryTablesExistAsync()
-        {
-            string createMainCategorySql = @"
-                CREATE TABLE IF NOT EXISTS main_category (
-                    main_category_id SERIAL PRIMARY KEY,
-                    name VARCHAR(100) UNIQUE NOT NULL
-                )";
-
-            string createFilterCategorySql = @"
-                CREATE TABLE IF NOT EXISTS filter_category (
-                    filter_category_id SERIAL PRIMARY KEY,
-                    main_category_id INTEGER NOT NULL REFERENCES main_category(main_category_id),
-                    name VARCHAR(100) NOT NULL,
-                    UNIQUE(main_category_id, name)
-                )";
-
-            string createDebtorSql = @"
-                CREATE TABLE IF NOT EXISTS debtor (
-                    debtor_id SERIAL PRIMARY KEY,
-                    person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
-                    filter_category_id INTEGER NOT NULL REFERENCES filter_category(filter_category_id),
-                    created_date DATE NOT NULL DEFAULT CURRENT_DATE
-                )";
-
-            await _databaseService.ExecuteNonQueryAsync(createMainCategorySql);
-            await _databaseService.ExecuteNonQueryAsync(createFilterCategorySql);
-            await _databaseService.ExecuteNonQueryAsync(createDebtorSql);
-        }
-
-        private async Task EnsureContractTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS contract (
-                    contract_id SERIAL PRIMARY KEY,
-                    contract_number VARCHAR(50) NOT NULL,
-                    city VARCHAR(100) NOT NULL,
-                    contract_date DATE NOT NULL,
-                    debtor_id INTEGER NOT NULL REFERENCES debtor(debtor_id) ON DELETE CASCADE ON UPDATE CASCADE,
-                    employee_id INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE ON UPDATE CASCADE,
-                    total_cost NUMERIC(12, 2) NOT NULL,
-                    mandatory_expenses NUMERIC(12, 2) NOT NULL,
-                    manager_fee NUMERIC(12, 2) NOT NULL,
-                    other_expenses NUMERIC(12, 2) NOT NULL,
-                    services_amount NUMERIC(12, 2)
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
-        }
-
-        private async Task EnsureContractStageTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS contract_stage (
-                    contract_stage_id SERIAL PRIMARY KEY,
-                    contract_id INTEGER NOT NULL REFERENCES contract(contract_id) ON DELETE CASCADE,
-                    stage INTEGER NOT NULL CHECK (stage >= 1 AND stage <= 3),
-                    amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
-                    due_date DATE NOT NULL,
-                    UNIQUE(contract_id, stage)
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
-        }
-
-        private async Task EnsurePaymentScheduleTableExistsAsync()
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS payment_schedule (
-                    schedule_id SERIAL PRIMARY KEY,
-                    contract_id INTEGER NOT NULL REFERENCES contract(contract_id) ON DELETE CASCADE,
-                    stage INTEGER NOT NULL,
-                    description TEXT NOT NULL,
-                    amount NUMERIC(12, 2) NOT NULL,
-                    amount_words TEXT,
-                    due_date DATE
-                )";
-            await _databaseService.ExecuteNonQueryAsync(sql);
         }
 
         #region Employee Methods
         public async Task<int> CreateEmployeeAsync(Employee employee)
         {
             string sql = @"
-                INSERT INTO employee (position, login, password_hash, created_date, is_active, basis_id, person_id)
-                VALUES (@position, @login, @passwordHash, @createdDate, @isActive, @basisId, @personId)
+                INSERT INTO employee (position, login, password_hash, created_date, is_active, basis, person_id)
+                VALUES (@position, @login, @passwordHash, @createdDate, @isActive, @basis, @personId)
                 RETURNING employee_id";
 
             var parameters = new Dictionary<string, object>
@@ -226,7 +27,7 @@ namespace bankrupt_piterjust.Services
                 { "@passwordHash", employee.PasswordHash },
                 { "@createdDate", employee.CreatedDate ?? (object)DBNull.Value },
                 { "@isActive", employee.IsActive },
-                { "@basisId", employee.BasisId ?? (object)DBNull.Value },
+                { "@basis", employee.Basis ?? (object)DBNull.Value },
                 { "@personId", employee.PersonId ?? (object)DBNull.Value }
             };
 
@@ -237,11 +38,9 @@ namespace bankrupt_piterjust.Services
         public async Task<Employee?> GetEmployeeByIdAsync(int employeeId)
         {
             string sql = @"
-                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
-                       b.basis_type, b.document_number, b.document_date
+                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email
                 FROM employee e
                 LEFT JOIN person p ON e.person_id = p.person_id
-                LEFT JOIN basis b ON e.basis_id = b.basis_id
                 WHERE e.employee_id = @employeeId";
 
             var parameters = new Dictionary<string, object> { { "@employeeId", employeeId } };
@@ -258,7 +57,7 @@ namespace bankrupt_piterjust.Services
                 PasswordHash = row["password_hash"].ToString() ?? string.Empty,
                 CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
                 IsActive = Convert.ToBoolean(row["is_active"]),
-                BasisId = row["basis_id"] != DBNull.Value ? Convert.ToInt32(row["basis_id"]) : null,
+                Basis = row["basis"] != DBNull.Value ? row["basis"].ToString() : null,
                 PersonId = row["person_id"] != DBNull.Value ? Convert.ToInt32(row["person_id"]) : null
             };
 
@@ -275,31 +74,15 @@ namespace bankrupt_piterjust.Services
                 };
             }
 
-            if (employee.BasisId.HasValue && row["basis_type"] != DBNull.Value)
-            {
-                employee.BasisInfo = new Basis
-                {
-                    BasisId = employee.BasisId.Value,
-                    BasisType = row["basis_type"].ToString() ?? string.Empty,
-                    DocumentNumber = row["document_number"].ToString() ?? string.Empty,
-                    DocumentDate = Convert.ToDateTime(row["document_date"])
-                };
-                
-                // For backward compatibility, also set the Basis string property
-                employee.Basis = $"{employee.BasisInfo.BasisType} № {employee.BasisInfo.DocumentNumber} от {employee.BasisInfo.DocumentDate:dd.MM.yyyy}";
-            }
-
             return employee;
         }
 
         public async Task<List<Employee>> GetAllEmployeesAsync()
         {
             string sql = @"
-                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
-                       b.basis_type, b.document_number, b.document_date
+                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email
                 FROM employee e
                 LEFT JOIN person p ON e.person_id = p.person_id
-                LEFT JOIN basis b ON e.basis_id = b.basis_id
                 ORDER BY e.position, p.last_name";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
@@ -315,7 +98,7 @@ namespace bankrupt_piterjust.Services
                     PasswordHash = row["password_hash"].ToString() ?? string.Empty,
                     CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
                     IsActive = Convert.ToBoolean(row["is_active"]),
-                    BasisId = row["basis_id"] != DBNull.Value ? Convert.ToInt32(row["basis_id"]) : null,
+                    Basis = row["basis"] != DBNull.Value ? row["basis"].ToString() : null,
                     PersonId = row["person_id"] != DBNull.Value ? Convert.ToInt32(row["person_id"]) : null
                 };
 
@@ -332,20 +115,6 @@ namespace bankrupt_piterjust.Services
                     };
                 }
 
-                if (employee.BasisId.HasValue && row["basis_type"] != DBNull.Value)
-                {
-                    employee.BasisInfo = new Basis
-                    {
-                        BasisId = employee.BasisId.Value,
-                        BasisType = row["basis_type"].ToString() ?? string.Empty,
-                        DocumentNumber = row["document_number"].ToString() ?? string.Empty,
-                        DocumentDate = Convert.ToDateTime(row["document_date"])
-                    };
-                    
-                    // For backward compatibility, also set the Basis string property
-                    employee.Basis = $"{employee.BasisInfo.BasisType} № {employee.BasisInfo.DocumentNumber} от {employee.BasisInfo.DocumentDate:dd.MM.yyyy}";
-                }
-
                 employees.Add(employee);
             }
 
@@ -357,7 +126,7 @@ namespace bankrupt_piterjust.Services
             string sql = @"
                 UPDATE employee SET
                     position = @position, login = @login, password_hash = @passwordHash,
-                    is_active = @isActive, basis_id = @basisId, person_id = @personId
+                    is_active = @isActive, basis = @basis, person_id = @personId
                 WHERE employee_id = @employeeId";
 
             var parameters = new Dictionary<string, object>
@@ -366,7 +135,7 @@ namespace bankrupt_piterjust.Services
                 { "@login", employee.Login },
                 { "@passwordHash", employee.PasswordHash },
                 { "@isActive", employee.IsActive },
-                { "@basisId", employee.BasisId ?? (object)DBNull.Value },
+                { "@basis", employee.Basis ?? (object)DBNull.Value },
                 { "@personId", employee.PersonId ?? (object)DBNull.Value },
                 { "@employeeId", employee.EmployeeId }
             };
@@ -379,12 +148,12 @@ namespace bankrupt_piterjust.Services
             string sql = @"
                 SELECT b.basis_type, b.document_number, b.document_date
                 FROM employee e
-                LEFT JOIN basis b ON e.basis_id = b.basis_id
+                JOIN basis b ON e.basis_id = b.basis_id
                 WHERE e.employee_id = @eid";
 
             var p = new Dictionary<string, object> { { "@eid", employeeId } };
             var table = await _databaseService.ExecuteReaderAsync(sql, p);
-            if (table.Rows.Count == 0 || table.Rows[0]["basis_type"] == DBNull.Value)
+            if (table.Rows.Count == 0)
                 return null;
 
             var row = table.Rows[0];
