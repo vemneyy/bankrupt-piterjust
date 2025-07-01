@@ -22,6 +22,7 @@ namespace bankrupt_piterjust.Services
             await EnsureEmployeeTableExistsAsync();
             await EnsureCategoryTablesExistAsync();
             await EnsureContractTableExistsAsync();
+            await EnsureContractStageTableExistsAsync();
             await EnsurePaymentScheduleTableExistsAsync();
         }
 
@@ -158,26 +159,23 @@ namespace bankrupt_piterjust.Services
                     mandatory_expenses NUMERIC(12, 2) NOT NULL,
                     manager_fee NUMERIC(12, 2) NOT NULL,
                     other_expenses NUMERIC(12, 2) NOT NULL,
-                    first_stage_cost NUMERIC(12, 2),
-                    second_stage_cost NUMERIC(12, 2),
-                    third_stage_cost NUMERIC(12, 2)
+                    services_amount NUMERIC(12, 2)
                 )";
             await _databaseService.ExecuteNonQueryAsync(sql);
+        }
 
-            string checkColumnsSql = @"
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contract' AND column_name='first_stage_cost') THEN
-                        ALTER TABLE contract ADD COLUMN first_stage_cost NUMERIC(12,2);
-                    END IF;
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contract' AND column_name='second_stage_cost') THEN
-                        ALTER TABLE contract ADD COLUMN second_stage_cost NUMERIC(12,2);
-                    END IF;
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contract' AND column_name='third_stage_cost') THEN
-                        ALTER TABLE contract ADD COLUMN third_stage_cost NUMERIC(12,2);
-                    END IF;
-                END $$;";
-            await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
+        private async Task EnsureContractStageTableExistsAsync()
+        {
+            string sql = @"
+                CREATE TABLE IF NOT EXISTS contract_stage (
+                    contract_stage_id SERIAL PRIMARY KEY,
+                    contract_id INTEGER NOT NULL REFERENCES contract(contract_id) ON DELETE CASCADE,
+                    stage INTEGER NOT NULL CHECK (stage >= 1 AND stage <= 3),
+                    amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+                    due_date DATE NOT NULL,
+                    UNIQUE(contract_id, stage)
+                )";
+            await _databaseService.ExecuteNonQueryAsync(sql);
         }
 
         private async Task EnsurePaymentScheduleTableExistsAsync()
@@ -353,10 +351,10 @@ namespace bankrupt_piterjust.Services
             string sql = @"
                 INSERT INTO contract (contract_number, city, contract_date, debtor_id, employee_id,
                                     total_cost, mandatory_expenses,
-                                    manager_fee, other_expenses, first_stage_cost, second_stage_cost, third_stage_cost)
+                                    manager_fee, other_expenses)
                 VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId,
                         @totalCost, @mandatoryExpenses,
-                        @managerFee, @otherExpenses, @stage1, @stage2, @stage3)
+                        @managerFee, @otherExpenses)
                 RETURNING contract_id";
 
             var parameters = new Dictionary<string, object>
@@ -369,10 +367,7 @@ namespace bankrupt_piterjust.Services
                 { "@totalCost", contract.TotalCost },
                 { "@mandatoryExpenses", contract.MandatoryExpenses },
                 { "@managerFee", contract.ManagerFee },
-                { "@otherExpenses", contract.OtherExpenses },
-                { "@stage1", contract.Stage1Cost },
-                { "@stage2", contract.Stage2Cost },
-                { "@stage3", contract.Stage3Cost }
+                { "@otherExpenses", contract.OtherExpenses }
             };
 
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
@@ -411,10 +406,18 @@ namespace bankrupt_piterjust.Services
                 MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
                 ManagerFee = Convert.ToDecimal(row["manager_fee"]),
                 OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
-                Stage1Cost = row["first_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["first_stage_cost"]) : 0m,
-                Stage2Cost = row["second_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["second_stage_cost"]) : 0m,
-                Stage3Cost = row["third_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["third_stage_cost"]) : 0m
             };
+
+            var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
+            foreach (var s in stages)
+            {
+                switch (s.Stage)
+                {
+                    case 1: contract.Stage1Cost = s.Amount; break;
+                    case 2: contract.Stage2Cost = s.Amount; break;
+                    case 3: contract.Stage3Cost = s.Amount; break;
+                }
+            }
 
             if (row["position"] != DBNull.Value)
             {
@@ -479,11 +482,19 @@ namespace bankrupt_piterjust.Services
                     TotalCost = Convert.ToDecimal(row["total_cost"]),
                     MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
                     ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                    OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
-                    Stage1Cost = row["first_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["first_stage_cost"]) : 0m,
-                    Stage2Cost = row["second_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["second_stage_cost"]) : 0m,
-                    Stage3Cost = row["third_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["third_stage_cost"]) : 0m
+                    OtherExpenses = Convert.ToDecimal(row["other_expenses"])
                 };
+
+                var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
+                foreach (var s in stages)
+                {
+                    switch (s.Stage)
+                    {
+                        case 1: contract.Stage1Cost = s.Amount; break;
+                        case 2: contract.Stage2Cost = s.Amount; break;
+                        case 3: contract.Stage3Cost = s.Amount; break;
+                    }
+                }
 
                 if (row["position"] != DBNull.Value)
                 {
@@ -528,10 +539,7 @@ namespace bankrupt_piterjust.Services
                     contract_number = @contractNumber, city = @city, contract_date = @contractDate,
                     debtor_id = @debtorId, employee_id = @employeeId, total_cost = @totalCost,
                     mandatory_expenses = @mandatoryExpenses, manager_fee = @managerFee,
-                    other_expenses = @otherExpenses,
-                    first_stage_cost = @stage1,
-                    second_stage_cost = @stage2,
-                    third_stage_cost = @stage3
+                    other_expenses = @otherExpenses
                 WHERE contract_id = @contractId";
 
             var parameters = new Dictionary<string, object>
@@ -545,9 +553,6 @@ namespace bankrupt_piterjust.Services
                 { "@mandatoryExpenses", contract.MandatoryExpenses },
                 { "@managerFee", contract.ManagerFee },
                 { "@otherExpenses", contract.OtherExpenses },
-                { "@stage1", contract.Stage1Cost },
-                { "@stage2", contract.Stage2Cost },
-                { "@stage3", contract.Stage3Cost },
                 { "@contractId", contract.ContractId }
             };
 
@@ -559,6 +564,50 @@ namespace bankrupt_piterjust.Services
             string sql = "DELETE FROM contract WHERE contract_id = @contractId";
             var parameters = new Dictionary<string, object> { { "@contractId", contractId } };
             await _databaseService.ExecuteNonQueryAsync(sql, parameters);
+        }
+        #endregion
+
+        #region Contract Stage Methods
+        public async Task<int> CreateContractStageAsync(ContractStage stage)
+        {
+            string sql = @"
+                INSERT INTO contract_stage (contract_id, stage, amount, due_date)
+                VALUES (@contractId, @stage, @amount, @dueDate)
+                RETURNING contract_stage_id";
+
+            var p = new Dictionary<string, object>
+            {
+                {"@contractId", stage.ContractId},
+                {"@stage", stage.Stage},
+                {"@amount", stage.Amount},
+                {"@dueDate", stage.DueDate }
+            };
+
+            var result = await _databaseService.ExecuteScalarAsync<object>(sql, p);
+            return result is Int64 v ? (int)v : Convert.ToInt32(result);
+        }
+
+        public async Task<List<ContractStage>> GetContractStagesByContractIdAsync(int contractId)
+        {
+            string sql = @"
+                SELECT * FROM contract_stage
+                WHERE contract_id = @cid
+                ORDER BY stage";
+
+            var table = await _databaseService.ExecuteReaderAsync(sql, new Dictionary<string, object>{{"@cid", contractId}});
+            var list = new List<ContractStage>();
+            foreach (DataRow row in table.Rows)
+            {
+                list.Add(new ContractStage
+                {
+                    ContractStageId = Convert.ToInt32(row["contract_stage_id"]),
+                    ContractId = Convert.ToInt32(row["contract_id"]),
+                    Stage = Convert.ToInt32(row["stage"]),
+                    Amount = Convert.ToDecimal(row["amount"]),
+                    DueDate = Convert.ToDateTime(row["due_date"])
+                });
+            }
+            return list;
         }
         #endregion
 
@@ -673,7 +722,7 @@ namespace bankrupt_piterjust.Services
             if (dataTable.Rows.Count == 0) return null;
 
             var row = dataTable.Rows[0];
-            return new Contract
+            var contract = new Contract
             {
                 ContractId = Convert.ToInt32(row["contract_id"]),
                 ContractNumber = row["contract_number"].ToString() ?? string.Empty,
@@ -684,11 +733,21 @@ namespace bankrupt_piterjust.Services
                 TotalCost = Convert.ToDecimal(row["total_cost"]),
                 MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
                 ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
-                Stage1Cost = row["first_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["first_stage_cost"]) : 0m,
-                Stage2Cost = row["second_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["second_stage_cost"]) : 0m,
-                Stage3Cost = row["third_stage_cost"] != DBNull.Value ? Convert.ToDecimal(row["third_stage_cost"]) : 0m
+                OtherExpenses = Convert.ToDecimal(row["other_expenses"])
             };
+
+            var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
+            foreach (var s in stages)
+            {
+                switch (s.Stage)
+                {
+                    case 1: contract.Stage1Cost = s.Amount; break;
+                    case 2: contract.Stage2Cost = s.Amount; break;
+                    case 3: contract.Stage3Cost = s.Amount; break;
+                }
+            }
+
+            return contract;
         }
         #endregion
 

@@ -49,6 +49,9 @@ namespace bankrupt_piterjust.ViewModels
         private decimal _stage1Amount;
         private decimal _stage2Amount;
         private decimal _stage3Amount;
+        private DateTime? _stage1DueDate;
+        private DateTime? _stage2DueDate;
+        private DateTime? _stage3DueDate;
         private decimal _scheduleTotal;
 
         // Default status values - No UI selection needed as per requirements
@@ -316,6 +319,24 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
+        public DateTime? Stage1DueDate
+        {
+            get => _stage1DueDate;
+            set { _stage1DueDate = value; OnPropertyChanged(nameof(Stage1DueDate)); }
+        }
+
+        public DateTime? Stage2DueDate
+        {
+            get => _stage2DueDate;
+            set { _stage2DueDate = value; OnPropertyChanged(nameof(Stage2DueDate)); }
+        }
+
+        public DateTime? Stage3DueDate
+        {
+            get => _stage3DueDate;
+            set { _stage3DueDate = value; OnPropertyChanged(nameof(Stage3DueDate)); }
+        }
+
         public decimal ScheduleTotal
         {
             get => _scheduleTotal;
@@ -436,6 +457,17 @@ namespace bankrupt_piterjust.ViewModels
                     Stage1Amount = contract.Stage1Cost;
                     Stage2Amount = contract.Stage2Cost;
                     Stage3Amount = contract.Stage3Cost;
+
+                    var stages = await fullRepo.GetContractStagesByContractIdAsync(contract.ContractId);
+                    foreach (var st in stages)
+                    {
+                        switch (st.Stage)
+                        {
+                            case 1: Stage1DueDate = st.DueDate; break;
+                            case 2: Stage2DueDate = st.DueDate; break;
+                            case 3: Stage3DueDate = st.DueDate; break;
+                        }
+                    }
 
                     var schedule = await fullRepo.GetPaymentScheduleByContractIdAsync(contract.ContractId);
                     PaymentSchedule = new ObservableCollection<PaymentSchedule>(schedule);

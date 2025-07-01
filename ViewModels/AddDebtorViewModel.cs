@@ -44,6 +44,9 @@ namespace bankrupt_piterjust.ViewModels
         private decimal _stage1Amount;
         private decimal _stage2Amount;
         private decimal _stage3Amount;
+        private DateTime? _stage1DueDate = DateTime.Now;
+        private DateTime? _stage2DueDate = DateTime.Now;
+        private DateTime? _stage3DueDate = DateTime.Now;
         private decimal _scheduleTotal;
 
         private readonly string _status = "Сбор документов";
@@ -308,6 +311,24 @@ namespace bankrupt_piterjust.ViewModels
             }
         }
 
+        public DateTime? Stage1DueDate
+        {
+            get => _stage1DueDate;
+            set { _stage1DueDate = value; OnPropertyChanged(nameof(Stage1DueDate)); }
+        }
+
+        public DateTime? Stage2DueDate
+        {
+            get => _stage2DueDate;
+            set { _stage2DueDate = value; OnPropertyChanged(nameof(Stage2DueDate)); }
+        }
+
+        public DateTime? Stage3DueDate
+        {
+            get => _stage3DueDate;
+            set { _stage3DueDate = value; OnPropertyChanged(nameof(Stage3DueDate)); }
+        }
+
         public decimal ScheduleTotal
         {
             get => _scheduleTotal;
@@ -361,6 +382,10 @@ namespace bankrupt_piterjust.ViewModels
 
             NewDebtor = new Debtor();
             _fullName = string.Empty;
+
+            _stage1DueDate = DateTime.Now;
+            _stage2DueDate = DateTime.Now;
+            _stage3DueDate = DateTime.Now;
 
             ManagerFee = 25000m;
             OtherExpenses = 20000m;
@@ -445,13 +470,22 @@ namespace bankrupt_piterjust.ViewModels
                         TotalCost = TotalCost,
                         MandatoryExpenses = MandatoryExpenses,
                         ManagerFee = ManagerFee,
-                        OtherExpenses = OtherExpenses,
-                        Stage1Cost = Stage1Amount,
-                        Stage2Cost = Stage2Amount,
-                        Stage3Cost = Stage3Amount
+                        OtherExpenses = OtherExpenses
                     };
 
                     int contractId = await fullRepository.CreateContractAsync(contract);
+
+                    var stages = new List<ContractStage>
+                    {
+                        new ContractStage { ContractId = contractId, Stage = 1, Amount = Stage1Amount, DueDate = Stage1DueDate ?? ContractDate },
+                        new ContractStage { ContractId = contractId, Stage = 2, Amount = Stage2Amount, DueDate = Stage2DueDate ?? ContractDate },
+                        new ContractStage { ContractId = contractId, Stage = 3, Amount = Stage3Amount, DueDate = Stage3DueDate ?? ContractDate }
+                    };
+
+                    foreach (var st in stages)
+                    {
+                        await fullRepository.CreateContractStageAsync(st);
+                    }
 
                     if (PaymentSchedule.Any())
                     {
