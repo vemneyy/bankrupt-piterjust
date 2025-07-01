@@ -454,18 +454,23 @@ namespace bankrupt_piterjust.ViewModels
                     MandatoryExpenses = contract.MandatoryExpenses;
                     ManagerFee = contract.ManagerFee;
                     OtherExpenses = contract.OtherExpenses;
-                    Stage1Amount = contract.Stage1Cost;
-                    Stage2Amount = contract.Stage2Cost;
-                    Stage3Amount = contract.Stage3Cost;
-
                     var stages = await fullRepo.GetContractStagesByContractIdAsync(contract.ContractId);
                     foreach (var st in stages)
                     {
                         switch (st.Stage)
                         {
-                            case 1: Stage1DueDate = st.DueDate; break;
-                            case 2: Stage2DueDate = st.DueDate; break;
-                            case 3: Stage3DueDate = st.DueDate; break;
+                            case 1:
+                                Stage1Amount = st.Amount;
+                                Stage1DueDate = st.DueDate;
+                                break;
+                            case 2:
+                                Stage2Amount = st.Amount;
+                                Stage2DueDate = st.DueDate;
+                                break;
+                            case 3:
+                                Stage3Amount = st.Amount;
+                                Stage3DueDate = st.DueDate;
+                                break;
                         }
                     }
 

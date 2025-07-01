@@ -410,16 +410,7 @@ namespace bankrupt_piterjust.Services
                 ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m,
             };
 
-            var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
-            foreach (var s in stages)
-            {
-                switch (s.Stage)
-                {
-                    case 1: contract.Stage1Cost = s.Amount; break;
-                    case 2: contract.Stage2Cost = s.Amount; break;
-                    case 3: contract.Stage3Cost = s.Amount; break;
-                }
-            }
+
 
             if (row["position"] != DBNull.Value)
             {
@@ -488,16 +479,7 @@ namespace bankrupt_piterjust.Services
                     ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
                 };
 
-                var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
-                foreach (var s in stages)
-                {
-                    switch (s.Stage)
-                    {
-                        case 1: contract.Stage1Cost = s.Amount; break;
-                        case 2: contract.Stage2Cost = s.Amount; break;
-                        case 3: contract.Stage3Cost = s.Amount; break;
-                    }
-                }
+
 
                 if (row["position"] != DBNull.Value)
                 {
@@ -736,17 +718,6 @@ namespace bankrupt_piterjust.Services
                 OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
                 ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
             };
-
-            var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
-            foreach (var s in stages)
-            {
-                switch (s.Stage)
-                {
-                    case 1: contract.Stage1Cost = s.Amount; break;
-                    case 2: contract.Stage2Cost = s.Amount; break;
-                    case 3: contract.Stage3Cost = s.Amount; break;
-                }
-            }
 
             return contract;
         }
