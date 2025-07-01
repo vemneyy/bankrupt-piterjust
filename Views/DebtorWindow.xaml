@@ -242,10 +242,7 @@
         </Style>
     </Window.Resources>
 
-    <!-- ===== L A Y O U T ===== -->
-    <!-- ИСПРАВЛЕНО: Структура Grid изменена для правильного позиционирования.
-         Теперь у нас 3 строки: Шапка (Auto), Основной контент (*), Нижняя панель (Auto).
-         Это позволяет нижней панели всегда быть прижатой к низу окна. -->
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -256,17 +253,7 @@
             <!-- Bottom action area -->
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Border Grid.Row="0"
-                Background="White"
-                BorderBrush="#DEE2E6"
-                BorderThickness="0,0,0,1">
-            <TextBlock Text="Добавление нового должника"
-                       Margin="25,10"
-                       FontSize="22"
-                       FontWeight="Bold"
-                       Foreground="#212529"/>
-        </Border>
+        
 
         <!-- Main Content -->
         <!-- ИСПРАВЛЕНО: ScrollViewer теперь занимает строку 1. 
@@ -283,7 +270,7 @@
             <TabControl Style="{StaticResource ModernTabControl}"
                         BorderThickness="0,1,0,0"
                         BorderBrush="#DEE2E6"
-                        Margin="0,20,0,0">
+                        Margin="0,20,0,0" Height="1374">
                 <!-- Личные данные -->
                 <TabItem Header="Личные данные" Style="{StaticResource ModernTabItem}">
                     <!-- ... (содержимое вкладки без изменений) ... -->
@@ -385,7 +372,7 @@
                                 <TextBlock Text="Квартира" Style="{StaticResource FormTextBlock}"/>
                                 <TextBox Text="{Binding RegistrationAddress.Apartment}" Style="{StaticResource FormTextBox}"/>
                             </StackPanel>
-                            
+
                         </StackPanel>
                     </Grid>
                 </TabItem>
@@ -537,9 +524,9 @@
 
         <!-- Busy indicator -->
         <!-- ИСПРАВЛЕНО: Grid.RowSpan="3" для корректного перекрытия всех элементов. -->
-        <Grid Grid.Row="0" Grid.RowSpan="3"
+        <Grid Grid.Row="1" Grid.RowSpan="2"
               Background="#80000000"
-              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,-50">
             <StackPanel VerticalAlignment="Center"
                         HorizontalAlignment="Center">
                 <TextBlock Text="Сохранение данных..."
