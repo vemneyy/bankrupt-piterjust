@@ -6,131 +6,9 @@ namespace bankrupt_piterjust.Services
     public class DebtorRepository
     {
         private readonly DatabaseService _databaseService;
-        private readonly FullDatabaseRepository _fullRepository;
-
         public DebtorRepository()
         {
             _databaseService = new DatabaseService();
-            _fullRepository = new FullDatabaseRepository();
-            _ = EnsureTablesExistAsync();
-        }
-
-        private async Task EnsureTablesExistAsync()
-        {
-            await EnsurePersonTableExistsAsync();
-            await EnsurePassportTableExistsAsync();
-            await EnsureAddressTableExistsAsync();
-            await EnsureCategoryTablesExistAsync();
-        }
-
-        private async Task EnsurePersonTableExistsAsync()
-        {
-            string createPersonTableSql = @"
-                CREATE TABLE IF NOT EXISTS person (
-                    person_id SERIAL PRIMARY KEY,
-                    last_name VARCHAR(100) NOT NULL,
-                    first_name VARCHAR(100) NOT NULL,
-                    middle_name VARCHAR(100),
-                    is_male BOOLEAN DEFAULT true,
-                    phone VARCHAR(20),
-                    email VARCHAR(100)
-                )";
-
-            await _databaseService.ExecuteNonQueryAsync(createPersonTableSql);
-
-            string checkColumnsSql = @"
-                DO $$
-                BEGIN
-                    -- Check if phone column exists
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns 
-                        WHERE table_name='person' AND column_name='phone'
-                    ) THEN
-                        ALTER TABLE person ADD COLUMN phone VARCHAR(20);
-                    END IF;
-                    
-                    -- Check if email column exists
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='person' AND column_name='email'
-                    ) THEN
-                        ALTER TABLE person ADD COLUMN email VARCHAR(100);
-                    END IF;
-
-                    -- Check if is_male column exists
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='person' AND column_name='is_male'
-                    ) THEN
-                        ALTER TABLE person ADD COLUMN is_male BOOLEAN DEFAULT true;
-                    END IF;
-                END $$;";
-
-            await _databaseService.ExecuteNonQueryAsync(checkColumnsSql);
-        }
-
-        private async Task EnsurePassportTableExistsAsync()
-        {
-            string createPassportTableSql = @"
-                CREATE TABLE IF NOT EXISTS passport (
-                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
-                    series VARCHAR(10) NOT NULL,
-                    number VARCHAR(20) NOT NULL,
-                    issued_by TEXT NOT NULL,
-                    division_code VARCHAR(20),
-                    issue_date DATE NOT NULL
-                )";
-
-            await _databaseService.ExecuteNonQueryAsync(createPassportTableSql);
-        }
-
-        private async Task EnsureAddressTableExistsAsync()
-        {
-
-            string createAddressTableSql = @"
-                CREATE TABLE IF NOT EXISTS address (
-                    person_id INTEGER PRIMARY KEY REFERENCES person(person_id) ON DELETE CASCADE,
-                    postal_code VARCHAR(20),
-                    country VARCHAR(100) NOT NULL DEFAULT 'Россия',
-                    region VARCHAR(100),
-                    district VARCHAR(100),
-                    city VARCHAR(100),
-                    locality VARCHAR(100),
-                    street VARCHAR(100),
-                    house_number VARCHAR(20),
-                    building VARCHAR(20),
-                    apartment VARCHAR(20)
-                )";
-
-            await _databaseService.ExecuteNonQueryAsync(createAddressTableSql);
-        }
-        private async Task EnsureCategoryTablesExistAsync()
-        {
-            string createMainCategorySql = @"
-                CREATE TABLE IF NOT EXISTS main_category (
-                    main_category_id SERIAL PRIMARY KEY,
-                    name VARCHAR(100) UNIQUE NOT NULL
-                );";
-
-            string createFilterCategorySql = @"
-                CREATE TABLE IF NOT EXISTS filter_category (
-                    filter_category_id SERIAL PRIMARY KEY,
-                    main_category_id INTEGER NOT NULL REFERENCES main_category(main_category_id),
-                    name VARCHAR(100) NOT NULL,
-                    UNIQUE(main_category_id, name)
-                );";
-
-            string createDebtorSql = @"
-                CREATE TABLE IF NOT EXISTS debtor (
-                    debtor_id SERIAL PRIMARY KEY,
-                    person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
-                    filter_category_id INTEGER NOT NULL REFERENCES filter_category(filter_category_id),
-                    created_date DATE NOT NULL DEFAULT CURRENT_DATE
-                );";
-
-            await _databaseService.ExecuteNonQueryAsync(createMainCategorySql);
-            await _databaseService.ExecuteNonQueryAsync(createFilterCategorySql);
-            await _databaseService.ExecuteNonQueryAsync(createDebtorSql);
         }
 
         public async Task<List<Debtor>> GetAllDebtorsAsync()
@@ -208,8 +86,6 @@ namespace bankrupt_piterjust.Services
             string mainCategory,
             string filterCategory)
         {
-            await EnsureTablesExistAsync();
-
             if (passport != null && !string.IsNullOrWhiteSpace(passport.Series) && !string.IsNullOrWhiteSpace(passport.Number))
             {
                 bool passportExists = await IsPassportExistsAsync(passport.Series, passport.Number);
