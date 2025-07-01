@@ -2,7 +2,9 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -55,6 +57,7 @@ namespace bankrupt_piterjust.ViewModels
         private DateTime? _stage2DueDate;
         private DateTime? _stage3DueDate;
         private decimal _scheduleTotal;
+        private int _contractId;
 
         // Default status values - No UI selection needed as per requirements
         private readonly string _status = "Сбор документов";
@@ -449,6 +452,7 @@ namespace bankrupt_piterjust.ViewModels
                 var contract = await fullRepo.GetLatestContractByDebtorIdAsync(debtorId);
                 if (contract != null)
                 {
+                    _contractId = contract.ContractId;
                     ContractNumber = contract.ContractNumber;
                     ContractCity = contract.City;
                     ContractDate = contract.ContractDate;
@@ -548,6 +552,63 @@ namespace bankrupt_piterjust.ViewModels
                 await _repository.UpsertPassportAsync(passport);
                 await _repository.ReplaceAddressesAsync(_personId, addresses);
 
+                if (ShouldSaveContract())
+                {
+                    var fullRepo = new FullDatabaseRepository();
+                    int debtorId = await fullRepo.GetDebtorIdByPersonIdAsync(_personId);
+
+                    UpdateScheduleTotal();
+                    var contract = new Contract
+                    {
+                        ContractId = _contractId,
+                        ContractNumber = ContractNumber,
+                        City = ContractCity,
+                        ContractDate = ContractDate,
+                        DebtorId = debtorId,
+                        EmployeeId = CurrentEmployeeId,
+                        TotalCost = TotalCost,
+                        MandatoryExpenses = MandatoryExpenses,
+                        ManagerFee = ManagerFee,
+                        OtherExpenses = OtherExpenses,
+                        ServicesAmount = ServicesAmount
+                    };
+
+                    if (_contractId > 0)
+                    {
+                        await fullRepo.UpdateContractAsync(contract);
+                        await fullRepo.DeleteContractStagesByContractIdAsync(_contractId);
+                        await fullRepo.DeletePaymentScheduleByContractIdAsync(_contractId);
+                    }
+                    else
+                    {
+                        _contractId = await fullRepo.CreateContractAsync(contract);
+                    }
+
+                    var stages = new List<ContractStage>
+                    {
+                        new ContractStage { ContractId = _contractId, Stage = 1, Amount = Stage1Amount, DueDate = Stage1DueDate ?? ContractDate },
+                        new ContractStage { ContractId = _contractId, Stage = 2, Amount = Stage2Amount, DueDate = Stage2DueDate ?? ContractDate },
+                        new ContractStage { ContractId = _contractId, Stage = 3, Amount = Stage3Amount, DueDate = Stage3DueDate ?? ContractDate }
+                    };
+
+                    foreach (var st in stages)
+                        await fullRepo.CreateContractStageAsync(st);
+
+                    foreach (var payment in PaymentSchedule)
+                    {
+                        var schedule = new PaymentSchedule
+                        {
+                            ContractId = _contractId,
+                            Stage = payment.Stage,
+                            Description = payment.Description,
+                            Amount = payment.Amount,
+                            DueDate = payment.DueDate
+                        };
+
+                        await fullRepo.CreatePaymentScheduleAsync(schedule);
+                    }
+                }
+
                 var window = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
                 if (window != null)
                 {
@@ -570,13 +631,13 @@ namespace bankrupt_piterjust.ViewModels
             if (ScheduleMonths <= 0)
                 return;
 
-            decimal monthly = ScheduleMonths > 0 ? Math.Round(ManagerFee / ScheduleMonths, 2) : 0m;
+            decimal monthly = ScheduleMonths > 0 ? Math.Round(ServicesAmount / ScheduleMonths, 2) : 0m;
             for (int i = 1; i <= ScheduleMonths; i++)
             {
                 PaymentSchedule.Add(new PaymentSchedule
                 {
                     Stage = i,
-                    Description = $"Платеж {i}",
+                    Description = "Оплата консультационных юридических услуг",
                     Amount = monthly,
                     DueDate = ContractDate.AddMonths(i - 1)
                 });
@@ -607,7 +668,6 @@ namespace bankrupt_piterjust.ViewModels
                 foreach (PaymentSchedule item in e.NewItems)
                     item.PropertyChanged += PaymentItem_PropertyChanged;
             }
-            ScheduleMonths = PaymentSchedule.Count;
             UpdateScheduleTotal();
         }
 
@@ -647,6 +707,25 @@ namespace bankrupt_piterjust.ViewModels
             if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
             if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
             return string.Join(", ", parts);
+        }
+
+        private bool ShouldSaveContract()
+        {
+            return !string.IsNullOrWhiteSpace(ContractNumber) &&
+                   (TotalCost > 0 || MandatoryExpenses > 0 || ManagerFee > 0 || OtherExpenses > 0);
+        }
+
+        private static int CurrentEmployeeId
+        {
+            get
+            {
+                var currentEmployee = UserSessionService.Instance.CurrentEmployee;
+                if (currentEmployee != null)
+                {
+                    return currentEmployee.EmployeeId;
+                }
+                return 1;
+            }
         }
 
         // Status properties - readonly with default values
