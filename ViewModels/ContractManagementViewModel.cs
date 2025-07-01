@@ -88,7 +88,7 @@ namespace bankrupt_piterjust.ViewModels
 
                 var employees = await _repository.GetAllEmployeesAsync();
                 Employees.Clear();
-                foreach (var employee in employees)
+                foreach (var employee in employees.Where(e => e.IsActive))
                 {
                     Employees.Add(employee);
                 }

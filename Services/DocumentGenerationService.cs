@@ -14,7 +14,7 @@ namespace bankrupt_piterjust.Services
 {
     public class DocumentGenerationService
     {
-        public static async Task<string?> GenerateContractAsync(int debtorId)
+        public static async Task<string?> GenerateContractAsync(int debtorId, Employee? representative = null)
         {
             try
             {
@@ -31,7 +31,8 @@ namespace bankrupt_piterjust.Services
                 var registrationAddress = addresses.FirstOrDefault() ?? throw new Exception("Адрес регистрации должника не найден.");
 
                 // Get representative (authorized employee) information
-                var representative = UserSessionService.Instance.CurrentEmployee ?? throw new Exception("Информация об авторизованном сотруднике не найдена.");
+                var rep = representative ?? UserSessionService.Instance.CurrentEmployee
+                    ?? throw new Exception("Информация об авторизованном сотруднике не найдена.");
 
                 // Get contract template path
                 string templatePath = FindTemplateFile();
@@ -82,9 +83,9 @@ namespace bankrupt_piterjust.Services
                 decimal stage3 = stages.FirstOrDefault(s => s.Stage == 3)?.Amount ?? 0m;
 
                 var paymentSchedule = await repo.GetPaymentScheduleByContractIdAsync(contractInfo.ContractId);
-                string representativeName = representative.FullName;
-                string representativePosition = representative.Position;
-                string? representativeBasis = await repo.GetEmployeeBasisStringAsync(representative.EmployeeId);
+                string representativeName = rep.FullName;
+                string representativePosition = rep.Position;
+                string? representativeBasis = await repo.GetEmployeeBasisStringAsync(rep.EmployeeId);
                 var replacements = new Dictionary<string, string>
                 {
                     { "<номер_договора>", contractNumber },
