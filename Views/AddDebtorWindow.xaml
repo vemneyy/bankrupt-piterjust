@@ -459,14 +459,17 @@
                                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                                     <TextBlock Text="Этап 1 (руб.)" Style="{StaticResource FormTextBlock}"/>
                                     <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding Stage1Amount, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                                    <DatePicker SelectedDate="{Binding Stage1DueDate}" Style="{StaticResource FormDatePicker}" Margin="0,5,0,0"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="0,0,10,0">
                                     <TextBlock Text="Этап 2 (руб.)" Style="{StaticResource FormTextBlock}"/>
                                     <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding Stage2Amount, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                                    <DatePicker SelectedDate="{Binding Stage2DueDate}" Style="{StaticResource FormDatePicker}" Margin="0,5,0,0"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Этап 3 (руб.)" Style="{StaticResource FormTextBlock}"/>
                                     <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding Stage3Amount, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                                    <DatePicker SelectedDate="{Binding Stage3DueDate}" Style="{StaticResource FormDatePicker}" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Grid>
 
