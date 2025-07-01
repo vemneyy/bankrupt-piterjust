@@ -6,6 +6,7 @@ using bankrupt_piterjust.Views;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -503,7 +504,21 @@ namespace bankrupt_piterjust.ViewModels
 
             try
             {
-                var outputPath = await DocumentGenerationService.GenerateContractAsync(SelectedDebtor.PersonId.Value);
+                var repo = new FullDatabaseRepository();
+                var employees = await repo.GetAllEmployeesAsync();
+                var activeEmployees = employees.Where(e => e.IsActive).ToList();
+
+                var dialog = new EmployeeSelectionWindow(activeEmployees)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                if (dialog.ShowDialog() != true || dialog.SelectedEmployee == null)
+                    return;
+
+                var outputPath = await DocumentGenerationService.GenerateContractAsync(
+                    SelectedDebtor.PersonId.Value,
+                    dialog.SelectedEmployee);
 
                 if (!string.IsNullOrEmpty(outputPath))
                 {
