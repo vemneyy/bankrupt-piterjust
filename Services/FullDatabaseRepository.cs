@@ -351,10 +351,10 @@ namespace bankrupt_piterjust.Services
             string sql = @"
                 INSERT INTO contract (contract_number, city, contract_date, debtor_id, employee_id,
                                     total_cost, mandatory_expenses,
-                                    manager_fee, other_expenses)
+                                    manager_fee, other_expenses, services_amount)
                 VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId,
                         @totalCost, @mandatoryExpenses,
-                        @managerFee, @otherExpenses)
+                        @managerFee, @otherExpenses, @servicesAmount)
                 RETURNING contract_id";
 
             var parameters = new Dictionary<string, object>
@@ -367,7 +367,8 @@ namespace bankrupt_piterjust.Services
                 { "@totalCost", contract.TotalCost },
                 { "@mandatoryExpenses", contract.MandatoryExpenses },
                 { "@managerFee", contract.ManagerFee },
-                { "@otherExpenses", contract.OtherExpenses }
+                { "@otherExpenses", contract.OtherExpenses },
+                { "@servicesAmount", contract.ServicesAmount }
             };
 
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
@@ -406,6 +407,7 @@ namespace bankrupt_piterjust.Services
                 MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
                 ManagerFee = Convert.ToDecimal(row["manager_fee"]),
                 OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
+                ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m,
             };
 
             var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
@@ -482,7 +484,8 @@ namespace bankrupt_piterjust.Services
                     TotalCost = Convert.ToDecimal(row["total_cost"]),
                     MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
                     ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                    OtherExpenses = Convert.ToDecimal(row["other_expenses"])
+                    OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
+                    ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
                 };
 
                 var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
@@ -535,11 +538,11 @@ namespace bankrupt_piterjust.Services
         public async Task UpdateContractAsync(Contract contract)
         {
             string sql = @"
-                UPDATE contract SET 
+                UPDATE contract SET
                     contract_number = @contractNumber, city = @city, contract_date = @contractDate,
                     debtor_id = @debtorId, employee_id = @employeeId, total_cost = @totalCost,
                     mandatory_expenses = @mandatoryExpenses, manager_fee = @managerFee,
-                    other_expenses = @otherExpenses
+                    other_expenses = @otherExpenses, services_amount = @servicesAmount
                 WHERE contract_id = @contractId";
 
             var parameters = new Dictionary<string, object>
@@ -553,6 +556,7 @@ namespace bankrupt_piterjust.Services
                 { "@mandatoryExpenses", contract.MandatoryExpenses },
                 { "@managerFee", contract.ManagerFee },
                 { "@otherExpenses", contract.OtherExpenses },
+                { "@servicesAmount", contract.ServicesAmount },
                 { "@contractId", contract.ContractId }
             };
 
@@ -729,7 +733,8 @@ namespace bankrupt_piterjust.Services
                 TotalCost = Convert.ToDecimal(row["total_cost"]),
                 MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
                 ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                OtherExpenses = Convert.ToDecimal(row["other_expenses"])
+                OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
+                ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
             };
 
             var stages = await GetContractStagesByContractIdAsync(contract.ContractId);
