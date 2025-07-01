@@ -1,5 +1,5 @@
-<!-- Views/EditDebtorWindow.xaml -->
-<Window x:Class="bankrupt_piterjust.Views.EditDebtorWindow"
+<!-- Views/DebtorWindow.xaml -->
+<Window x:Class="bankrupt_piterjust.Views.DebtorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,7 +9,7 @@
         xmlns:beh="clr-namespace:bankrupt_piterjust.Helpers"
         xmlns:local="clr-namespace:bankrupt_piterjust"
         mc:Ignorable="d"
-        Title="Редактирование должника"
+        Title="{Binding WindowTitle}"
         MinHeight="700"
         MaxHeight="950" 
         Width="900"
@@ -19,8 +19,7 @@
         Background="#F8F9FA"
         ShowInTaskbar="False">
 
-
-    <!-- ===== R E S O U R C E S ===== -->
+    <!-- ===== R E S O U Р C E S ===== -->
     <Window.Resources>
         <!-- ... (ресурсы остаются без изменений) ... -->
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -262,7 +261,7 @@
                 Background="White"
                 BorderBrush="#DEE2E6"
                 BorderThickness="0,0,0,1">
-            <TextBlock Text="Редактирование должника"
+            <TextBlock Text="Добавление нового должника"
                        Margin="25,10"
                        FontSize="22"
                        FontWeight="Bold"
@@ -363,7 +362,6 @@
                                     <TextBox Text="{Binding PassportDivisionCode, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DivisionCodeConverter}}" Style="{StaticResource FormTextBox}" MaxLength="7"/>
                                 </StackPanel>
                             </Grid>
-                            <TextBlock Text="Адреса" Style="{StaticResource HeaderTextBlock}"/>
                             <TextBlock Text="Адрес регистрации *" Style="{StaticResource FormTextBlock}"/>
                             <StackPanel>
                                 <TextBlock Text="Индекс" Style="{StaticResource FormTextBlock}"/>
@@ -387,6 +385,7 @@
                                 <TextBlock Text="Квартира" Style="{StaticResource FormTextBlock}"/>
                                 <TextBox Text="{Binding RegistrationAddress.Apartment}" Style="{StaticResource FormTextBox}"/>
                             </StackPanel>
+                            
                         </StackPanel>
                     </Grid>
                 </TabItem>
@@ -426,8 +425,8 @@
                                     <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding ServicesAmount, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Обязательные расходы (руб.)"/></TextBlock>
-                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding MandatoryExpenses, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}"/>
+                                    <TextBlock Style="{StaticResource FormTextBlock}"><Run Text="Общая сумма "/><Run Language="ru-ru" Text="расходов "/><Run Text="(руб.)"/></TextBlock>
+                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding MandatoryExpenses, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
                                 </StackPanel>
                             </Grid>
 
@@ -471,9 +470,9 @@
                             </Grid>
 
                             <StackPanel Orientation="Horizontal" Margin="0,20,0,5">
-                                <TextBlock Text="Количество месяцев:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <TextBox Width="50" Text="{Binding ScheduleMonths, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}"/>
-                                <Button Content="Сгенерировать" Command="{Binding GenerateScheduleCommand}" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}"/>
+                                <TextBlock Text="Количество месяцев:" VerticalAlignment="Center" Margin="0,0,10,0" Height="28"/>
+                                <TextBox Width="50" Text="{Binding ScheduleMonths}" Style="{StaticResource FormTextBox}" Height="34"/>
+                                <Button Content="Сгенерировать" Command="{Binding GenerateScheduleCommand}" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}" Height="31"/>
                             </StackPanel>
                             <TextBlock Text="График платежей" Style="{StaticResource HeaderTextBlock}" Margin="0,10,0,5"/>
                             <DataGrid ItemsSource="{Binding PaymentSchedule}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" Margin="0,0,0,10">
@@ -481,14 +480,19 @@
                                     <DataGridTextColumn Header="№" Binding="{Binding Stage}" Width="Auto"/>
                                     <DataGridTextColumn Header="Дата платежа" Binding="{Binding DueDate, StringFormat=dd.MM.yyyy}" Width="*"/>
                                     <DataGridTextColumn Header="Цель платежа" Binding="{Binding Description}" Width="*"/>
-                                    <DataGridTextColumn Header="Сумма платежа" Binding="{Binding Amount, StringFormat={}{0:F2}}" Width="*"/>
+                                    <DataGridTextColumn Header="Сумма платежа" Binding="{Binding Amount, StringFormat={}{0:N2}}" Width="*"/>
                                 </DataGrid.Columns>
                             </DataGrid>
 
-                            <StackPanel>
-                                <TextBlock Text="Сумма по графику (руб.)" Style="{StaticResource FormTextBlock}"/>
-                                <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding ScheduleTotal, Converter={StaticResource CurrencyConverter}}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
-                            </StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Сумма по графику (руб.)" Style="{StaticResource FormTextBlock}"/>
+                                    <TextBox beh:CurrencyInputBehavior.IsEnabled="True" Text="{Binding ScheduleTotal}" Style="{StaticResource FormTextBox}" IsReadOnly="True"/>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Grid>
                 </TabItem>
@@ -533,9 +537,9 @@
 
         <!-- Busy indicator -->
         <!-- ИСПРАВЛЕНО: Grid.RowSpan="3" для корректного перекрытия всех элементов. -->
-        <Grid Grid.RowSpan="2"
+        <Grid Grid.Row="0" Grid.RowSpan="3"
               Background="#80000000"
-              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="940,141,-940,-195" Grid.Row="1">
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center"
                         HorizontalAlignment="Center">
                 <TextBlock Text="Сохранение данных..."
