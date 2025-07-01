@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Linq;
 
 namespace bankrupt_piterjust.Services
 {
@@ -75,6 +76,11 @@ namespace bankrupt_piterjust.Services
                 decimal servicesAmount = contractInfo.TotalCost - contractInfo.MandatoryExpenses;
                 decimal otherExpenses = contractInfo.OtherExpenses;
 
+                var stages = await repo.GetContractStagesByContractIdAsync(contractInfo.ContractId);
+                decimal stage1 = stages.FirstOrDefault(s => s.Stage == 1)?.Amount ?? 0m;
+                decimal stage2 = stages.FirstOrDefault(s => s.Stage == 2)?.Amount ?? 0m;
+                decimal stage3 = stages.FirstOrDefault(s => s.Stage == 3)?.Amount ?? 0m;
+
                 var paymentSchedule = await repo.GetPaymentScheduleByContractIdAsync(contractInfo.ContractId);
                 string representativeName = representative.FullName;
                 string representativePosition = representative.Position;
@@ -100,12 +106,12 @@ namespace bankrupt_piterjust.Services
                     { "<сумма_обязательных_расходов_прописью>", NumberToWordsConverter.ConvertToWords(mandatoryExpenses) },
                     { "<размер_вознаграждения_фин_управляющего>", managerFee.ToString("#,##0.00") },
                     { "<прочие_расходы_банкротства>", otherExpenses.ToString("#,##0.00") },
-                    { "<стоимость_первого_этапа>", contractInfo.Stage1Cost.ToString("#,##0.00") },
-                    { "<стоимость_первого_этапа_прописью>", NumberToWordsConverter.ConvertToWords(contractInfo.Stage1Cost) },
-                    { "<стоимость_второго_этапа>", contractInfo.Stage2Cost.ToString("#,##0.00") },
-                    { "<стоимость_второго_этапа_прописью>", NumberToWordsConverter.ConvertToWords(contractInfo.Stage2Cost) },
-                    { "<стоимость_третьего_этапа>", contractInfo.Stage3Cost.ToString("#,##0.00") },
-                    { "<стоимость_третьего_этапа_прописью>", NumberToWordsConverter.ConvertToWords(contractInfo.Stage3Cost) },
+                    { "<стоимость_первого_этапа>", stage1.ToString("#,##0.00") },
+                    { "<стоимость_первого_этапа_прописью>", NumberToWordsConverter.ConvertToWords(stage1) },
+                    { "<стоимость_второго_этапа>", stage2.ToString("#,##0.00") },
+                    { "<стоимость_второго_этапа_прописью>", NumberToWordsConverter.ConvertToWords(stage2) },
+                    { "<стоимость_третьего_этапа>", stage3.ToString("#,##0.00") },
+                    { "<стоимость_третьего_этапа_прописью>", NumberToWordsConverter.ConvertToWords(stage3) },
                     { "<номер_телефона_заказчика>", person.Phone ?? "-" }, // Use null-coalescing operator to provide a default value
                     { "<электронный_адрес_заказчика>", person.Email ?? "-" } // Use null-coalescing operator to provide a default value
                 };

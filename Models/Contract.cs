@@ -16,9 +16,6 @@ namespace bankrupt_piterjust.Models
         /// Стоимость юридических услуг (общая сумма этапов).
         /// </summary>
         public decimal ServicesAmount { get; set; }
-        public decimal Stage1Cost { get; set; }
-        public decimal Stage2Cost { get; set; }
-        public decimal Stage3Cost { get; set; }
         public Employee? Employee { get; set; }
         public Person? Debtor { get; set; }
     }
