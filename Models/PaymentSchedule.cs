@@ -7,7 +7,6 @@ namespace bankrupt_piterjust.Models
         private int _stage;
         private string _description = string.Empty;
         private decimal _amount;
-        private string? _amountWords;
         private DateTime? _dueDate;
         public int ScheduleId { get; set; }
         public int ContractId { get; set; }
@@ -25,11 +24,6 @@ namespace bankrupt_piterjust.Models
         {
             get => _amount;
             set { _amount = value; OnPropertyChanged(nameof(Amount)); }
-        }
-        public string? AmountWords
-        {
-            get => _amountWords;
-            set { _amountWords = value; OnPropertyChanged(nameof(AmountWords)); }
         }
         public DateTime? DueDate
         {

@@ -566,8 +566,8 @@ namespace bankrupt_piterjust.Services
         public async Task<int> CreatePaymentScheduleAsync(PaymentSchedule schedule)
         {
             string sql = @"
-                INSERT INTO payment_schedule (contract_id, stage, description, amount, amount_words, due_date)
-                VALUES (@contractId, @stage, @description, @amount, @amountWords, @dueDate)
+                INSERT INTO payment_schedule (contract_id, stage, description, amount,due_date)
+                VALUES (@contractId, @stage, @description, @amount, @dueDate)
                 RETURNING schedule_id";
 
             var parameters = new Dictionary<string, object>
@@ -576,7 +576,6 @@ namespace bankrupt_piterjust.Services
                 { "@stage", schedule.Stage },
                 { "@description", schedule.Description },
                 { "@amount", schedule.Amount },
-                { "@amountWords", schedule.AmountWords ?? (object)DBNull.Value },
                 { "@dueDate", schedule.DueDate ?? (object)DBNull.Value }
             };
 
@@ -606,7 +605,6 @@ namespace bankrupt_piterjust.Services
                     Stage = Convert.ToInt32(row["stage"]),
                     Description = row["description"].ToString() ?? string.Empty,
                     Amount = Convert.ToDecimal(row["amount"]),
-                    AmountWords = row["amount_words"] != DBNull.Value ? row["amount_words"].ToString() : null,
                     DueDate = row["due_date"] != DBNull.Value ? Convert.ToDateTime(row["due_date"]) : null
                 };
 
@@ -629,8 +627,7 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 UPDATE payment_schedule SET 
-                    stage = @stage, description = @description, amount = @amount,
-                    amount_words = @amountWords, due_date = @dueDate
+                    stage = @stage, description = @description, amount = @amount, due_date = @dueDate
                 WHERE schedule_id = @scheduleId";
 
             var parameters = new Dictionary<string, object>
@@ -638,7 +635,6 @@ namespace bankrupt_piterjust.Services
                 { "@stage", schedule.Stage },
                 { "@description", schedule.Description },
                 { "@amount", schedule.Amount },
-                { "@amountWords", schedule.AmountWords ?? (object)DBNull.Value },
                 { "@dueDate", schedule.DueDate ?? (object)DBNull.Value },
                 { "@scheduleId", schedule.ScheduleId }
             };

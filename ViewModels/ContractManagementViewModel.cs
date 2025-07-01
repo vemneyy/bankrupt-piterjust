@@ -524,7 +524,6 @@ namespace bankrupt_piterjust.ViewModels
             Stage = payment.Stage;
             Description = payment.Description;
             Amount = payment.Amount;
-            AmountWords = payment.AmountWords ?? string.Empty;
             DueDate = payment.DueDate;
         }
 
@@ -543,7 +542,6 @@ namespace bankrupt_piterjust.ViewModels
                     Stage = Stage,
                     Description = Description,
                     Amount = Amount,
-                    AmountWords = AmountWords,
                     DueDate = DueDate
                 };
 
