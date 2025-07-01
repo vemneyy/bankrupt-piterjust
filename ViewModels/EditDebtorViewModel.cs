@@ -631,13 +631,13 @@ namespace bankrupt_piterjust.ViewModels
             if (ScheduleMonths <= 0)
                 return;
 
-            decimal monthly = ScheduleMonths > 0 ? Math.Round(ManagerFee / ScheduleMonths, 2) : 0m;
+            decimal monthly = ScheduleMonths > 0 ? Math.Round(ServicesAmount / ScheduleMonths, 2) : 0m;
             for (int i = 1; i <= ScheduleMonths; i++)
             {
                 PaymentSchedule.Add(new PaymentSchedule
                 {
                     Stage = i,
-                    Description = $"Платеж {i}",
+                    Description = "Оплата консультационных юридических услуг",
                     Amount = monthly,
                     DueDate = ContractDate.AddMonths(i - 1)
                 });
