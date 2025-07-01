@@ -1,6 +1,5 @@
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.ViewModels;
-using System.Collections.Generic;
 using System.Windows;
 
 namespace bankrupt_piterjust.Views

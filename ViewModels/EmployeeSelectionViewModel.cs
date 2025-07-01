@@ -2,7 +2,6 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Models;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 

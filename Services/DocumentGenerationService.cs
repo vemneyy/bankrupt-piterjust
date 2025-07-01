@@ -8,7 +8,6 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows;
-using System.Linq;
 
 namespace bankrupt_piterjust.Services
 {
@@ -270,7 +269,7 @@ namespace bankrupt_piterjust.Services
             foreach (var paragraph in element.Descendants<Paragraph>())
             {
                 var runs = paragraph.Descendants<Run>().ToList();
-                if (runs.Count < 2) continue; 
+                if (runs.Count < 2) continue;
 
                 var paragraphText = new StringBuilder();
                 foreach (var run in runs)
