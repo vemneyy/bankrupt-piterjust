@@ -13,8 +13,6 @@ namespace bankrupt_piterjust.ViewModels
         private readonly DebtorRepository _repository;
         private bool _isBusy;
 
-        public string WindowTitle => "Добавление должника";
-
         private string _lastName = string.Empty;
         private string _firstName = string.Empty;
         private string _middleName = string.Empty;
@@ -623,21 +621,6 @@ namespace bankrupt_piterjust.ViewModels
             target.Apartment = source.Apartment;
         }
 
-        private static string FormatAddress(Address address)
-        {
-            var parts = new List<string>();
-            if (!string.IsNullOrWhiteSpace(address.PostalCode)) parts.Add(address.PostalCode);
-            if (!string.IsNullOrWhiteSpace(address.Country)) parts.Add(address.Country);
-            if (!string.IsNullOrWhiteSpace(address.Region)) parts.Add(address.Region);
-            if (!string.IsNullOrWhiteSpace(address.District)) parts.Add(address.District);
-            if (!string.IsNullOrWhiteSpace(address.City)) parts.Add(address.City);
-            if (!string.IsNullOrWhiteSpace(address.Locality)) parts.Add(address.Locality);
-            if (!string.IsNullOrWhiteSpace(address.Street)) parts.Add(address.Street);
-            if (!string.IsNullOrWhiteSpace(address.HouseNumber)) parts.Add(address.HouseNumber);
-            if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
-            if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
-            return string.Join(", ", parts);
-        }
         public string Status => _status;
         public string MainCategory => _mainCategory;
         public string FilterCategory => _filterCategory;

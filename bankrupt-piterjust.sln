@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36127.28
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bankrupt-piterjust", "bankrupt-piterjust.csproj", "{A0B94308-010F-49EF-B956-FAA1C3BEF85B}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Piterjust Bankrupt", "..\Piterjust Bankrupt\Piterjust Bankrupt.vdproj", "{BACC648E-370B-2D42-962D-7C705285FEB5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,16 @@ Global
 		{A0B94308-010F-49EF-B956-FAA1C3BEF85B}.Release|x64.Build.0 = Release|Any CPU
 		{A0B94308-010F-49EF-B956-FAA1C3BEF85B}.Release|x86.ActiveCfg = Release|Any CPU
 		{A0B94308-010F-49EF-B956-FAA1C3BEF85B}.Release|x86.Build.0 = Release|Any CPU
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Debug|Any CPU.ActiveCfg = Debug
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Debug|ARM.ActiveCfg = Debug
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Debug|ARM64.ActiveCfg = Debug
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Debug|x64.ActiveCfg = Debug
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Debug|x86.ActiveCfg = Debug
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Release|Any CPU.ActiveCfg = Release
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Release|ARM.ActiveCfg = Release
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Release|ARM64.ActiveCfg = Release
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Release|x64.ActiveCfg = Release
+		{BACC648E-370B-2D42-962D-7C705285FEB5}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
