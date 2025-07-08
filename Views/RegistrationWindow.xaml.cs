@@ -4,18 +4,18 @@ using System.Windows.Controls;
 
 namespace bankrupt_piterjust.Views
 {
-    public partial class DatabaseSettingsWindow : Window
+    public partial class RegistrationWindow : Window
     {
-        public DatabaseSettingsWindow()
+        public RegistrationWindow()
         {
             InitializeComponent();
         }
 
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
-            if (DataContext is DatabaseSettingsViewModel viewModel)
+            if (DataContext is RegistrationViewModel vm)
             {
-                viewModel.DatabaseConfiguration.Password = ((PasswordBox)sender).Password;
+                vm.Password = ((PasswordBox)sender).Password;
             }
         }
     }

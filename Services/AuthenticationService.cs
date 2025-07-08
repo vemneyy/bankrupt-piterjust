@@ -26,25 +26,24 @@ namespace bankrupt_piterjust.Services
                 }
 
                 string sql = @"
-                    SELECT 
-                    e.employee_id, 
-                    p.last_name, 
-                    p.first_name, 
-                    p.middle_name, 
-                    e.position, 
+                    SELECT
+                    e.employee_id,
+                    p.last_name,
+                    p.first_name,
+                    p.middle_name,
+                    e.position,
                     e.login,
-                    e.created_date, 
+                    e.created_date,
                     e.is_active,
-                    (e.password_hash = crypt(@password, e.password_hash)) AS password_matches
+                    e.password_hash
                     FROM employee e
                     JOIN person p ON e.person_id = p.person_id
-                    WHERE e.login = @login AND e.is_active = true;
+                    WHERE e.login = @login AND e.is_active = 1;
                 ";
 
                 var parameters = new Dictionary<string, object>
                 {
-                    { "@login", login },
-                    { "@password", password }
+                    { "@login", login }
                 };
 
                 var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
@@ -55,9 +54,8 @@ namespace bankrupt_piterjust.Services
                 }
 
                 var row = dataTable.Rows[0];
-                bool passwordMatches = Convert.ToBoolean(row["password_matches"]);
-
-                if (!passwordMatches)
+                var hash = row["password_hash"].ToString() ?? string.Empty;
+                if (!BCrypt.Net.BCrypt.Verify(password, hash))
                 {
                     return null;
                 }
@@ -82,6 +80,41 @@ namespace bankrupt_piterjust.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Authentication error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<int?> RegisterEmployeeAsync(string lastName,
+                                                       string firstName,
+                                                       bool isMale,
+                                                       string position,
+                                                       string login,
+                                                       string password,
+                                                       string? middleName = null,
+                                                       string? phone = null,
+                                                       string? email = null)
+        {
+            try
+            {
+                if (!await _databaseService.TestConnectionAsync())
+                {
+                    return null;
+                }
+
+                return await _databaseService.AddEmployeeAsync(
+                    lastName,
+                    firstName,
+                    isMale,
+                    position,
+                    login,
+                    password,
+                    middleName,
+                    phone,
+                    email);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Registration error: {ex.Message}");
                 return null;
             }
         }
