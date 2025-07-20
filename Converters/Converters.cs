@@ -137,6 +137,65 @@ namespace bankrupt_piterjust.Converters
     }
 
     /// <summary>
+    /// Конвертер: инвертирует значение типа bool.
+    /// </summary>
+    public class InverseBooleanConverter : IValueConverter
+    {
+        /// <summary>
+        /// Инвертирует логическое значение.
+        /// </summary>
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+                return !boolValue;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Инвертирует логическое значение обратно.
+        /// </summary>
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+                return !boolValue;
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Конвертер: преобразует 0 в Visibility.Visible, любое другое число в Visibility.Collapsed.
+    /// </summary>
+    public class ZeroToVisibilityConverter : IValueConverter
+    {
+        /// <summary>
+        /// Возвращает Visible, если значение равно 0, иначе Collapsed.
+        /// </summary>
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int intValue)
+                return intValue == 0 ? Visibility.Visible : Visibility.Collapsed;
+            
+            if (value is double doubleValue)
+                return doubleValue == 0.0 ? Visibility.Visible : Visibility.Collapsed;
+            
+            if (value is decimal decimalValue)
+                return decimalValue == 0m ? Visibility.Visible : Visibility.Collapsed;
+
+            return Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// Обратное преобразование не реализовано.
+        /// </summary>
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
     /// Конвертер: bool -> строка из параметра "TrueValue|FalseValue".
     /// </summary>
     public class BoolToValueConverter : IValueConverter

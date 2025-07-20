@@ -2,6 +2,7 @@ using bankrupt_piterjust.Commands;
 using bankrupt_piterjust.Models;
 using bankrupt_piterjust.Services;
 using bankrupt_piterjust.Views;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 
@@ -9,40 +10,12 @@ namespace bankrupt_piterjust.ViewModels
 {
     public class LoginViewModel : INotifyPropertyChanged
     {
-        private readonly AuthenticationService _authService;
+        private readonly EmployeeService _employeeService;
         private readonly DatabaseService _databaseService;
 
-        private string _lastName = string.Empty;
-        private string _firstName = string.Empty;
-        private string _middleName = string.Empty;
-        private string _position = string.Empty;
         private bool _isBusy;
-        private string _login = string.Empty;
-        private string _password = string.Empty;
-
-        public string LastName
-        {
-            get => _lastName;
-            set { _lastName = value; OnPropertyChanged(nameof(LastName)); UpdateCanLogin(); }
-        }
-
-        public string FirstName
-        {
-            get => _firstName;
-            set { _firstName = value; OnPropertyChanged(nameof(FirstName)); UpdateCanLogin(); }
-        }
-
-        public string MiddleName
-        {
-            get => _middleName;
-            set { _middleName = value; OnPropertyChanged(nameof(MiddleName)); }
-        }
-
-        public string Position
-        {
-            get => _position;
-            set { _position = value; OnPropertyChanged(nameof(Position)); UpdateCanLogin(); }
-        }
+        private ObservableCollection<Employee> _employees = new ObservableCollection<Employee>();
+        private Employee? _selectedEmployee;
 
         public bool IsBusy
         {
@@ -50,61 +23,112 @@ namespace bankrupt_piterjust.ViewModels
             set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); UpdateCanLogin(); }
         }
 
-        public string Login
+        public ObservableCollection<Employee> Employees
         {
-            get => _login;
-            set { _login = value; OnPropertyChanged(nameof(Login)); UpdateCanLogin(); }
+            get => _employees;
+            set { _employees = value; OnPropertyChanged(nameof(Employees)); }
         }
 
-        public string Password
+        public Employee? SelectedEmployee
         {
-            get => _password;
-            set { _password = value; OnPropertyChanged(nameof(Password)); UpdateCanLogin(); }
+            get => _selectedEmployee;
+            set { _selectedEmployee = value; OnPropertyChanged(nameof(SelectedEmployee)); UpdateCanLogin(); }
         }
 
-        public bool CanLogin => !string.IsNullOrWhiteSpace(Login) &&
-                                !string.IsNullOrWhiteSpace(Password) &&
-                                !IsBusy;
+        public bool CanLogin => SelectedEmployee != null && !IsBusy;
 
         public RelayCommand LoginCommand { get; }
         public RelayCommand CancelCommand { get; }
-        public RelayCommand DatabaseSettingsCommand { get; }
+        public RelayCommand RegisterCommand { get; }
+        public RelayCommand RefreshCommand { get; }
 
         // Authentication result
         public Employee? AuthenticatedEmployee { get; private set; }
 
         public LoginViewModel()
         {
-            _authService = new AuthenticationService();
+            _employeeService = new EmployeeService();
             _databaseService = new DatabaseService();
+
             LoginCommand = new RelayCommand(async o => await LoginAsync(), o => CanLogin);
             CancelCommand = new RelayCommand(o => CancelLogin(o as Window));
-            DatabaseSettingsCommand = new RelayCommand(o => OpenDatabaseSettings(o as Window), o => !IsBusy);
+            RegisterCommand = new RelayCommand(o => RegisterEmployee(o as Window), o => !IsBusy);
+            RefreshCommand = new RelayCommand(async o => await LoadEmployeesAsync(), o => !IsBusy);
+
+            _ = LoadEmployeesAsync();
         }
 
         private void UpdateCanLogin()
         {
             OnPropertyChanged(nameof(CanLogin));
-            RelayCommand.RaiseCanExecuteChanged();
-            RelayCommand.RaiseCanExecuteChanged();
         }
 
-        private static void OpenDatabaseSettings(Window? parentWindow)
+        private async Task LoadEmployeesAsync()
         {
             try
             {
-                var settingsWindow = new DatabaseSettingsWindow();
-                if (parentWindow != null)
+                IsBusy = true;
+
+                // Test database connection first
+                if (!await _databaseService.TestConnectionAsync())
                 {
-                    settingsWindow.Owner = parentWindow;
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(
+                            "Не удалось подключиться к базе данных.",
+                            "Ошибка подключения",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                    });
+                    return;
                 }
 
-                settingsWindow.ShowDialog();
+                var employees = await _employeeService.GetAllActiveEmployeesAsync();
+                Employees = new ObservableCollection<Employee>(employees);
+            }
+            catch (Exception ex)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(
+                        $"Ошибка при загрузке списка сотрудников: {ex.Message}",
+                        "Ошибка",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                });
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private void RegisterEmployee(Window? parentWindow)
+        {
+            try
+            {
+                var addEmployeeWindow = new AddEmployeeWindow();
+                if (parentWindow != null)
+                {
+                    addEmployeeWindow.Owner = parentWindow;
+                }
+
+                if (addEmployeeWindow.ShowDialog() == true && addEmployeeWindow.ViewModel.IsRegistrationSuccessful)
+                {
+                    MessageBox.Show(
+                        "Сотрудник успешно зарегистрирован!",
+                        "Успех",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+                    // Обновляем список сотрудников
+                    _ = LoadEmployeesAsync();
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Ошибка при открытии настроек: {ex.Message}",
+                    $"Ошибка при регистрации сотрудника: {ex.Message}",
                     "Ошибка",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -125,7 +149,7 @@ namespace bankrupt_piterjust.ViewModels
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         MessageBox.Show(
-                            "Не удалось подключиться к базе данных. Пожалуйста, проверьте подключение к сети и убедитесь, что база данных доступна.",
+                            "Не удалось подключиться к базе данных. Пожалуйста, проверьте подключение.",
                             "Ошибка подключения",
                             MessageBoxButton.OK,
                             MessageBoxImage.Warning);
@@ -133,21 +157,8 @@ namespace bankrupt_piterjust.ViewModels
                     return;
                 }
 
-                // Authentication logic
-                AuthenticatedEmployee = await _authService.AuthenticateAsync(Login.Trim(), Password);
-
-                if (AuthenticatedEmployee == null)
-                {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        MessageBox.Show(
-                            "Неверный логин или пароль. Пожалуйста, проверьте введенные данные.",
-                            "Ошибка входа",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
-                    });
-                    return;
-                }
+                // Set authenticated employee
+                AuthenticatedEmployee = SelectedEmployee;
 
                 // Close the login window with success
                 Application.Current.Dispatcher.Invoke(() =>
@@ -164,7 +175,7 @@ namespace bankrupt_piterjust.ViewModels
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     MessageBox.Show(
-                        $"Ошибка при входе: {ex.Message}\n\nПроверьте подключение к базе данных и правильность введенных данных.",
+                        $"Ошибка при входе: {ex.Message}",
                         "Ошибка",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);

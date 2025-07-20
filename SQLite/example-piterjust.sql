@@ -63,19 +63,16 @@ CREATE TABLE debtor (
 	CONSTRAINT debtor_filter_category_id_fkey FOREIGN KEY (filter_category_id) REFERENCES filter_category(filter_category_id)
 );
 
--- Таблица employee
+-- Таблица employee (убраны поля login и password_hash)
 CREATE TABLE employee (
 	employee_id INTEGER PRIMARY KEY,
 	"position" TEXT NOT NULL,
-	login TEXT NOT NULL,
-	password_hash TEXT NOT NULL,
 	created_date TEXT NULL, -- Stored as 'YYYY-MM-DD'
 	is_active INTEGER NOT NULL DEFAULT 1, -- 0 for false, 1 for true
 	basis_id INTEGER NULL,
 	person_id INTEGER NULL,
-	CONSTRAINT employee_login_key UNIQUE (login),
-	CONSTRAINT employee_basis_fk FOREIGN KEY (basis_id) REFERENCES basis(basis_id) ON DELETE SET NULL ON UPDATE CASCADE,
-	CONSTRAINT employee_person_fk FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE ON UPDATE CASCADE
+	CONSTRAINT employee_basis_fk FOREIGN KEY (basis_id) REFERENCES basis(basis_id) ON DELETE SET NULL,
+	CONSTRAINT employee_person_fk FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE
 );
 
 -- Таблица contract
@@ -91,8 +88,8 @@ CREATE TABLE contract (
 	manager_fee NUMERIC NOT NULL,
 	other_expenses NUMERIC NOT NULL,
 	services_amount NUMERIC NULL,
-	CONSTRAINT contract_debtor_fk FOREIGN KEY (debtor_id) REFERENCES debtor(debtor_id) ON DELETE CASCADE ON UPDATE CASCADE,
-	CONSTRAINT contract_employee_fk FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE ON UPDATE CASCADE
+	CONSTRAINT contract_debtor_fk FOREIGN KEY (debtor_id) REFERENCES debtor(debtor_id) ON DELETE CASCADE,
+	CONSTRAINT contract_employee_fk FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE
 );
 
 -- Таблица contract_stage

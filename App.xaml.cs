@@ -26,16 +26,24 @@ namespace bankrupt_piterjust
                 // Ensure document directories are created
                 EnsureDocumentDirectoriesExist();
 
-                // Initialize database service
+                // Initialize SQLite database
+                await SQLiteInitializationService.InitializeDatabaseAsync();
+
+                // Initialize database service for SQLite
                 _databaseService = new DatabaseService();
 
-                // Attempt initial database connection
+                // Test SQLite connection
                 bool connectionSuccess = await _databaseService.TestConnectionAsync();
 
-                if (connectionSuccess)
+                if (!connectionSuccess)
                 {
-                    // Ensure default admin user exists
-                    var authService = new AuthenticationService();
+                    MessageBox.Show(
+                        "Не удалось подключиться к базе данных SQLite.",
+                        "Ошибка подключения",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    Shutdown(1);
+                    return;
                 }
 
                 await ShowLoginWindow();

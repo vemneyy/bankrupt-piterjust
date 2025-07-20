@@ -16,23 +16,21 @@ namespace bankrupt_piterjust.Services
         public async Task<int> CreateEmployeeAsync(Employee employee)
         {
             string sql = @"
-                INSERT INTO employee (position, login, password_hash, created_date, is_active, basis_id, person_id)
-                VALUES (@position, @login, @passwordHash, @createdDate, @isActive, @basisId, @personId)
-                RETURNING employee_id";
+                INSERT INTO employee (position, created_date, is_active, basis_id, person_id)
+                VALUES (@position, @createdDate, @isActive, @basisId, @personId);
+                SELECT last_insert_rowid();";
 
             var parameters = new Dictionary<string, object>
             {
                 { "@position", employee.Position },
-                { "@login", employee.Login },
-                { "@passwordHash", employee.PasswordHash },
-                { "@createdDate", employee.CreatedDate ?? (object)DBNull.Value },
-                { "@isActive", employee.IsActive },
+                { "@createdDate", employee.CreatedDate?.ToString("yyyy-MM-dd") ?? (object)DBNull.Value },
+                { "@isActive", employee.IsActive ? 1 : 0 },
                 { "@basisId", employee.BasisId ?? (object)DBNull.Value },
                 { "@personId", employee.PersonId ?? (object)DBNull.Value }
             };
 
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
-            return result is Int64 value ? (int)value : Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
 
         public async Task<Employee?> GetEmployeeByIdAsync(int employeeId)
@@ -55,8 +53,6 @@ namespace bankrupt_piterjust.Services
             {
                 EmployeeId = Convert.ToInt32(row["employee_id"]),
                 Position = row["position"].ToString() ?? string.Empty,
-                Login = row["login"].ToString() ?? string.Empty,
-                PasswordHash = row["password_hash"].ToString() ?? string.Empty,
                 CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
                 IsActive = Convert.ToBoolean(row["is_active"]),
                 BasisId = row["basis_id"] != DBNull.Value ? Convert.ToInt32(row["basis_id"]) : null,
@@ -112,8 +108,6 @@ namespace bankrupt_piterjust.Services
                 {
                     EmployeeId = Convert.ToInt32(row["employee_id"]),
                     Position = row["position"].ToString() ?? string.Empty,
-                    Login = row["login"].ToString() ?? string.Empty,
-                    PasswordHash = row["password_hash"].ToString() ?? string.Empty,
                     CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
                     IsActive = Convert.ToBoolean(row["is_active"]),
                     BasisId = row["basis_id"] != DBNull.Value ? Convert.ToInt32(row["basis_id"]) : null,
@@ -157,16 +151,13 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 UPDATE employee SET
-                    position = @position, login = @login, password_hash = @passwordHash,
-                    is_active = @isActive, basis_id = @basisId, person_id = @personId
+                    position = @position, is_active = @isActive, basis_id = @basisId, person_id = @personId
                 WHERE employee_id = @employeeId";
 
             var parameters = new Dictionary<string, object>
             {
                 { "@position", employee.Position },
-                { "@login", employee.Login },
-                { "@passwordHash", employee.PasswordHash },
-                { "@isActive", employee.IsActive },
+                { "@isActive", employee.IsActive ? 1 : 0 },
                 { "@basisId", employee.BasisId ?? (object)DBNull.Value },
                 { "@personId", employee.PersonId ?? (object)DBNull.Value },
                 { "@employeeId", employee.EmployeeId }
@@ -205,14 +196,14 @@ namespace bankrupt_piterjust.Services
                                     manager_fee, other_expenses, services_amount)
                 VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId,
                         @totalCost, @mandatoryExpenses,
-                        @managerFee, @otherExpenses, @servicesAmount)
-                RETURNING contract_id";
+                        @managerFee, @otherExpenses, @servicesAmount);
+                SELECT last_insert_rowid();";
 
             var parameters = new Dictionary<string, object>
             {
                 { "@contractNumber", contract.ContractNumber },
                 { "@city", contract.City },
-                { "@contractDate", contract.ContractDate },
+                { "@contractDate", contract.ContractDate.ToString("yyyy-MM-dd") },
                 { "@debtorId", contract.DebtorId },
                 { "@employeeId", contract.EmployeeId },
                 { "@totalCost", contract.TotalCost },
@@ -223,14 +214,14 @@ namespace bankrupt_piterjust.Services
             };
 
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
-            return result is Int64 value ? (int)value : Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
 
         public async Task<Contract?> GetContractByIdAsync(int contractId)
         {
             string sql = @"
                 SELECT c.*, 
-                       e.position, e.login, 
+                       e.position,
                        ep.last_name as emp_last_name, ep.first_name as emp_first_name, ep.middle_name as emp_middle_name,
                        dp.last_name as debtor_last_name, dp.first_name as debtor_first_name, dp.middle_name as debtor_middle_name
                 FROM contract c
@@ -261,15 +252,12 @@ namespace bankrupt_piterjust.Services
                 ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m,
             };
 
-
-
             if (row["position"] != DBNull.Value)
             {
                 contract.Employee = new Employee
                 {
                     EmployeeId = contract.EmployeeId,
                     Position = row["position"].ToString() ?? string.Empty,
-                    Login = row["login"].ToString() ?? string.Empty,
                 };
 
                 if (row["emp_last_name"] != DBNull.Value)
@@ -300,7 +288,7 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 SELECT c.*, 
-                       e.position, e.login,
+                       e.position,
                        ep.last_name as emp_last_name, ep.first_name as emp_first_name, ep.middle_name as emp_middle_name,
                        dp.last_name as debtor_last_name, dp.first_name as debtor_first_name, dp.middle_name as debtor_middle_name
                 FROM contract c
@@ -330,15 +318,12 @@ namespace bankrupt_piterjust.Services
                     ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
                 };
 
-
-
                 if (row["position"] != DBNull.Value)
                 {
                     contract.Employee = new Employee
                     {
                         EmployeeId = contract.EmployeeId,
                         Position = row["position"].ToString() ?? string.Empty,
-                        Login = row["login"].ToString() ?? string.Empty,
                     };
 
                     if (row["emp_last_name"] != DBNull.Value)
@@ -382,7 +367,7 @@ namespace bankrupt_piterjust.Services
             {
                 { "@contractNumber", contract.ContractNumber },
                 { "@city", contract.City },
-                { "@contractDate", contract.ContractDate },
+                { "@contractDate", contract.ContractDate.ToString("yyyy-MM-dd") },
                 { "@debtorId", contract.DebtorId },
                 { "@employeeId", contract.EmployeeId },
                 { "@totalCost", contract.TotalCost },
@@ -409,19 +394,19 @@ namespace bankrupt_piterjust.Services
         {
             string sql = @"
                 INSERT INTO contract_stage (contract_id, stage, amount, due_date)
-                VALUES (@contractId, @stage, @amount, @dueDate)
-                RETURNING contract_stage_id";
+                VALUES (@contractId, @stage, @amount, @dueDate);
+                SELECT last_insert_rowid();";
 
             var p = new Dictionary<string, object>
             {
                 {"@contractId", stage.ContractId},
                 {"@stage", stage.Stage},
                 {"@amount", stage.Amount},
-                {"@dueDate", stage.DueDate }
+                {"@dueDate", stage.DueDate.ToString("yyyy-MM-dd") }
             };
 
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, p);
-            return result is Int64 v ? (int)v : Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
 
         public async Task<List<ContractStage>> GetContractStagesByContractIdAsync(int contractId)
@@ -459,9 +444,9 @@ namespace bankrupt_piterjust.Services
         public async Task<int> CreatePaymentScheduleAsync(PaymentSchedule schedule)
         {
             string sql = @"
-                INSERT INTO payment_schedule (contract_id, stage, description, amount,due_date)
-                VALUES (@contractId, @stage, @description, @amount, @dueDate)
-                RETURNING schedule_id";
+                INSERT INTO payment_schedule (contract_id, stage, description, amount, due_date)
+                VALUES (@contractId, @stage, @description, @amount, @dueDate);
+                SELECT last_insert_rowid();";
 
             var parameters = new Dictionary<string, object>
             {
@@ -469,11 +454,11 @@ namespace bankrupt_piterjust.Services
                 { "@stage", schedule.Stage },
                 { "@description", schedule.Description },
                 { "@amount", schedule.Amount },
-                { "@dueDate", schedule.DueDate ?? (object)DBNull.Value }
+                { "@dueDate", schedule.DueDate?.ToString("yyyy-MM-dd") ?? (object)DBNull.Value }
             };
 
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
-            return result is Int64 value ? (int)value : Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
 
         public async Task<List<PaymentSchedule>> GetPaymentScheduleByContractIdAsync(int contractId)
@@ -528,7 +513,7 @@ namespace bankrupt_piterjust.Services
                 { "@stage", schedule.Stage },
                 { "@description", schedule.Description },
                 { "@amount", schedule.Amount },
-                { "@dueDate", schedule.DueDate ?? (object)DBNull.Value },
+                { "@dueDate", schedule.DueDate?.ToString("yyyy-MM-dd") ?? (object)DBNull.Value },
                 { "@scheduleId", schedule.ScheduleId }
             };
 
@@ -587,7 +572,7 @@ namespace bankrupt_piterjust.Services
             string sql = "SELECT debtor_id FROM debtor WHERE person_id = @personId";
             var parameters = new Dictionary<string, object> { { "@personId", personId } };
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters) ?? throw new Exception($"Должник с person_id {personId} не найден в базе данных.");
-            return result is Int64 value ? (int)value : Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
 
         public async Task<Person?> GetPersonByIdAsync(int personId)
