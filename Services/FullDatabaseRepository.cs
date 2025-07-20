@@ -69,7 +69,58 @@ namespace bankrupt_piterjust.Services
 
             return employees;
         }
+        public async Task<List<Employee>> GetActiveEmployeesWithBasisAsync()
+        {
+            var sql = "SELECT e.employee_id, e.position, e.created_date, e.is_active, e.basis_id, e.person_id, " +
+                     "p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male, " +
+                     "b.basis_type, b.document_number, b.document_date " +
+                     "FROM employee e " +
+                     "INNER JOIN person p ON e.person_id = p.person_id " +
+                     "INNER JOIN basis b ON e.basis_id = b.basis_id " +
+                     "WHERE e.is_active = 1 " +
+                     "ORDER BY e.position, p.last_name";
 
+            var dataTable = await _databaseService.ExecuteReaderAsync(sql);
+            var employees = new List<Employee>();
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                var employee = new Employee
+                {
+                    EmployeeId = Convert.ToInt32(row["employee_id"]),
+                    Position = row["position"].ToString() ?? string.Empty,
+                    CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
+                    IsActive = Convert.ToBoolean(row["is_active"]),
+                    BasisId = Convert.ToInt32(row["basis_id"]),
+                    PersonId = Convert.ToInt32(row["person_id"])
+                };
+
+                employee.Person = new Person
+                {
+                    PersonId = employee.PersonId.Value,
+                    LastName = row["last_name"].ToString() ?? string.Empty,
+                    FirstName = row["first_name"].ToString() ?? string.Empty,
+                    MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
+                    Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
+                    Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
+                    IsMale = row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
+                };
+
+                employee.BasisInfo = new Basis
+                {
+                    BasisId = employee.BasisId.Value,
+                    BasisType = row["basis_type"].ToString() ?? string.Empty,
+                    DocumentNumber = row["document_number"].ToString() ?? string.Empty,
+                    DocumentDate = Convert.ToDateTime(row["document_date"])
+                };
+
+                employee.Basis = $"{employee.BasisInfo.BasisType} № {employee.BasisInfo.DocumentNumber} от {employee.BasisInfo.DocumentDate:dd.MM.yyyy}";
+
+                employees.Add(employee);
+            }
+
+            return employees;
+        }
         public async Task<string?> GetEmployeeBasisStringAsync(int employeeId)
         {
             var sql = "SELECT b.basis_type, b.document_number, b.document_date " +

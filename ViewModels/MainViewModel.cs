@@ -504,9 +504,17 @@ namespace bankrupt_piterjust.ViewModels
             try
             {
                 var repo = new FullDatabaseRepository();
-                var employees = await repo.GetAllEmployeesAsync();
-                // Фильтруем только активных сотрудников с доверенностью (BasisId не null)
-                var activeEmployeesWithBasis = employees.Where(e => e.IsActive && e.BasisId.HasValue).ToList();
+                List<Employee> activeEmployeesWithBasis;
+
+                try
+                {
+                    activeEmployeesWithBasis = await repo.GetActiveEmployeesWithBasisAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при получении списка сотрудников: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
 
                 var dialog = new EmployeeSelectionWindow(activeEmployeesWithBasis)
                 {
@@ -543,6 +551,7 @@ namespace bankrupt_piterjust.ViewModels
                 MessageBox.Show($"Ошибка при генерации договора (Основное Меню): {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private async Task LoadDataAsync()
         {
