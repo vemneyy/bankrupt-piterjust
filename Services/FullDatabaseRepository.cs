@@ -12,16 +12,15 @@ namespace bankrupt_piterjust.Services
             _databaseService = new DatabaseService();
         }
 
-        // Employee methods
         public async Task<List<Employee>> GetAllEmployeesAsync()
         {
-            string sql = @"
-                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male,
-                       b.basis_type, b.document_number, b.document_date
-                FROM employee e
-                INNER JOIN person p ON e.person_id = p.person_id
-                LEFT JOIN basis b ON e.basis_id = b.basis_id
-                ORDER BY e.position, p.last_name";
+            var sql = "SELECT e.employee_id, e.position, e.created_date, e.is_active, e.basis_id, e.person_id, " +
+                     "p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male, " +
+                     "b.basis_type, b.document_number, b.document_date " +
+                     "FROM employee e " +
+                     "INNER JOIN person p ON e.person_id = p.person_id " +
+                     "LEFT JOIN basis b ON e.basis_id = b.basis_id " +
+                     "ORDER BY e.position, p.last_name";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
             var employees = new List<Employee>();
@@ -33,7 +32,7 @@ namespace bankrupt_piterjust.Services
                     EmployeeId = Convert.ToInt32(row["employee_id"]),
                     Position = row["position"].ToString() ?? string.Empty,
                     CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
-                    IsActive = Convert.ToBoolean(row["is_active"]),
+                    IsActive = row["is_active"] != DBNull.Value ? Convert.ToBoolean(row["is_active"]) : true,
                     BasisId = row["basis_id"] != DBNull.Value ? Convert.ToInt32(row["basis_id"]) : null,
                     PersonId = row["person_id"] != DBNull.Value ? Convert.ToInt32(row["person_id"]) : null
                 };
@@ -73,11 +72,10 @@ namespace bankrupt_piterjust.Services
 
         public async Task<string?> GetEmployeeBasisStringAsync(int employeeId)
         {
-            string sql = @"
-                SELECT b.basis_type, b.document_number, b.document_date
-                FROM employee e
-                LEFT JOIN basis b ON e.basis_id = b.basis_id
-                WHERE e.employee_id = @eid";
+            var sql = "SELECT b.basis_type, b.document_number, b.document_date " +
+                     "FROM employee e " +
+                     "LEFT JOIN basis b ON e.basis_id = b.basis_id " +
+                     "WHERE e.employee_id = @eid";
 
             var p = new Dictionary<string, object> { { "@eid", employeeId } };
             var table = await _databaseService.ExecuteReaderAsync(sql, p);
@@ -91,7 +89,6 @@ namespace bankrupt_piterjust.Services
             return $"{type} № {number} от {date:dd.MM.yyyy}";
         }
 
-        // Contract methods
         public async Task<List<Contract>> GetAllContractsAsync()
         {
             string sql = "SELECT * FROM contract ORDER BY contract_date DESC";
@@ -121,12 +118,11 @@ namespace bankrupt_piterjust.Services
 
         public async Task<int> CreateContractAsync(Contract contract)
         {
-            string sql = @"
-                INSERT INTO contract (contract_number, city, contract_date, debtor_id, employee_id,
-                                    total_cost, mandatory_expenses, manager_fee, other_expenses, services_amount)
-                VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId,
-                        @totalCost, @mandatoryExpenses, @managerFee, @otherExpenses, @servicesAmount);
-                SELECT last_insert_rowid();";
+            var sql = "INSERT INTO contract (contract_number, city, contract_date, debtor_id, employee_id, " +
+                     "total_cost, mandatory_expenses, manager_fee, other_expenses, services_amount) " +
+                     "VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId, " +
+                     "@totalCost, @mandatoryExpenses, @managerFee, @otherExpenses, @servicesAmount); " +
+                     "SELECT last_insert_rowid();";
 
             var parameters = new Dictionary<string, object>
             {
@@ -148,13 +144,12 @@ namespace bankrupt_piterjust.Services
 
         public async Task UpdateContractAsync(Contract contract)
         {
-            string sql = @"
-                UPDATE contract SET
-                    contract_number = @contractNumber, city = @city, contract_date = @contractDate,
-                    debtor_id = @debtorId, employee_id = @employeeId, total_cost = @totalCost,
-                    mandatory_expenses = @mandatoryExpenses, manager_fee = @managerFee,
-                    other_expenses = @otherExpenses, services_amount = @servicesAmount
-                WHERE contract_id = @contractId";
+            var sql = "UPDATE contract SET " +
+                     "contract_number = @contractNumber, city = @city, contract_date = @contractDate, " +
+                     "debtor_id = @debtorId, employee_id = @employeeId, total_cost = @totalCost, " +
+                     "mandatory_expenses = @mandatoryExpenses, manager_fee = @managerFee, " +
+                     "other_expenses = @otherExpenses, services_amount = @servicesAmount " +
+                     "WHERE contract_id = @contractId";
 
             var parameters = new Dictionary<string, object>
             {
@@ -183,11 +178,7 @@ namespace bankrupt_piterjust.Services
 
         public async Task<Contract?> GetLatestContractByDebtorIdAsync(int debtorId)
         {
-            string sql = @"
-                SELECT * FROM contract
-                WHERE debtor_id = @debtorId
-                ORDER BY contract_date DESC
-                LIMIT 1";
+            var sql = "SELECT * FROM contract WHERE debtor_id = @debtorId ORDER BY contract_date DESC LIMIT 1";
 
             var parameters = new Dictionary<string, object> { { "@debtorId", debtorId } };
             var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
@@ -210,13 +201,11 @@ namespace bankrupt_piterjust.Services
             };
         }
 
-        // Contract Stage methods
         public async Task<int> CreateContractStageAsync(ContractStage stage)
         {
-            string sql = @"
-                INSERT INTO contract_stage (contract_id, stage, amount, due_date)
-                VALUES (@contractId, @stage, @amount, @dueDate);
-                SELECT last_insert_rowid();";
+            var sql = "INSERT INTO contract_stage (contract_id, stage, amount, due_date) " +
+                     "VALUES (@contractId, @stage, @amount, @dueDate); " +
+                     "SELECT last_insert_rowid();";
 
             var p = new Dictionary<string, object>
             {
@@ -232,10 +221,7 @@ namespace bankrupt_piterjust.Services
 
         public async Task<List<ContractStage>> GetContractStagesByContractIdAsync(int contractId)
         {
-            string sql = @"
-                SELECT * FROM contract_stage
-                WHERE contract_id = @cid
-                ORDER BY stage";
+            var sql = "SELECT * FROM contract_stage WHERE contract_id = @cid ORDER BY stage";
 
             var table = await _databaseService.ExecuteReaderAsync(sql, new Dictionary<string, object> { { "@cid", contractId } });
             var list = new List<ContractStage>();
@@ -260,13 +246,11 @@ namespace bankrupt_piterjust.Services
             await _databaseService.ExecuteNonQueryAsync(sql, p);
         }
 
-        // Payment Schedule methods
         public async Task<int> CreatePaymentScheduleAsync(PaymentSchedule schedule)
         {
-            string sql = @"
-                INSERT INTO payment_schedule (contract_id, stage, description, amount, due_date)
-                VALUES (@contractId, @stage, @description, @amount, @dueDate);
-                SELECT last_insert_rowid();";
+            var sql = "INSERT INTO payment_schedule (contract_id, stage, description, amount, due_date) " +
+                     "VALUES (@contractId, @stage, @description, @amount, @dueDate); " +
+                     "SELECT last_insert_rowid();";
 
             var parameters = new Dictionary<string, object>
             {
@@ -283,12 +267,9 @@ namespace bankrupt_piterjust.Services
 
         public async Task<List<PaymentSchedule>> GetPaymentScheduleByContractIdAsync(int contractId)
         {
-            string sql = @"
-                SELECT ps.*, c.contract_number
-                FROM payment_schedule ps
-                LEFT JOIN contract c ON ps.contract_id = c.contract_id
-                WHERE ps.contract_id = @contractId
-                ORDER BY ps.stage";
+            var sql = "SELECT ps.*, c.contract_number FROM payment_schedule ps " +
+                     "LEFT JOIN contract c ON ps.contract_id = c.contract_id " +
+                     "WHERE ps.contract_id = @contractId ORDER BY ps.stage";
 
             var parameters = new Dictionary<string, object> { { "@contractId", contractId } };
             var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
@@ -323,10 +304,9 @@ namespace bankrupt_piterjust.Services
 
         public async Task UpdatePaymentScheduleAsync(PaymentSchedule schedule)
         {
-            string sql = @"
-                UPDATE payment_schedule SET 
-                    stage = @stage, description = @description, amount = @amount, due_date = @dueDate
-                WHERE schedule_id = @scheduleId";
+            var sql = "UPDATE payment_schedule SET " +
+                     "stage = @stage, description = @description, amount = @amount, due_date = @dueDate " +
+                     "WHERE schedule_id = @scheduleId";
 
             var parameters = new Dictionary<string, object>
             {
@@ -354,7 +334,6 @@ namespace bankrupt_piterjust.Services
             await _databaseService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        // Helper methods
         public async Task<int> GetDebtorIdByPersonIdAsync(int personId)
         {
             string sql = "SELECT debtor_id FROM debtor WHERE person_id = @personId";

@@ -176,10 +176,10 @@ namespace bankrupt_piterjust.Converters
         {
             if (value is int intValue)
                 return intValue == 0 ? Visibility.Visible : Visibility.Collapsed;
-            
+
             if (value is double doubleValue)
                 return doubleValue == 0.0 ? Visibility.Visible : Visibility.Collapsed;
-            
+
             if (value is decimal decimalValue)
                 return decimalValue == 0m ? Visibility.Visible : Visibility.Collapsed;
 

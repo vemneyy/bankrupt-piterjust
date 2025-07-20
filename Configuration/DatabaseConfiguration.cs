@@ -26,7 +26,7 @@ namespace bankrupt_piterjust.Configuration
         /// <returns>Строка подключения SQLite.</returns>
         public string GetConnectionString()
         {
-            return string.IsNullOrEmpty(DatabasePath) 
+            return string.IsNullOrEmpty(DatabasePath)
                 ? Services.SQLiteInitializationService.GetConnectionString()
                 : $"Data Source={DatabasePath}";
         }

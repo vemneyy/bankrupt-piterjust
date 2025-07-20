@@ -88,6 +88,7 @@ namespace bankrupt_piterjust.ViewModels
 
                 var employees = await _repository.GetAllEmployeesAsync();
                 Employees.Clear();
+                // Загружаем всех активных сотрудников (фильтрация будет в конструкторах ContractEditViewModel)
                 foreach (var employee in employees.Where(e => e.IsActive))
                 {
                     Employees.Add(employee);
@@ -349,7 +350,8 @@ namespace bankrupt_piterjust.ViewModels
             _repository = repository;
             _originalContract = null;
             _isEditMode = false;
-            Employees = employees;
+            // Для создания новых договоров оставляем только сотрудников с доверенностью
+            Employees = [.. employees.Where(e => e.BasisId.HasValue)];
             Debtors = debtors;
 
             _managerFee = 25000m;
@@ -358,12 +360,14 @@ namespace bankrupt_piterjust.ViewModels
             SaveCommand = new RelayCommand(async o => await SaveAsync(), CanSave);
             CancelCommand = new RelayCommand(o => CloseDialog(false));
         }
+
         public ContractEditViewModel(FullDatabaseRepository repository, List<Employee> employees, List<Person> debtors, Contract contract)
         {
             _repository = repository;
             _originalContract = contract;
             _isEditMode = true;
-            Employees = employees;
+            // Для редактирования существующих договоров оставляем всех активных сотрудников
+            Employees = [.. employees];
             Debtors = debtors;
 
             LoadContractData(contract);
@@ -387,15 +391,31 @@ namespace bankrupt_piterjust.ViewModels
 
         private bool CanSave(object? parameter)
         {
-            return !string.IsNullOrWhiteSpace(ContractNumber) &&
-                   SelectedEmployee != null &&
-                   SelectedDebtor != null;
+            bool basicValidation = !string.IsNullOrWhiteSpace(ContractNumber) &&
+                                   SelectedEmployee != null &&
+                                   SelectedDebtor != null;
+
+            // Для новых договоров дополнительно требуем сотрудника с доверенностью
+            if (!_isEditMode)
+            {
+                return basicValidation && SelectedEmployee?.BasisId.HasValue == true;
+            }
+
+            // Для редактирования достаточно базовой валидации
+            return basicValidation;
         }
 
         private async Task SaveAsync()
         {
             try
             {
+                // Дополнительная проверка для новых договоров
+                if (!_isEditMode && SelectedEmployee?.BasisId.HasValue != true)
+                {
+                    MessageBox.Show("Для создания нового договора необходимо выбрать сотрудника с доверенностью.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 int debtorId = await _repository.GetDebtorIdByPersonIdAsync(SelectedDebtor!.PersonId);
 
                 var contract = new Contract
@@ -404,7 +424,8 @@ namespace bankrupt_piterjust.ViewModels
                     City = City,
                     ContractDate = ContractDate,
                     DebtorId = debtorId,
-                    EmployeeId = SelectedEmployee!.EmployeeId,
+                    // При редактировании оставляем оригинальный EmployeeId, при создании используем выбранного
+                    EmployeeId = _isEditMode && _originalContract != null ? _originalContract.EmployeeId : SelectedEmployee!.EmployeeId,
                     TotalCost = TotalCost,
                     MandatoryExpenses = MandatoryExpenses,
                     ManagerFee = ManagerFee,

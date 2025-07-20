@@ -505,9 +505,10 @@ namespace bankrupt_piterjust.ViewModels
             {
                 var repo = new FullDatabaseRepository();
                 var employees = await repo.GetAllEmployeesAsync();
-                var activeEmployees = employees.Where(e => e.IsActive).ToList();
+                // Фильтруем только активных сотрудников с доверенностью (BasisId не null)
+                var activeEmployeesWithBasis = employees.Where(e => e.IsActive && e.BasisId.HasValue).ToList();
 
-                var dialog = new EmployeeSelectionWindow(activeEmployees)
+                var dialog = new EmployeeSelectionWindow(activeEmployeesWithBasis)
                 {
                     Owner = Application.Current.MainWindow
                 };

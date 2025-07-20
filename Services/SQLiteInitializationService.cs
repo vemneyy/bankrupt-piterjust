@@ -6,8 +6,8 @@ namespace bankrupt_piterjust.Services
     public class SQLiteInitializationService
     {
         private static readonly string DatabasePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), 
-            ".piterjust", 
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".piterjust",
             "data.db");
 
         public static string GetDatabasePath() => DatabasePath;
@@ -26,12 +26,16 @@ namespace bankrupt_piterjust.Services
             {
                 // Check if database exists and is valid
                 bool needsInit = !File.Exists(DatabasePath) || await NeedsDatabaseRecreation();
-                
+
                 if (needsInit)
                 {
                     await CleanupExistingDatabase();
                     await CreateDatabaseAsync();
                     await CreateSampleDataAsync();
+                }
+                else
+                {
+                    await UpdateDatabaseSchemaAsync();
                 }
             }
             catch (Exception ex)
@@ -50,11 +54,11 @@ namespace bankrupt_piterjust.Services
             {
                 using var connection = new SqliteConnection(GetConnectionString());
                 await connection.OpenAsync();
-                
+
                 // Check if main tables exist
                 using var cmd = new SqliteCommand("SELECT name FROM sqlite_master WHERE type='table' AND name='person';", connection);
                 var result = await cmd.ExecuteScalarAsync();
-                
+
                 return result == null;
             }
             catch
@@ -67,10 +71,10 @@ namespace bankrupt_piterjust.Services
         {
             // Close any existing connections first
             SqliteConnection.ClearAllPools();
-            
+
             // Wait a bit for connections to close
             await Task.Delay(100);
-            
+
             try
             {
                 // Delete main database file
@@ -78,14 +82,14 @@ namespace bankrupt_piterjust.Services
                 {
                     File.Delete(DatabasePath);
                 }
-                
+
                 // Delete WAL file if exists
                 string walPath = DatabasePath + "-wal";
                 if (File.Exists(walPath))
                 {
                     File.Delete(walPath);
                 }
-                
+
                 // Delete SHM file if exists
                 string shmPath = DatabasePath + "-shm";
                 if (File.Exists(shmPath))
@@ -110,7 +114,7 @@ namespace bankrupt_piterjust.Services
             await ExecuteCommandAsync(connection, "PRAGMA encoding = 'UTF-8';");
             await ExecuteCommandAsync(connection, "PRAGMA journal_mode = DELETE;"); // Use DELETE instead of WAL
             await ExecuteCommandAsync(connection, "PRAGMA synchronous = NORMAL;");
-            
+
             // Create person table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE person (
@@ -290,6 +294,24 @@ namespace bankrupt_piterjust.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Sample data creation error: {ex.Message}");
                 // Don't throw here - sample data is not critical
+            }
+        }
+
+        private static async Task UpdateDatabaseSchemaAsync()
+        {
+            using var connection = new SqliteConnection(GetConnectionString());
+            await connection.OpenAsync();
+
+            try
+            {
+                // For now, no schema updates needed
+                // Employee information is stored in contract table, not debtor table
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Schema update error: {ex.Message}");
+                // Continue anyway
             }
         }
 

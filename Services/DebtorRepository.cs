@@ -6,7 +6,7 @@ namespace bankrupt_piterjust.Services
     public class DebtorRepository
     {
         private readonly DatabaseService _databaseService;
-        
+
         public DebtorRepository()
         {
             _databaseService = new DatabaseService();
@@ -15,15 +15,21 @@ namespace bankrupt_piterjust.Services
         public async Task<List<Debtor>> GetAllDebtorsAsync()
         {
             string sql = @"
-                SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male,
+                SELECT d.debtor_id, p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male,
                        fc.name AS status,
                        mc.name AS main_category,
                        fc.name AS filter_category,
-                       d.created_date
+                       c.contract_date,
+                       emp_p.last_name AS emp_last_name,
+                       emp_p.first_name AS emp_first_name,
+                       emp_p.middle_name AS emp_middle_name
                 FROM person p
                 INNER JOIN debtor d ON d.person_id = p.person_id
                 INNER JOIN filter_category fc ON fc.filter_category_id = d.filter_category_id
                 INNER JOIN main_category mc ON mc.main_category_id = fc.main_category_id
+                INNER JOIN contract c ON c.debtor_id = d.debtor_id
+                LEFT JOIN employee emp ON emp.employee_id = c.employee_id
+                LEFT JOIN person emp_p ON emp_p.person_id = emp.person_id
                 ORDER BY p.last_name, p.first_name";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
@@ -54,8 +60,25 @@ namespace bankrupt_piterjust.Services
                 debtor.Status = row["status"] != DBNull.Value ? row["status"].ToString() ?? string.Empty : "";
                 debtor.MainCategory = row["main_category"] != DBNull.Value ? row["main_category"].ToString() ?? string.Empty : "";
                 debtor.FilterCategory = row["filter_category"] != DBNull.Value ? row["filter_category"].ToString() ?? string.Empty : "";
-                if (row.Table.Columns.Contains("created_date") && row["created_date"] != DBNull.Value)
-                    debtor.Date = Convert.ToDateTime(row["created_date"]).ToString("dd.MM.yyyy");
+
+                if (row.Table.Columns.Contains("contract_date") && row["contract_date"] != DBNull.Value)
+                    debtor.Date = Convert.ToDateTime(row["contract_date"]).ToString("dd.MM.yyyy");
+
+                // Set the employee name who created the contract (which represents who added this debtor)
+                if (row["emp_last_name"] != DBNull.Value && row["emp_first_name"] != DBNull.Value)
+                {
+                    string empLastName = row["emp_last_name"].ToString() ?? "";
+                    string empFirstName = row["emp_first_name"].ToString() ?? "";
+                    string empMiddleName = row["emp_middle_name"] != DBNull.Value ? row["emp_middle_name"].ToString() ?? "" : "";
+
+                    debtor.AddedByEmployeeName = !string.IsNullOrWhiteSpace(empMiddleName)
+                        ? $"{empLastName} {empFirstName} {empMiddleName}"
+                        : $"{empLastName} {empFirstName}";
+                }
+                else
+                {
+                    debtor.AddedByEmployeeName = "Не указан";
+                }
 
                 debtors.Add(debtor);
             }

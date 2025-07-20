@@ -203,11 +203,11 @@ namespace bankrupt_piterjust.Services
                 _connectionTested = false;
                 _connectionAvailable = false;
             }
-            
+
             // Clear connection pools to release any locks
             SqliteConnection.ClearAllPools();
             await Task.Delay(50); // Give it a moment
-            
+
             return await TestConnectionAsync();
         }
 
