@@ -39,8 +39,9 @@ namespace bankrupt_piterjust.Services
                 using var connection = new SqliteConnection(_connectionString);
                 await connection.OpenAsync();
 
-                using var cmd = new SqliteCommand("SELECT 1", connection);
-                await cmd.ExecuteScalarAsync();
+                // Test simple query
+                using var testCmd = new SqliteCommand("SELECT 1", connection);
+                await testCmd.ExecuteScalarAsync();
 
                 lock (_connectionLock)
                 {
@@ -57,7 +58,9 @@ namespace bankrupt_piterjust.Services
                     _connectionTested = true;
                 }
 
-                Application.Current.Dispatcher.Invoke(() =>
+                System.Diagnostics.Debug.WriteLine($"Database connection error: {ex.Message}");
+
+                Application.Current?.Dispatcher?.Invoke(() =>
                 {
                     string errorMessage = "Не удалось подключиться к базе данных SQLite.";
                     errorMessage += $"\n\nПодробности: {ex.Message}";
@@ -89,7 +92,8 @@ namespace bankrupt_piterjust.Services
                 {
                     foreach (var param in parameters)
                     {
-                        command.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                        var value = param.Value ?? DBNull.Value;
+                        command.Parameters.AddWithValue(param.Key, value);
                     }
                 }
 
@@ -104,7 +108,7 @@ namespace bankrupt_piterjust.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
-                return 0;
+                throw; // Re-throw so calling code can handle
             }
         }
 
@@ -124,7 +128,8 @@ namespace bankrupt_piterjust.Services
                 {
                     foreach (var param in parameters)
                     {
-                        command.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                        var value = param.Value ?? DBNull.Value;
+                        command.Parameters.AddWithValue(param.Key, value);
                     }
                 }
 
@@ -147,7 +152,7 @@ namespace bankrupt_piterjust.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
-                return default;
+                throw; // Re-throw so calling code can handle
             }
         }
 
@@ -167,7 +172,8 @@ namespace bankrupt_piterjust.Services
                 {
                     foreach (var param in parameters)
                     {
-                        command.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                        var value = param.Value ?? DBNull.Value;
+                        command.Parameters.AddWithValue(param.Key, value);
                     }
                 }
 
@@ -186,7 +192,7 @@ namespace bankrupt_piterjust.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
-                return new DataTable();
+                throw; // Re-throw so calling code can handle
             }
         }
 
@@ -197,6 +203,11 @@ namespace bankrupt_piterjust.Services
                 _connectionTested = false;
                 _connectionAvailable = false;
             }
+            
+            // Clear connection pools to release any locks
+            SqliteConnection.ClearAllPools();
+            await Task.Delay(50); // Give it a moment
+            
             return await TestConnectionAsync();
         }
 

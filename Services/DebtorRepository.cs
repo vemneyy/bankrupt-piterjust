@@ -15,15 +15,16 @@ namespace bankrupt_piterjust.Services
         public async Task<List<Debtor>> GetAllDebtorsAsync()
         {
             string sql = @"
-                SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
+                SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male,
                        fc.name AS status,
                        mc.name AS main_category,
                        fc.name AS filter_category,
                        d.created_date
                 FROM person p
-                LEFT JOIN debtor d ON d.person_id = p.person_id
-                LEFT JOIN filter_category fc ON fc.filter_category_id = d.filter_category_id
-                LEFT JOIN main_category mc ON mc.main_category_id = fc.main_category_id";
+                INNER JOIN debtor d ON d.person_id = p.person_id
+                INNER JOIN filter_category fc ON fc.filter_category_id = d.filter_category_id
+                INNER JOIN main_category mc ON mc.main_category_id = fc.main_category_id
+                ORDER BY p.last_name, p.first_name";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
             var debtors = new List<Debtor>();
@@ -40,7 +41,7 @@ namespace bankrupt_piterjust.Services
                     MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                     Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
                     Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
-                    IsMale = !row.Table.Columns.Contains("is_male") || row["is_male"] == DBNull.Value || Convert.ToBoolean(row["is_male"])
+                    IsMale = row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
                 };
 
                 var debtor = Debtor.FromPerson(person);
@@ -186,7 +187,7 @@ namespace bankrupt_piterjust.Services
                 MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                 Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
                 Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
-                IsMale = !row.Table.Columns.Contains("is_male") || row["is_male"] == DBNull.Value || Convert.ToBoolean(row["is_male"])
+                IsMale = row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
             };
         }
 

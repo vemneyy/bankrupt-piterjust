@@ -26,20 +26,17 @@ namespace bankrupt_piterjust
                 // Ensure document directories are created
                 EnsureDocumentDirectoriesExist();
 
-                // Initialize SQLite database
-                await SQLiteInitializationService.InitializeDatabaseAsync();
-
                 // Initialize database service for SQLite
                 _databaseService = new DatabaseService();
 
-                // Test SQLite connection
+                // Test SQLite connection (this will also initialize the database)
                 bool connectionSuccess = await _databaseService.TestConnectionAsync();
 
                 if (!connectionSuccess)
                 {
                     MessageBox.Show(
-                        "Не удалось подключиться к базе данных SQLite.",
-                        "Ошибка подключения",
+                        "Не удалось подключиться к базе данных SQLite.\n\nПриложение будет закрыто.",
+                        "Критическая ошибка",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
                     Shutdown(1);
@@ -51,8 +48,8 @@ namespace bankrupt_piterjust
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Произошла ошибка при запуске приложения: {ex.Message}",
-                    "Ошибка",
+                    $"Произошла критическая ошибка при запуске приложения:\n\n{ex.Message}\n\nДетали: {ex.InnerException?.Message}",
+                    "Критическая ошибка",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 Shutdown(1);
@@ -61,31 +58,38 @@ namespace bankrupt_piterjust
 
         private static void EnsureDocumentDirectoriesExist()
         {
-            // Create Documents directory for templates if it doesn't exist
-            string documentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents");
-            if (!Directory.Exists(documentsPath))
+            try
             {
-                Directory.CreateDirectory(documentsPath);
-            }
+                // Create Documents directory for templates if it doesn't exist
+                string documentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents");
+                if (!Directory.Exists(documentsPath))
+                {
+                    Directory.CreateDirectory(documentsPath);
+                }
 
-            // Create Generated directory for output files if it doesn't exist
-            string generatedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Generated");
-            if (!Directory.Exists(generatedPath))
+                // Create Generated directory for output files if it doesn't exist
+                string generatedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Generated");
+                if (!Directory.Exists(generatedPath))
+                {
+                    Directory.CreateDirectory(generatedPath);
+                }
+            }
+            catch (Exception ex)
             {
-                Directory.CreateDirectory(generatedPath);
+                System.Diagnostics.Debug.WriteLine($"Error creating directories: {ex.Message}");
             }
         }
 
         private async Task ShowLoginWindow()
         {
-            // Create and show login window
-            var loginWindow = new LoginWindow();
-            bool? result = loginWindow.ShowDialog();
-
-            // If login was successful, store the user and show main window
-            if (result == true && loginWindow.AuthenticatedEmployee != null)
+            try
             {
-                try
+                // Create and show login window
+                var loginWindow = new LoginWindow();
+                bool? result = loginWindow.ShowDialog();
+
+                // If login was successful, store the user and show main window
+                if (result == true && loginWindow.AuthenticatedEmployee != null)
                 {
                     // Set current employee in session
                     UserSessionService.Instance.SetCurrentEmployee(loginWindow.AuthenticatedEmployee);
@@ -108,20 +112,20 @@ namespace bankrupt_piterjust
                     // Show main window
                     mainWindow.Show();
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show(
-                        $"Ошибка при открытии главного окна: {ex.Message}",
-                        "Ошибка",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                    Shutdown(1);
+                    // If login was cancelled or failed, exit the application
+                    Shutdown();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                // If login was cancelled or failed, exit the application
-                Shutdown();
+                MessageBox.Show(
+                    $"Ошибка при работе с окном входа: {ex.Message}",
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown(1);
             }
         }
     }

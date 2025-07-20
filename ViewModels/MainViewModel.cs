@@ -296,7 +296,7 @@ namespace bankrupt_piterjust.ViewModels
             // Placeholder management commands
             ManageContractsCommand = new RelayCommand(o => { });
             ManageCompaniesCommand = new RelayCommand(o => { });
-            ManageEmployeesCommand = new RelayCommand(o => { });
+            ManageEmployeesCommand = new RelayCommand(o => ManageEmployees());
 
             // Status change commands
             ShowStatusSelectionCommand = new RelayCommand(o => ShowStatusSelection(), o => SelectedDebtor != null);
@@ -547,6 +547,8 @@ namespace bankrupt_piterjust.ViewModels
         {
             try
             {
+                IsLoading = true;
+
                 // Загрузка данных из базы через репозиторий
                 var debtors = await _debtorRepository.GetAllDebtorsAsync();
                 _allDebtors = [.. debtors];
@@ -579,6 +581,10 @@ namespace bankrupt_piterjust.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
@@ -746,6 +752,20 @@ namespace bankrupt_piterjust.ViewModels
             if (!string.IsNullOrWhiteSpace(address.Building)) parts.Add("к." + address.Building);
             if (!string.IsNullOrWhiteSpace(address.Apartment)) parts.Add("кв." + address.Apartment);
             return string.Join(", ", parts);
+        }
+
+        private void ManageEmployees()
+        {
+            var addEmployeeWindow = new AddEmployeeWindow
+            {
+                Owner = Application.Current?.MainWindow
+            };
+
+            if (addEmployeeWindow.ShowDialog() == true)
+            {
+                // Employee was successfully added, you can refresh any employee lists if needed
+                MessageBox.Show("Сотрудник успешно зарегистрирован!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

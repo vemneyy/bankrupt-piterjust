@@ -12,7 +12,7 @@ namespace bankrupt_piterjust.Services
 
         public static string GetDatabasePath() => DatabasePath;
 
-        public static string GetConnectionString() => $"Data Source={DatabasePath}";
+        public static string GetConnectionString() => $"Data Source={DatabasePath};";
 
         public static async Task InitializeDatabaseAsync()
         {
@@ -22,10 +22,81 @@ namespace bankrupt_piterjust.Services
                 Directory.CreateDirectory(directory!);
             }
 
-            if (!File.Exists(DatabasePath))
+            try
             {
+                // Check if database exists and is valid
+                bool needsInit = !File.Exists(DatabasePath) || await NeedsDatabaseRecreation();
+                
+                if (needsInit)
+                {
+                    await CleanupExistingDatabase();
+                    await CreateDatabaseAsync();
+                    await CreateSampleDataAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Database initialization error: {ex.Message}");
+                // Try to cleanup and create a new database
+                await CleanupExistingDatabase();
                 await CreateDatabaseAsync();
                 await CreateSampleDataAsync();
+            }
+        }
+
+        private static async Task<bool> NeedsDatabaseRecreation()
+        {
+            try
+            {
+                using var connection = new SqliteConnection(GetConnectionString());
+                await connection.OpenAsync();
+                
+                // Check if main tables exist
+                using var cmd = new SqliteCommand("SELECT name FROM sqlite_master WHERE type='table' AND name='person';", connection);
+                var result = await cmd.ExecuteScalarAsync();
+                
+                return result == null;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private static async Task CleanupExistingDatabase()
+        {
+            // Close any existing connections first
+            SqliteConnection.ClearAllPools();
+            
+            // Wait a bit for connections to close
+            await Task.Delay(100);
+            
+            try
+            {
+                // Delete main database file
+                if (File.Exists(DatabasePath))
+                {
+                    File.Delete(DatabasePath);
+                }
+                
+                // Delete WAL file if exists
+                string walPath = DatabasePath + "-wal";
+                if (File.Exists(walPath))
+                {
+                    File.Delete(walPath);
+                }
+                
+                // Delete SHM file if exists
+                string shmPath = DatabasePath + "-shm";
+                if (File.Exists(shmPath))
+                {
+                    File.Delete(shmPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Cleanup error: {ex.Message}");
+                // Continue anyway
             }
         }
 
@@ -34,138 +105,149 @@ namespace bankrupt_piterjust.Services
             using var connection = new SqliteConnection(GetConnectionString());
             await connection.OpenAsync();
 
-            // Create tables one by one
+            // Set pragmas for better compatibility (but avoid WAL mode)
             await ExecuteCommandAsync(connection, "PRAGMA foreign_keys = ON;");
+            await ExecuteCommandAsync(connection, "PRAGMA encoding = 'UTF-8';");
+            await ExecuteCommandAsync(connection, "PRAGMA journal_mode = DELETE;"); // Use DELETE instead of WAL
+            await ExecuteCommandAsync(connection, "PRAGMA synchronous = NORMAL;");
             
+            // Create person table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE person (
-                    person_id INTEGER PRIMARY KEY,
+                    person_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     last_name TEXT NOT NULL,
                     first_name TEXT NOT NULL,
-                    middle_name TEXT NULL,
-                    phone TEXT NULL,
-                    email TEXT NULL,
-                    is_male INTEGER NOT NULL
+                    middle_name TEXT,
+                    phone TEXT,
+                    email TEXT,
+                    is_male INTEGER NOT NULL DEFAULT 1
                 );");
 
+            // Create address table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE address (
-                    person_id INTEGER NOT NULL PRIMARY KEY,
-                    postal_code TEXT NULL,
-                    country TEXT DEFAULT 'Россия' NOT NULL,
-                    region TEXT NULL,
-                    district TEXT NULL,
-                    city TEXT NULL,
-                    locality TEXT NULL,
-                    street TEXT NULL,
-                    house_number TEXT NULL,
-                    building TEXT NULL,
-                    apartment TEXT NULL,
+                    address_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    person_id INTEGER NOT NULL,
+                    postal_code TEXT,
+                    country TEXT NOT NULL DEFAULT 'Russia',
+                    region TEXT,
+                    district TEXT,
+                    city TEXT,
+                    locality TEXT,
+                    street TEXT,
+                    house_number TEXT,
+                    building TEXT,
+                    apartment TEXT,
                     FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE
                 );");
 
+            // Create basis table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE basis (
-                    basis_id INTEGER PRIMARY KEY,
+                    basis_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     basis_type TEXT NOT NULL,
                     document_number TEXT NOT NULL,
-                    document_date TEXT NOT NULL,
-                    CONSTRAINT basis_basis_type_check CHECK (basis_type IN ('Доверенность', 'Приказ'))
+                    document_date TEXT NOT NULL
                 );");
 
+            // Create main_category table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE main_category (
-                    main_category_id INTEGER PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    CONSTRAINT main_category_name_key UNIQUE (name)
+                    main_category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE
                 );");
 
+            // Create filter_category table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE filter_category (
-                    filter_category_id INTEGER PRIMARY KEY,
+                    filter_category_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     main_category_id INTEGER NOT NULL,
                     name TEXT NOT NULL,
-                    CONSTRAINT filter_category_main_name_key UNIQUE (main_category_id, name),
-                    CONSTRAINT filter_category_main_category_id_fkey FOREIGN KEY (main_category_id) REFERENCES main_category(main_category_id)
+                    UNIQUE (main_category_id, name),
+                    FOREIGN KEY (main_category_id) REFERENCES main_category(main_category_id)
                 );");
 
+            // Create debtor table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE debtor (
-                    debtor_id INTEGER PRIMARY KEY,
+                    debtor_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     person_id INTEGER NOT NULL,
                     filter_category_id INTEGER NOT NULL,
-                    created_date TEXT NOT NULL DEFAULT (CURRENT_DATE),
-                    CONSTRAINT debtor_person_id_fkey FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE,
-                    CONSTRAINT debtor_filter_category_id_fkey FOREIGN KEY (filter_category_id) REFERENCES filter_category(filter_category_id)
+                    created_date TEXT NOT NULL DEFAULT (date('now')),
+                    FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE,
+                    FOREIGN KEY (filter_category_id) REFERENCES filter_category(filter_category_id)
                 );");
 
+            // Create employee table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE employee (
-                    employee_id INTEGER PRIMARY KEY,
+                    employee_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     position TEXT NOT NULL,
-                    created_date TEXT NULL,
+                    created_date TEXT,
                     is_active INTEGER NOT NULL DEFAULT 1,
-                    basis_id INTEGER NULL,
-                    person_id INTEGER NULL,
-                    CONSTRAINT employee_basis_fk FOREIGN KEY (basis_id) REFERENCES basis(basis_id) ON DELETE SET NULL,
-                    CONSTRAINT employee_person_fk FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE
+                    basis_id INTEGER,
+                    person_id INTEGER,
+                    FOREIGN KEY (basis_id) REFERENCES basis(basis_id) ON DELETE SET NULL,
+                    FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE
                 );");
 
+            // Create contract table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE contract (
-                    contract_id INTEGER PRIMARY KEY,
+                    contract_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     contract_number TEXT NOT NULL,
                     city TEXT NOT NULL,
                     contract_date TEXT NOT NULL,
                     debtor_id INTEGER NOT NULL,
                     employee_id INTEGER NOT NULL,
-                    total_cost NUMERIC NOT NULL,
-                    mandatory_expenses NUMERIC NOT NULL,
-                    manager_fee NUMERIC NOT NULL,
-                    other_expenses NUMERIC NOT NULL,
-                    services_amount NUMERIC NULL,
-                    CONSTRAINT contract_debtor_fk FOREIGN KEY (debtor_id) REFERENCES debtor(debtor_id) ON DELETE CASCADE,
-                    CONSTRAINT contract_employee_fk FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE
+                    total_cost REAL NOT NULL,
+                    mandatory_expenses REAL NOT NULL,
+                    manager_fee REAL NOT NULL,
+                    other_expenses REAL NOT NULL,
+                    services_amount REAL,
+                    FOREIGN KEY (debtor_id) REFERENCES debtor(debtor_id) ON DELETE CASCADE,
+                    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE
                 );");
 
+            // Create contract_stage table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE contract_stage (
-                    contract_stage_id INTEGER PRIMARY KEY,
+                    contract_stage_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     contract_id INTEGER NOT NULL,
                     stage INTEGER NOT NULL,
-                    amount NUMERIC NOT NULL,
+                    amount REAL NOT NULL,
                     due_date TEXT NOT NULL,
                     is_active INTEGER DEFAULT 0,
-                    CONSTRAINT contract_stage_contract_fk FOREIGN KEY (contract_id) REFERENCES contract(contract_id) ON DELETE CASCADE
+                    FOREIGN KEY (contract_id) REFERENCES contract(contract_id) ON DELETE CASCADE
                 );");
 
+            // Create passport table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE passport (
                     person_id INTEGER NOT NULL PRIMARY KEY,
                     series TEXT NOT NULL,
-                    number TEXT NOT NULL,
+                    number TEXT NOT NULL UNIQUE,
                     issued_by TEXT NOT NULL,
-                    division_code TEXT NULL,
+                    division_code TEXT,
                     issue_date TEXT NOT NULL,
-                    CONSTRAINT passport_unique UNIQUE (number),
-                    CONSTRAINT passport_person_id_fkey FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE
+                    FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE
                 );");
 
+            // Create payment_schedule table
             await ExecuteCommandAsync(connection, @"
                 CREATE TABLE payment_schedule (
-                    schedule_id INTEGER PRIMARY KEY,
+                    schedule_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     contract_id INTEGER NOT NULL,
                     stage INTEGER NOT NULL,
                     description TEXT NOT NULL,
-                    amount NUMERIC NOT NULL,
-                    due_date TEXT NOT NULL,
+                    amount REAL NOT NULL CHECK (amount > 0),
+                    due_date TEXT,
                     is_paid INTEGER DEFAULT 0,
-                    CONSTRAINT payment_schedule_amount_positive CHECK (amount > 0),
-                    CONSTRAINT payment_schedule_contract_stage_unique UNIQUE (contract_id, stage),
-                    CONSTRAINT payment_schedule_contract_id_fkey FOREIGN KEY (contract_id) REFERENCES contract(contract_id) ON DELETE CASCADE
+                    UNIQUE (contract_id, stage),
+                    FOREIGN KEY (contract_id) REFERENCES contract(contract_id) ON DELETE CASCADE
                 );");
 
-            // Insert default data
+            // Insert default categories
             await ExecuteCommandAsync(connection, "INSERT INTO main_category (name) VALUES ('Клиенты');");
             await ExecuteCommandAsync(connection, "INSERT INTO main_category (name) VALUES ('Архив');");
 
@@ -187,32 +269,41 @@ namespace bankrupt_piterjust.Services
             using var connection = new SqliteConnection(GetConnectionString());
             await connection.OpenAsync();
 
-            await ExecuteCommandAsync(connection, @"
-                INSERT INTO person (last_name, first_name, middle_name, phone, email, is_male) 
-                VALUES ('Иванов', 'Иван', 'Иванович', '+7 (999) 123-45-67', 'ivanov@piterjust.ru', 1);");
+            try
+            {
+                // Add sample employees
+                await ExecuteCommandAsync(connection, @"
+                    INSERT INTO person (last_name, first_name, middle_name, phone, email, is_male) 
+                    VALUES ('Иванов', 'Иван', 'Иванович', '+7 (999) 123-45-67', 'ivanov@piterjust.ru', 1);");
 
-            var personId1 = await GetScalarAsync(connection, "SELECT last_insert_rowid();");
-            await ExecuteCommandAsync(connection, $"INSERT INTO employee (position, created_date, is_active, person_id) VALUES ('Юрист', date('now'), 1, {personId1});");
+                var personId1 = await GetScalarAsync(connection, "SELECT last_insert_rowid();");
+                await ExecuteCommandAsync(connection, $"INSERT INTO employee (position, created_date, is_active, person_id) VALUES ('Юрист', date('now'), 1, {personId1});");
 
-            await ExecuteCommandAsync(connection, @"
-                INSERT INTO person (last_name, first_name, middle_name, phone, email, is_male) 
-                VALUES ('Петрова', 'Мария', 'Сергеевна', '+7 (999) 234-56-78', 'petrova@piterjust.ru', 0);");
+                await ExecuteCommandAsync(connection, @"
+                    INSERT INTO person (last_name, first_name, middle_name, phone, email, is_male) 
+                    VALUES ('Петрова', 'Мария', 'Сергеевна', '+7 (999) 234-56-78', 'petrova@piterjust.ru', 0);");
 
-            var personId2 = await GetScalarAsync(connection, "SELECT last_insert_rowid();");
-            await ExecuteCommandAsync(connection, $"INSERT INTO employee (position, created_date, is_active, person_id) VALUES ('Менеджер', date('now'), 1, {personId2});");
-        }
-
-        private static async Task ExecuteCommandAsync(SqliteConnection connection, string commandText)
-        {
-            using var command = new SqliteCommand(commandText, connection);
-            await command.ExecuteNonQueryAsync();
+                var personId2 = await GetScalarAsync(connection, "SELECT last_insert_rowid();");
+                await ExecuteCommandAsync(connection, $"INSERT INTO employee (position, created_date, is_active, person_id) VALUES ('Менеджер', date('now'), 1, {personId2});");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Sample data creation error: {ex.Message}");
+                // Don't throw here - sample data is not critical
+            }
         }
 
         private static async Task<long> GetScalarAsync(SqliteConnection connection, string commandText)
         {
             using var command = new SqliteCommand(commandText, connection);
             var result = await command.ExecuteScalarAsync();
-            return Convert.ToInt64(result);
+            return Convert.ToInt64(result ?? 0);
+        }
+
+        private static async Task ExecuteCommandAsync(SqliteConnection connection, string commandText)
+        {
+            using var command = new SqliteCommand(commandText, connection);
+            await command.ExecuteNonQueryAsync();
         }
     }
 }

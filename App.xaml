@@ -10,5 +10,6 @@
         <converters:StringEqualsConverter x:Key="StringEqualsConverter"/>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:BooleanToInverseConverter x:Key="BooleanToInverseConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
     </Application.Resources>
 </Application>

@@ -12,87 +12,11 @@ namespace bankrupt_piterjust.Services
             _databaseService = new DatabaseService();
         }
 
-        #region Employee Methods
-        public async Task<int> CreateEmployeeAsync(Employee employee)
-        {
-            string sql = @"
-                INSERT INTO employee (position, created_date, is_active, basis_id, person_id)
-                VALUES (@position, @createdDate, @isActive, @basisId, @personId);
-                SELECT last_insert_rowid();";
-
-            var parameters = new Dictionary<string, object>
-            {
-                { "@position", employee.Position },
-                { "@createdDate", employee.CreatedDate?.ToString("yyyy-MM-dd") ?? (object)DBNull.Value },
-                { "@isActive", employee.IsActive ? 1 : 0 },
-                { "@basisId", employee.BasisId ?? (object)DBNull.Value },
-                { "@personId", employee.PersonId ?? (object)DBNull.Value }
-            };
-
-            var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
-            return Convert.ToInt32(result);
-        }
-
-        public async Task<Employee?> GetEmployeeByIdAsync(int employeeId)
-        {
-            string sql = @"
-                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
-                       b.basis_type, b.document_number, b.document_date
-                FROM employee e
-                LEFT JOIN person p ON e.person_id = p.person_id
-                LEFT JOIN basis b ON e.basis_id = b.basis_id
-                WHERE e.employee_id = @employeeId";
-
-            var parameters = new Dictionary<string, object> { { "@employeeId", employeeId } };
-            var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
-
-            if (dataTable.Rows.Count == 0) return null;
-
-            var row = dataTable.Rows[0];
-            var employee = new Employee
-            {
-                EmployeeId = Convert.ToInt32(row["employee_id"]),
-                Position = row["position"].ToString() ?? string.Empty,
-                CreatedDate = row["created_date"] != DBNull.Value ? Convert.ToDateTime(row["created_date"]) : null,
-                IsActive = Convert.ToBoolean(row["is_active"]),
-                BasisId = row["basis_id"] != DBNull.Value ? Convert.ToInt32(row["basis_id"]) : null,
-                PersonId = row["person_id"] != DBNull.Value ? Convert.ToInt32(row["person_id"]) : null
-            };
-
-            if (employee.PersonId.HasValue && row["last_name"] != DBNull.Value)
-            {
-                employee.Person = new Person
-                {
-                    PersonId = employee.PersonId.Value,
-                    LastName = row["last_name"].ToString() ?? string.Empty,
-                    FirstName = row["first_name"].ToString() ?? string.Empty,
-                    MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
-                    Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
-                    Email = row["email"] != DBNull.Value ? row["email"].ToString() : null
-                };
-            }
-
-            if (employee.BasisId.HasValue && row["basis_type"] != DBNull.Value)
-            {
-                employee.BasisInfo = new Basis
-                {
-                    BasisId = employee.BasisId.Value,
-                    BasisType = row["basis_type"].ToString() ?? string.Empty,
-                    DocumentNumber = row["document_number"].ToString() ?? string.Empty,
-                    DocumentDate = Convert.ToDateTime(row["document_date"])
-                };
-
-                // For backward compatibility, also set the Basis string property
-                employee.Basis = $"{employee.BasisInfo.BasisType} № {employee.BasisInfo.DocumentNumber} от {employee.BasisInfo.DocumentDate:dd.MM.yyyy}";
-            }
-
-            return employee;
-        }
-
+        // Employee methods
         public async Task<List<Employee>> GetAllEmployeesAsync()
         {
             string sql = @"
-                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
+                SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male,
                        b.basis_type, b.document_number, b.document_date
                 FROM employee e
                 LEFT JOIN person p ON e.person_id = p.person_id
@@ -123,7 +47,8 @@ namespace bankrupt_piterjust.Services
                         FirstName = row["first_name"].ToString() ?? string.Empty,
                         MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                         Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
-                        Email = row["email"] != DBNull.Value ? row["email"].ToString() : null
+                        Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
+                        IsMale = row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
                     };
                 }
 
@@ -137,7 +62,6 @@ namespace bankrupt_piterjust.Services
                         DocumentDate = Convert.ToDateTime(row["document_date"])
                     };
 
-                    // For backward compatibility, also set the Basis string property
                     employee.Basis = $"{employee.BasisInfo.BasisType} № {employee.BasisInfo.DocumentNumber} от {employee.BasisInfo.DocumentDate:dd.MM.yyyy}";
                 }
 
@@ -145,25 +69,6 @@ namespace bankrupt_piterjust.Services
             }
 
             return employees;
-        }
-
-        public async Task UpdateEmployeeAsync(Employee employee)
-        {
-            string sql = @"
-                UPDATE employee SET
-                    position = @position, is_active = @isActive, basis_id = @basisId, person_id = @personId
-                WHERE employee_id = @employeeId";
-
-            var parameters = new Dictionary<string, object>
-            {
-                { "@position", employee.Position },
-                { "@isActive", employee.IsActive ? 1 : 0 },
-                { "@basisId", employee.BasisId ?? (object)DBNull.Value },
-                { "@personId", employee.PersonId ?? (object)DBNull.Value },
-                { "@employeeId", employee.EmployeeId }
-            };
-
-            await _databaseService.ExecuteNonQueryAsync(sql, parameters);
         }
 
         public async Task<string?> GetEmployeeBasisStringAsync(int employeeId)
@@ -185,18 +90,42 @@ namespace bankrupt_piterjust.Services
             DateTime date = Convert.ToDateTime(row["document_date"]);
             return $"{type} № {number} от {date:dd.MM.yyyy}";
         }
-        #endregion
 
-        #region Contract Methods
+        // Contract methods
+        public async Task<List<Contract>> GetAllContractsAsync()
+        {
+            string sql = "SELECT * FROM contract ORDER BY contract_date DESC";
+            var dataTable = await _databaseService.ExecuteReaderAsync(sql);
+            var contracts = new List<Contract>();
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                contracts.Add(new Contract
+                {
+                    ContractId = Convert.ToInt32(row["contract_id"]),
+                    ContractNumber = row["contract_number"].ToString() ?? string.Empty,
+                    City = row["city"].ToString() ?? string.Empty,
+                    ContractDate = Convert.ToDateTime(row["contract_date"]),
+                    DebtorId = Convert.ToInt32(row["debtor_id"]),
+                    EmployeeId = Convert.ToInt32(row["employee_id"]),
+                    TotalCost = Convert.ToDecimal(row["total_cost"]),
+                    MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
+                    ManagerFee = Convert.ToDecimal(row["manager_fee"]),
+                    OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
+                    ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
+                });
+            }
+
+            return contracts;
+        }
+
         public async Task<int> CreateContractAsync(Contract contract)
         {
             string sql = @"
                 INSERT INTO contract (contract_number, city, contract_date, debtor_id, employee_id,
-                                    total_cost, mandatory_expenses,
-                                    manager_fee, other_expenses, services_amount)
+                                    total_cost, mandatory_expenses, manager_fee, other_expenses, services_amount)
                 VALUES (@contractNumber, @city, @contractDate, @debtorId, @employeeId,
-                        @totalCost, @mandatoryExpenses,
-                        @managerFee, @otherExpenses, @servicesAmount);
+                        @totalCost, @mandatoryExpenses, @managerFee, @otherExpenses, @servicesAmount);
                 SELECT last_insert_rowid();";
 
             var parameters = new Dictionary<string, object>
@@ -215,142 +144,6 @@ namespace bankrupt_piterjust.Services
 
             var result = await _databaseService.ExecuteScalarAsync<object>(sql, parameters);
             return Convert.ToInt32(result);
-        }
-
-        public async Task<Contract?> GetContractByIdAsync(int contractId)
-        {
-            string sql = @"
-                SELECT c.*, 
-                       e.position,
-                       ep.last_name as emp_last_name, ep.first_name as emp_first_name, ep.middle_name as emp_middle_name,
-                       dp.last_name as debtor_last_name, dp.first_name as debtor_first_name, dp.middle_name as debtor_middle_name
-                FROM contract c
-                LEFT JOIN employee e ON c.employee_id = e.employee_id
-                LEFT JOIN person ep ON e.person_id = ep.person_id
-                LEFT JOIN debtor d ON c.debtor_id = d.debtor_id
-                LEFT JOIN person dp ON d.person_id = dp.person_id
-                WHERE c.contract_id = @contractId";
-
-            var parameters = new Dictionary<string, object> { { "@contractId", contractId } };
-            var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
-
-            if (dataTable.Rows.Count == 0) return null;
-
-            var row = dataTable.Rows[0];
-            var contract = new Contract
-            {
-                ContractId = Convert.ToInt32(row["contract_id"]),
-                ContractNumber = row["contract_number"].ToString() ?? string.Empty,
-                City = row["city"].ToString() ?? string.Empty,
-                ContractDate = Convert.ToDateTime(row["contract_date"]),
-                DebtorId = Convert.ToInt32(row["debtor_id"]),
-                EmployeeId = Convert.ToInt32(row["employee_id"]),
-                TotalCost = Convert.ToDecimal(row["total_cost"]),
-                MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
-                ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
-                ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m,
-            };
-
-            if (row["position"] != DBNull.Value)
-            {
-                contract.Employee = new Employee
-                {
-                    EmployeeId = contract.EmployeeId,
-                    Position = row["position"].ToString() ?? string.Empty,
-                };
-
-                if (row["emp_last_name"] != DBNull.Value)
-                {
-                    contract.Employee.Person = new Person
-                    {
-                        LastName = row["emp_last_name"].ToString() ?? string.Empty,
-                        FirstName = row["emp_first_name"].ToString() ?? string.Empty,
-                        MiddleName = row["emp_middle_name"] != DBNull.Value ? row["emp_middle_name"].ToString() : null
-                    };
-                }
-            }
-
-            if (row["debtor_last_name"] != DBNull.Value)
-            {
-                contract.Debtor = new Person
-                {
-                    LastName = row["debtor_last_name"].ToString() ?? string.Empty,
-                    FirstName = row["debtor_first_name"].ToString() ?? string.Empty,
-                    MiddleName = row["debtor_middle_name"] != DBNull.Value ? row["debtor_middle_name"].ToString() : null
-                };
-            }
-
-            return contract;
-        }
-
-        public async Task<List<Contract>> GetAllContractsAsync()
-        {
-            string sql = @"
-                SELECT c.*, 
-                       e.position,
-                       ep.last_name as emp_last_name, ep.first_name as emp_first_name, ep.middle_name as emp_middle_name,
-                       dp.last_name as debtor_last_name, dp.first_name as debtor_first_name, dp.middle_name as debtor_middle_name
-                FROM contract c
-                LEFT JOIN employee e ON c.employee_id = e.employee_id
-                LEFT JOIN person ep ON e.person_id = ep.person_id
-                LEFT JOIN debtor d ON c.debtor_id = d.debtor_id
-                LEFT JOIN person dp ON d.person_id = dp.person_id
-                ORDER BY c.contract_date DESC";
-
-            var dataTable = await _databaseService.ExecuteReaderAsync(sql);
-            var contracts = new List<Contract>();
-
-            foreach (DataRow row in dataTable.Rows)
-            {
-                var contract = new Contract
-                {
-                    ContractId = Convert.ToInt32(row["contract_id"]),
-                    ContractNumber = row["contract_number"].ToString() ?? string.Empty,
-                    City = row["city"].ToString() ?? string.Empty,
-                    ContractDate = Convert.ToDateTime(row["contract_date"]),
-                    DebtorId = Convert.ToInt32(row["debtor_id"]),
-                    EmployeeId = Convert.ToInt32(row["employee_id"]),
-                    TotalCost = Convert.ToDecimal(row["total_cost"]),
-                    MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
-                    ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                    OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
-                    ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
-                };
-
-                if (row["position"] != DBNull.Value)
-                {
-                    contract.Employee = new Employee
-                    {
-                        EmployeeId = contract.EmployeeId,
-                        Position = row["position"].ToString() ?? string.Empty,
-                    };
-
-                    if (row["emp_last_name"] != DBNull.Value)
-                    {
-                        contract.Employee.Person = new Person
-                        {
-                            LastName = row["emp_last_name"].ToString() ?? string.Empty,
-                            FirstName = row["emp_first_name"].ToString() ?? string.Empty,
-                            MiddleName = row["emp_middle_name"] != DBNull.Value ? row["emp_middle_name"].ToString() : null
-                        };
-                    }
-                }
-
-                if (row["debtor_last_name"] != DBNull.Value)
-                {
-                    contract.Debtor = new Person
-                    {
-                        LastName = row["debtor_last_name"].ToString() ?? string.Empty,
-                        FirstName = row["debtor_first_name"].ToString() ?? string.Empty,
-                        MiddleName = row["debtor_middle_name"] != DBNull.Value ? row["debtor_middle_name"].ToString() : null
-                    };
-                }
-
-                contracts.Add(contract);
-            }
-
-            return contracts;
         }
 
         public async Task UpdateContractAsync(Contract contract)
@@ -387,9 +180,37 @@ namespace bankrupt_piterjust.Services
             var parameters = new Dictionary<string, object> { { "@contractId", contractId } };
             await _databaseService.ExecuteNonQueryAsync(sql, parameters);
         }
-        #endregion
 
-        #region Contract Stage Methods
+        public async Task<Contract?> GetLatestContractByDebtorIdAsync(int debtorId)
+        {
+            string sql = @"
+                SELECT * FROM contract
+                WHERE debtor_id = @debtorId
+                ORDER BY contract_date DESC
+                LIMIT 1";
+
+            var parameters = new Dictionary<string, object> { { "@debtorId", debtorId } };
+            var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
+            if (dataTable.Rows.Count == 0) return null;
+
+            var row = dataTable.Rows[0];
+            return new Contract
+            {
+                ContractId = Convert.ToInt32(row["contract_id"]),
+                ContractNumber = row["contract_number"].ToString() ?? string.Empty,
+                City = row["city"].ToString() ?? string.Empty,
+                ContractDate = Convert.ToDateTime(row["contract_date"]),
+                DebtorId = Convert.ToInt32(row["debtor_id"]),
+                EmployeeId = Convert.ToInt32(row["employee_id"]),
+                TotalCost = Convert.ToDecimal(row["total_cost"]),
+                MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
+                ManagerFee = Convert.ToDecimal(row["manager_fee"]),
+                OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
+                ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
+            };
+        }
+
+        // Contract Stage methods
         public async Task<int> CreateContractStageAsync(ContractStage stage)
         {
             string sql = @"
@@ -438,9 +259,8 @@ namespace bankrupt_piterjust.Services
             var p = new Dictionary<string, object> { { "@cid", contractId } };
             await _databaseService.ExecuteNonQueryAsync(sql, p);
         }
-        #endregion
 
-        #region Payment Schedule Methods
+        // Payment Schedule methods
         public async Task<int> CreatePaymentScheduleAsync(PaymentSchedule schedule)
         {
             string sql = @"
@@ -534,39 +354,7 @@ namespace bankrupt_piterjust.Services
             await _databaseService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public async Task<Contract?> GetLatestContractByDebtorIdAsync(int debtorId)
-        {
-            string sql = @"
-                SELECT * FROM contract
-                WHERE debtor_id = @debtorId
-                ORDER BY contract_date DESC
-                LIMIT 1";
-
-            var parameters = new Dictionary<string, object> { { "@debtorId", debtorId } };
-            var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
-            if (dataTable.Rows.Count == 0) return null;
-
-            var row = dataTable.Rows[0];
-            var contract = new Contract
-            {
-                ContractId = Convert.ToInt32(row["contract_id"]),
-                ContractNumber = row["contract_number"].ToString() ?? string.Empty,
-                City = row["city"].ToString() ?? string.Empty,
-                ContractDate = Convert.ToDateTime(row["contract_date"]),
-                DebtorId = Convert.ToInt32(row["debtor_id"]),
-                EmployeeId = Convert.ToInt32(row["employee_id"]),
-                TotalCost = Convert.ToDecimal(row["total_cost"]),
-                MandatoryExpenses = Convert.ToDecimal(row["mandatory_expenses"]),
-                ManagerFee = Convert.ToDecimal(row["manager_fee"]),
-                OtherExpenses = Convert.ToDecimal(row["other_expenses"]),
-                ServicesAmount = row["services_amount"] != DBNull.Value ? Convert.ToDecimal(row["services_amount"]) : 0m
-            };
-
-            return contract;
-        }
-        #endregion
-
-        #region Helper Methods
+        // Helper methods
         public async Task<int> GetDebtorIdByPersonIdAsync(int personId)
         {
             string sql = "SELECT debtor_id FROM debtor WHERE person_id = @personId";
@@ -591,9 +379,9 @@ namespace bankrupt_piterjust.Services
                 FirstName = row["first_name"].ToString() ?? string.Empty,
                 MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                 Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
-                Email = row["email"] != DBNull.Value ? row["email"].ToString() : null
+                Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
+                IsMale = row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
             };
         }
-        #endregion
     }
 }
