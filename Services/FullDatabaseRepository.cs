@@ -19,7 +19,7 @@ namespace bankrupt_piterjust.Services
                 SELECT e.*, p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male,
                        b.basis_type, b.document_number, b.document_date
                 FROM employee e
-                LEFT JOIN person p ON e.person_id = p.person_id
+                INNER JOIN person p ON e.person_id = p.person_id
                 LEFT JOIN basis b ON e.basis_id = b.basis_id
                 ORDER BY e.position, p.last_name";
 
@@ -38,7 +38,7 @@ namespace bankrupt_piterjust.Services
                     PersonId = row["person_id"] != DBNull.Value ? Convert.ToInt32(row["person_id"]) : null
                 };
 
-                if (employee.PersonId.HasValue && row["last_name"] != DBNull.Value)
+                if (employee.PersonId.HasValue)
                 {
                     employee.Person = new Person
                     {
