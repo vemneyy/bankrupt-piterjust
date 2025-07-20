@@ -31,7 +31,6 @@ namespace bankrupt_piterjust.Services
                 {
                     await CleanupExistingDatabase();
                     await CreateDatabaseAsync();
-                    await CreateSampleDataAsync();
                 }
                 else
                 {
@@ -44,7 +43,6 @@ namespace bankrupt_piterjust.Services
                 // Try to cleanup and create a new database
                 await CleanupExistingDatabase();
                 await CreateDatabaseAsync();
-                await CreateSampleDataAsync();
             }
         }
 
@@ -265,36 +263,7 @@ namespace bankrupt_piterjust.Services
             await ExecuteCommandAsync(connection, $"INSERT INTO filter_category (main_category_id, name) VALUES ({clientsId}, 'Ходатайство');");
             await ExecuteCommandAsync(connection, $"INSERT INTO filter_category (main_category_id, name) VALUES ({clientsId}, 'Заседание');");
             await ExecuteCommandAsync(connection, $"INSERT INTO filter_category (main_category_id, name) VALUES ({clientsId}, 'Процедура введена');");
-            await ExecuteCommandAsync(connection, $"INSERT INTO filter_category (main_category_id, name) VALUES ({archiveId}, 'Все');");
-        }
-
-        private static async Task CreateSampleDataAsync()
-        {
-            using var connection = new SqliteConnection(GetConnectionString());
-            await connection.OpenAsync();
-
-            try
-            {
-                // Add sample employees
-                await ExecuteCommandAsync(connection, @"
-                    INSERT INTO person (last_name, first_name, middle_name, phone, email, is_male) 
-                    VALUES ('Иванов', 'Иван', 'Иванович', '+7 (999) 123-45-67', 'ivanov@piterjust.ru', 1);");
-
-                var personId1 = await GetScalarAsync(connection, "SELECT last_insert_rowid();");
-                await ExecuteCommandAsync(connection, $"INSERT INTO employee (position, created_date, is_active, person_id) VALUES ('Юрист', date('now'), 1, {personId1});");
-
-                await ExecuteCommandAsync(connection, @"
-                    INSERT INTO person (last_name, first_name, middle_name, phone, email, is_male) 
-                    VALUES ('Петрова', 'Мария', 'Сергеевна', '+7 (999) 234-56-78', 'petrova@piterjust.ru', 0);");
-
-                var personId2 = await GetScalarAsync(connection, "SELECT last_insert_rowid();");
-                await ExecuteCommandAsync(connection, $"INSERT INTO employee (position, created_date, is_active, person_id) VALUES ('Менеджер', date('now'), 1, {personId2});");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Sample data creation error: {ex.Message}");
-                // Don't throw here - sample data is not critical
-            }
+            await ExecuteCommandAsync(connection, $"INSERT INTO filter_category (main_category_id, name) VALUES ({archiveId}, 'Архив');");
         }
 
         private static async Task UpdateDatabaseSchemaAsync()
