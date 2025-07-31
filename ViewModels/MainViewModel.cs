@@ -652,13 +652,17 @@ namespace bankrupt_piterjust.ViewModels
 
         private void AddDebtor()
         {
+            var mainWindow = Application.Current?.MainWindow;
             var addWindow = new DebtorWindow
             {
-                // Устанавливаем владельца, чтобы окно появилось по центру главного
-                Owner = Application.Current?.MainWindow
+                Owner = mainWindow
             };
 
-            if (addWindow.ShowDialog() == true && addWindow.NewDebtor != null)
+            mainWindow?.Hide();
+            bool? result = addWindow.ShowDialog();
+            mainWindow?.Show();
+
+            if (result == true && addWindow.NewDebtor != null)
             {
                 var newDebtor = addWindow.NewDebtor;
                 _allDebtors.Add(newDebtor);
@@ -679,11 +683,17 @@ namespace bankrupt_piterjust.ViewModels
             if (SelectedDebtor?.PersonId == null)
                 return;
 
+            var mainWindow = Application.Current?.MainWindow;
             var editWindow = new DebtorWindow(SelectedDebtor.PersonId.Value)
             {
-                Owner = Application.Current?.MainWindow
+                Owner = mainWindow
             };
-            if (editWindow.ShowDialog() == true)
+
+            mainWindow?.Hide();
+            bool? result = editWindow.ShowDialog();
+            mainWindow?.Show();
+
+            if (result == true)
             {
                 _ = LoadDataAsync();
             }

@@ -111,6 +111,13 @@ namespace bankrupt_piterjust.ViewModels
             set { _email = value; OnPropertyChanged(nameof(Email)); }
         }
 
+        private DateTime _birthDate = DateTime.Now.AddYears(-18);
+        public DateTime BirthDate
+        {
+            get => _birthDate;
+            set { _birthDate = value; OnPropertyChanged(nameof(BirthDate)); }
+        }
+
         private string _fullName = string.Empty;
         public string FullName
         {
