@@ -650,7 +650,7 @@
 
                         <TextBlock Text="Дата заключения договора" Style="{StaticResource DetailLabelStyle}"/>
                         <TextBlock Text="{Binding SelectedDebtor.Date}" Style="{StaticResource DetailValueStyle}"/>
-
+                        
                         <!-- Кнопки действий -->
                         <Button Content="Сгенерировать договор" 
                                 Command="{Binding GenerateContractCommand}" 

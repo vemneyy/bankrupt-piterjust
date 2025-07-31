@@ -13,6 +13,7 @@ namespace bankrupt_piterjust.ViewModels
         private readonly DebtorRepository _repository;
         private readonly int _personId;
         private bool _isBusy;
+        private int _originalEmployeeId; // Добавляем поле для хранения оригинального employee_id
 
         public string WindowTitle => "Редактирование должника";
 
@@ -451,6 +452,7 @@ namespace bankrupt_piterjust.ViewModels
                 if (contract != null)
                 {
                     _contractId = contract.ContractId;
+                    _originalEmployeeId = contract.EmployeeId; // Сохраняем оригинальный employee_id
                     ContractNumber = contract.ContractNumber;
                     ContractCity = contract.City;
                     ContractDate = contract.ContractDate;
@@ -563,7 +565,9 @@ namespace bankrupt_piterjust.ViewModels
                         City = ContractCity,
                         ContractDate = ContractDate,
                         DebtorId = debtorId,
-                        EmployeeId = CurrentEmployeeId,
+                        // При редактировании существующего контракта используем оригинальный EmployeeId
+                        // При создании нового контракта используем текущего сотрудника
+                        EmployeeId = _contractId > 0 ? _originalEmployeeId : CurrentEmployeeId,
                         TotalCost = TotalCost,
                         MandatoryExpenses = MandatoryExpenses,
                         ManagerFee = ManagerFee,

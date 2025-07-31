@@ -8,6 +8,7 @@ namespace bankrupt_piterjust.Models
         public string MainCategory { get; set; } = string.Empty;
         public string FilterCategory { get; set; } = string.Empty;
         public string Date { get; set; } = string.Empty;
+        public string AddedByEmployeeName { get; set; } = string.Empty;
 
         public string? PreviousMainCategory { get; set; }
         public string? PreviousFilterCategory { get; set; }

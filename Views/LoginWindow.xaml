@@ -6,11 +6,11 @@
         xmlns:vm="clr-namespace:bankrupt_piterjust.ViewModels"
         xmlns:conv="clr-namespace:bankrupt_piterjust.Converters"
         mc:Ignorable="d"
-        Title="ПитерЮст. Банкротство." Height="440" Width="400"
+        Title="ПитерЮст. Банкротство." Height="500" Width="450"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#F8F9FA"
         KeyDown="Window_KeyDown" Icon="/Images/icon.png">
-    
+
     <Window.DataContext>
         <vm:LoginViewModel/>
     </Window.DataContext>
@@ -18,39 +18,15 @@
     <Window.Resources>
         <!-- Converters -->
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <conv:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
 
         <!-- Styles -->
-        <Style x:Key="HeaderTextBlock" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="22"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Margin" Value="0,0,0,20"/>
-            <Setter Property="Foreground" Value="#212529"/>
-        </Style>
-
         <Style x:Key="FormTextBlock" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,5,0,2"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="Foreground" Value="#495057"/>
-        </Style>
-
-        <Style x:Key="FormTextBox" TargetType="TextBox">
-            <Setter Property="Margin" Value="0,2,0,10"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#CED4DA"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#A9A9A9"/>
-                </Trigger>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#007BFF"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
@@ -113,120 +89,108 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <Style x:Key="SettingsButton" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Width" Value="32"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="ToolTip" Value="Настройки подключения к базе данных"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="16">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#E9ECEF"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#DEE2E6"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
-    <Border Background="White" Margin="0,0,0,179" CornerRadius="6" Padding="25">
-        <Grid Margin="0,0,0,-199">
-            <StackPanel Margin="0,0,0,10">
-                <!-- Logo and heading section with settings button -->
-                <Grid Margin="0,0,0,15">
-                    <Grid HorizontalAlignment="Center" Width="300">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+    <Border Background="White" Margin="0,0,0,-6" CornerRadius="6" Padding="25">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="ПитерЮст " 
-                                      Foreground="#212529" 
-                                      FontSize="20" 
-                                      FontWeight="Bold" 
-                                      VerticalAlignment="Center"/>
-                            <Border Background="#007BFF" CornerRadius="6" Padding="12,6">
-                                <TextBlock Text="Банкротство" Foreground="White" FontSize="20" FontWeight="Bold"/>
-                            </Border>
-                        </StackPanel>
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                    <TextBlock Text="ПитерЮст " 
+                              Foreground="#212529" 
+                              FontSize="20" 
+                              FontWeight="Bold" 
+                              VerticalAlignment="Center"/>
+                    <Border Background="#007BFF" CornerRadius="6" Padding="12,6">
+                        <TextBlock Text="Банкротство" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                    </Border>
+                </StackPanel>
+                <TextBlock Text="Выберите сотрудника для входа в систему" 
+                          HorizontalAlignment="Center" 
+                          FontSize="14" 
+                          Foreground="#6C757D" Margin="0,59,0,-35"/>
+            </Grid>
 
-                        <!-- Settings button positioned to the right edge of grid -->
-                        <Button Grid.Column="2" Style="{StaticResource SettingsButton}"
-                                VerticalAlignment="Top"
-                                HorizontalAlignment="Right"
-                                Command="{Binding DatabaseSettingsCommand}"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" 
-                                Height="39" Margin="0,0,-13,0">
-                            <Path Data="M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16Z" 
-                                  Fill="#6C757D" 
-                                  Width="5" 
-                                  Height="20" Stretch="Fill"/>
-                        </Button>
-                    </Grid>
-                </Grid>
+            <!-- Employee Selection -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
+                <StackPanel Height="177">
+                    <TextBlock Text="Сотрудники *" Style="{StaticResource FormTextBlock}"/>
 
-                <TextBlock Text="Логин *" Style="{StaticResource FormTextBlock}"/>
-                <TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBox}" Height="40"/>
-
-                <TextBlock Text="Пароль *" Style="{StaticResource FormTextBlock}"/>
-                <PasswordBox Height="40"
-                             Margin="0,2,0,10"
-                             Padding="10,8"
-                             FontSize="13"
-                             VerticalContentAlignment="Center"
-                             Background="White"
+                    <!-- Employee List -->
+                    <ListBox ItemsSource="{Binding Employees}" 
+                             SelectedItem="{Binding SelectedEmployee}"
+                             MaxHeight="200"
                              BorderBrush="#CED4DA"
                              BorderThickness="1"
-                             PasswordChanged="PasswordBox_PasswordChanged">
-                    <PasswordBox.Style>
-                        <Style TargetType="PasswordBox">
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="BorderBrush" Value="#A9A9A9"/>
-                                </Trigger>
-                                <Trigger Property="IsFocused" Value="True">
-                                    <Setter Property="BorderBrush" Value="#007BFF"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </PasswordBox.Style>
-                </PasswordBox>
+                             Background="White">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="5">
+                                    <TextBlock Text="{Binding FullName}" FontWeight="Medium" FontSize="14"/>
+                                    <TextBlock Text="{Binding Position}" FontSize="12" Foreground="#6C757D"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
-                <TextBlock Text="* Обязательные поля" Foreground="#6C757D" Margin="0,10,0,20"/>
+                    <!-- Empty state -->
+                    <TextBlock Text="Нет зарегистрированных сотрудников" 
+                              HorizontalAlignment="Center" 
+                              Margin="0,20,0,0"
+                              FontStyle="Italic" 
+                              Foreground="#6C757D"
+                              Visibility="{Binding Employees.Count, Converter={StaticResource ZeroToVisibilityConverter}}"/>
+                </StackPanel>
+            </ScrollViewer>
 
-                <!-- Enhanced login button -->
+            <!-- Buttons -->
+            <StackPanel Grid.Row="2">
+                <!-- Login button -->
                 <Button Content="Войти в систему" Height="46" 
                         Command="{Binding LoginCommand}" 
                         Style="{StaticResource PrimaryButton}"
                         IsEnabled="{Binding CanLogin}" 
                         FontSize="16"
                         FontWeight="SemiBold"
-                        Margin="0,0,0,15"/>
+                        Margin="0,0,0,10"/>
 
-                <Button Content="Отмена" Height="42" 
-                        Command="{Binding CancelCommand}" 
-                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                        Style="{StaticResource SecondaryButton}"/>
+                <!-- Action buttons -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="Регистрация" Height="42" 
+                            Command="{Binding RegisterCommand}" 
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                            Style="{StaticResource SecondaryButton}"/>
+
+                    <Button Grid.Column="2" Content="Обновить" Height="42" 
+                            Command="{Binding RefreshCommand}" 
+                            Style="{StaticResource SecondaryButton}"/>
+
+                    <Button Grid.Column="4" Content="Отмена" Height="42" 
+                            Command="{Binding CancelCommand}" 
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                            Style="{StaticResource SecondaryButton}"/>
+                </Grid>
             </StackPanel>
 
             <!-- Busy indicator -->
-            <Grid Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid Grid.Row="0" Grid.RowSpan="3" Background="#80000000" 
+                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="Выполняется вход..." Foreground="White" FontSize="16" FontWeight="Medium" Margin="0,0,0,15"/>
+                    <TextBlock Text="Загрузка..." Foreground="White" FontSize="16" FontWeight="Medium" Margin="0,0,0,15"/>
                     <ProgressBar IsIndeterminate="True" Width="200" Height="8"/>
                 </StackPanel>
             </Grid>

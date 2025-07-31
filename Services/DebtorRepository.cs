@@ -6,6 +6,7 @@ namespace bankrupt_piterjust.Services
     public class DebtorRepository
     {
         private readonly DatabaseService _databaseService;
+
         public DebtorRepository()
         {
             _databaseService = new DatabaseService();
@@ -14,22 +15,29 @@ namespace bankrupt_piterjust.Services
         public async Task<List<Debtor>> GetAllDebtorsAsync()
         {
             string sql = @"
-                SELECT p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email,
+                SELECT d.debtor_id, p.person_id, p.last_name, p.first_name, p.middle_name, p.phone, p.email, p.is_male,
                        fc.name AS status,
                        mc.name AS main_category,
                        fc.name AS filter_category,
-                       d.created_date
+                       c.contract_date,
+                       emp_p.last_name AS emp_last_name,
+                       emp_p.first_name AS emp_first_name,
+                       emp_p.middle_name AS emp_middle_name
                 FROM person p
-                LEFT JOIN debtor d ON d.person_id = p.person_id
-                LEFT JOIN filter_category fc ON fc.filter_category_id = d.filter_category_id
-                LEFT JOIN main_category mc ON mc.main_category_id = fc.main_category_id";
+                INNER JOIN debtor d ON d.person_id = p.person_id
+                INNER JOIN filter_category fc ON fc.filter_category_id = d.filter_category_id
+                INNER JOIN main_category mc ON mc.main_category_id = fc.main_category_id
+                INNER JOIN contract c ON c.debtor_id = d.debtor_id
+                LEFT JOIN employee emp ON emp.employee_id = c.employee_id
+                LEFT JOIN person emp_p ON emp_p.person_id = emp.person_id
+                ORDER BY p.last_name, p.first_name";
 
             var dataTable = await _databaseService.ExecuteReaderAsync(sql);
             var debtors = new List<Debtor>();
 
             foreach (DataRow row in dataTable.Rows)
             {
-                int personId = row["person_id"] is Int64 value ? (int)value : Convert.ToInt32(row["person_id"]);
+                int personId = Convert.ToInt32(row["person_id"]);
 
                 var person = new Person
                 {
@@ -39,7 +47,7 @@ namespace bankrupt_piterjust.Services
                     MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                     Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
                     Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
-                    IsMale = !row.Table.Columns.Contains("is_male") || row["is_male"] == DBNull.Value || Convert.ToBoolean(row["is_male"])
+                    IsMale = row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
                 };
 
                 var debtor = Debtor.FromPerson(person);
@@ -52,8 +60,25 @@ namespace bankrupt_piterjust.Services
                 debtor.Status = row["status"] != DBNull.Value ? row["status"].ToString() ?? string.Empty : "";
                 debtor.MainCategory = row["main_category"] != DBNull.Value ? row["main_category"].ToString() ?? string.Empty : "";
                 debtor.FilterCategory = row["filter_category"] != DBNull.Value ? row["filter_category"].ToString() ?? string.Empty : "";
-                if (row.Table.Columns.Contains("created_date") && row["created_date"] != DBNull.Value)
-                    debtor.Date = Convert.ToDateTime(row["created_date"]).ToString("dd.MM.yyyy");
+
+                if (row.Table.Columns.Contains("contract_date") && row["contract_date"] != DBNull.Value)
+                    debtor.Date = Convert.ToDateTime(row["contract_date"]).ToString("dd.MM.yyyy");
+
+                // Set the employee name who created the contract (which represents who added this debtor)
+                if (row["emp_last_name"] != DBNull.Value && row["emp_first_name"] != DBNull.Value)
+                {
+                    string empLastName = row["emp_last_name"].ToString() ?? "";
+                    string empFirstName = row["emp_first_name"].ToString() ?? "";
+                    string empMiddleName = row["emp_middle_name"] != DBNull.Value ? row["emp_middle_name"].ToString() ?? "" : "";
+
+                    debtor.AddedByEmployeeName = !string.IsNullOrWhiteSpace(empMiddleName)
+                        ? $"{empLastName} {empFirstName} {empMiddleName}"
+                        : $"{empLastName} {empFirstName}";
+                }
+                else
+                {
+                    debtor.AddedByEmployeeName = "Не указан";
+                }
 
                 debtors.Add(debtor);
             }
@@ -97,22 +122,21 @@ namespace bankrupt_piterjust.Services
 
             string insertPersonSql = @"
                 INSERT INTO person (last_name, first_name, middle_name, is_male, phone, email)
-                VALUES (@lastName, @firstName, @middleName, @isMale, @phone, @email)
-                RETURNING person_id";
+                VALUES (@lastName, @firstName, @middleName, @isMale, @phone, @email);
+                SELECT last_insert_rowid();";
 
             var personParams = new Dictionary<string, object>
             {
                 { "@lastName", person.LastName },
                 { "@firstName", person.FirstName },
-                { "@middleName", person.MiddleName != null ? person.MiddleName : DBNull.Value },
-                { "@phone", person.Phone != null ? person.Phone : DBNull.Value },
-                { "@email", person.Email != null ? person.Email : DBNull.Value },
-                { "@isMale", person.IsMale }
+                { "@middleName", person.MiddleName ?? (object)DBNull.Value },
+                { "@phone", person.Phone ?? (object)DBNull.Value },
+                { "@email", person.Email ?? (object)DBNull.Value },
+                { "@isMale", person.IsMale ? 1 : 0 }
             };
 
             object? v = await _databaseService.ExecuteScalarAsync<object>(insertPersonSql, personParams);
-            object scalarResult = v!;
-            int personId = scalarResult is Int64 value ? (int)value : Convert.ToInt32(scalarResult);
+            int personId = Convert.ToInt32(v);
 
             if (passport != null && !string.IsNullOrWhiteSpace(passport.Series) && !string.IsNullOrWhiteSpace(passport.Number))
             {
@@ -126,8 +150,8 @@ namespace bankrupt_piterjust.Services
                     { "@series", passport.Series },
                     { "@number", passport.Number },
                     { "@issuedBy", passport.IssuedBy },
-                    { "@divisionCode", passport.DivisionCode != null ? passport.DivisionCode : DBNull.Value },
-                    { "@issueDate", passport.IssueDate }
+                    { "@divisionCode", passport.DivisionCode ?? (object)DBNull.Value },
+                    { "@issueDate", passport.IssueDate.ToString("yyyy-MM-dd") }
                 };
 
                 await _databaseService.ExecuteNonQueryAsync(insertPassportSql, passportParams);
@@ -139,29 +163,11 @@ namespace bankrupt_piterjust.Services
                 {
                     string insertAddressSql = @"
                         INSERT INTO address (
-                            person_id,
-                            postal_code,
-                            country,
-                            region,
-                            district,
-                            city,
-                            locality,
-                            street,
-                            house_number,
-                            building,
-                            apartment)
+                            person_id, postal_code, country, region, district, city,
+                            locality, street, house_number, building, apartment)
                         VALUES (
-                            @personId,
-                            @postalCode,
-                            @country,
-                            @region,
-                            @district,
-                            @city,
-                            @locality,
-                            @street,
-                            @houseNumber,
-                            @building,
-                            @apartment)";
+                            @personId, @postalCode, @country, @region, @district, @city,
+                            @locality, @street, @houseNumber, @building, @apartment)";
 
                     var addressParams = new Dictionary<string, object>
                     {
@@ -182,63 +188,45 @@ namespace bankrupt_piterjust.Services
                 }
             }
 
-            // Insert debtor record with category information
             await AddDebtorRecordAsync(personId, mainCategory, filterCategory);
-
             return personId;
         }
 
         public async Task<Person?> GetPersonByIdAsync(int personId)
         {
             string sql = "SELECT * FROM person WHERE person_id = @personId";
-
-            var parameters = new Dictionary<string, object>
-            {
-                { "@personId", personId }
-            };
-
+            var parameters = new Dictionary<string, object> { { "@personId", personId } };
             var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
 
             if (dataTable.Rows.Count == 0)
                 return null;
 
             var row = dataTable.Rows[0];
-
-            int id = row["person_id"] is Int64 value ? (int)value : Convert.ToInt32(row["person_id"]);
-
             return new Person
             {
-                PersonId = id,
+                PersonId = Convert.ToInt32(row["person_id"]),
                 LastName = row["last_name"].ToString() ?? string.Empty,
                 FirstName = row["first_name"].ToString() ?? string.Empty,
                 MiddleName = row["middle_name"] != DBNull.Value ? row["middle_name"].ToString() : null,
                 Phone = row["phone"] != DBNull.Value ? row["phone"].ToString() : null,
                 Email = row["email"] != DBNull.Value ? row["email"].ToString() : null,
-                IsMale = !row.Table.Columns.Contains("is_male") || row["is_male"] == DBNull.Value || Convert.ToBoolean(row["is_male"])
+                IsMale = row["is_male"] != DBNull.Value ? Convert.ToBoolean(row["is_male"]) : true
             };
         }
 
         public async Task<Passport?> GetPassportByPersonIdAsync(int personId)
         {
             string sql = "SELECT * FROM passport WHERE person_id = @personId";
-
-            var parameters = new Dictionary<string, object>
-            {
-                { "@personId", personId }
-            };
-
+            var parameters = new Dictionary<string, object> { { "@personId", personId } };
             var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
 
             if (dataTable.Rows.Count == 0)
                 return null;
 
             var row = dataTable.Rows[0];
-
-            int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
-
             return new Passport
             {
-                PersonId = pId,
+                PersonId = Convert.ToInt32(row["person_id"]),
                 Series = row["series"].ToString() ?? string.Empty,
                 Number = row["number"].ToString() ?? string.Empty,
                 IssuedBy = row["issued_by"].ToString() ?? string.Empty,
@@ -250,22 +238,15 @@ namespace bankrupt_piterjust.Services
         public async Task<List<Address>> GetAddressesByPersonIdAsync(int personId)
         {
             string sql = "SELECT * FROM address WHERE person_id = @personId";
-
-            var parameters = new Dictionary<string, object>
-            {
-                { "@personId", personId }
-            };
-
+            var parameters = new Dictionary<string, object> { { "@personId", personId } };
             var dataTable = await _databaseService.ExecuteReaderAsync(sql, parameters);
             var addresses = new List<Address>();
 
             foreach (DataRow row in dataTable.Rows)
             {
-                int pId = row["person_id"] is Int64 value2 ? (int)value2 : Convert.ToInt32(row["person_id"]);
-
                 addresses.Add(new Address
                 {
-                    PersonId = pId,
+                    PersonId = Convert.ToInt32(row["person_id"]),
                     PostalCode = row["postal_code"] != DBNull.Value ? row["postal_code"].ToString() : null,
                     Country = row["country"].ToString() ?? "Россия",
                     Region = row["region"] != DBNull.Value ? row["region"].ToString() : null,
@@ -282,32 +263,31 @@ namespace bankrupt_piterjust.Services
             return addresses;
         }
 
-
         private async Task<int> GetOrCreateMainCategoryIdAsync(string name)
         {
             string checkSql = "SELECT main_category_id FROM main_category WHERE name=@name";
             var p = new Dictionary<string, object> { { "@name", name } };
             var table = await _databaseService.ExecuteReaderAsync(checkSql, p);
             if (table.Rows.Count > 0)
-                return table.Rows[0]["main_category_id"] is Int64 v ? (int)v : Convert.ToInt32(table.Rows[0]["main_category_id"]);
+                return Convert.ToInt32(table.Rows[0]["main_category_id"]);
 
-            string insertSql = "INSERT INTO main_category(name) VALUES(@name) RETURNING main_category_id";
+            string insertSql = "INSERT INTO main_category(name) VALUES(@name); SELECT last_insert_rowid();";
             object? result = await _databaseService.ExecuteScalarAsync<object>(insertSql, p);
-            return result is Int64 val ? (int)val : Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
 
         private async Task<int> GetOrCreateFilterCategoryIdAsync(string name, int mainCategoryId)
         {
-            string checkSql = "SELECT filter_category_id FROM filter_category WHERE name=@name";
-            var p = new Dictionary<string, object> { { "@name", name } };
+            string checkSql = "SELECT filter_category_id FROM filter_category WHERE name=@name AND main_category_id=@mainId";
+            var p = new Dictionary<string, object> { { "@name", name }, { "@mainId", mainCategoryId } };
             var table = await _databaseService.ExecuteReaderAsync(checkSql, p);
             if (table.Rows.Count > 0)
-                return table.Rows[0]["filter_category_id"] is Int64 v ? (int)v : Convert.ToInt32(table.Rows[0]["filter_category_id"]);
+                return Convert.ToInt32(table.Rows[0]["filter_category_id"]);
 
-            string insertSql = "INSERT INTO filter_category(name, main_category_id) VALUES(@name,@main) RETURNING filter_category_id";
+            string insertSql = "INSERT INTO filter_category(name, main_category_id) VALUES(@name,@main); SELECT last_insert_rowid();";
             var pp = new Dictionary<string, object> { { "@name", name }, { "@main", mainCategoryId } };
             object? result = await _databaseService.ExecuteScalarAsync<object>(insertSql, pp);
-            return result is Int64 val ? (int)val : Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
 
         private async Task AddDebtorRecordAsync(int personId, string mainCategory, string filterCategory)
@@ -315,8 +295,7 @@ namespace bankrupt_piterjust.Services
             int mainId = await GetOrCreateMainCategoryIdAsync(mainCategory);
             int filterId = await GetOrCreateFilterCategoryIdAsync(filterCategory, mainId);
 
-            string sql = @"INSERT INTO debtor(person_id, filter_category_id)
-                           VALUES(@pid, @fid)";
+            string sql = "INSERT INTO debtor(person_id, filter_category_id) VALUES(@pid, @fid)";
             var param = new Dictionary<string, object>
             {
                 {"@pid", personId},
@@ -332,10 +311,10 @@ namespace bankrupt_piterjust.Services
             {
                 {"@ln", person.LastName},
                 {"@fn", person.FirstName},
-                {"@mn", person.MiddleName != null ? person.MiddleName : DBNull.Value},
-                {"@ph", person.Phone != null ? person.Phone : DBNull.Value},
-                {"@em", person.Email != null ? person.Email : DBNull.Value},
-                {"@isMale", person.IsMale},
+                {"@mn", person.MiddleName ?? (object)DBNull.Value},
+                {"@ph", person.Phone ?? (object)DBNull.Value},
+                {"@em", person.Email ?? (object)DBNull.Value},
+                {"@isMale", person.IsMale ? 1 : 0},
                 {"@id", person.PersonId}
             };
             await _databaseService.ExecuteNonQueryAsync(sql, p);
@@ -346,7 +325,7 @@ namespace bankrupt_piterjust.Services
             int mainId = await GetOrCreateMainCategoryIdAsync(mainCategory);
             int filterId = await GetOrCreateFilterCategoryIdAsync(filterCategory, mainId);
 
-            string sql = @"UPDATE debtor SET filter_category_id=@fid WHERE person_id=@pid";
+            string sql = "UPDATE debtor SET filter_category_id=@fid WHERE person_id=@pid";
             var p = new Dictionary<string, object>
             {
                 {"@fid", filterId},
@@ -368,8 +347,8 @@ namespace bankrupt_piterjust.Services
                     {"@series", passport.Series},
                     {"@number", passport.Number},
                     {"@issuedBy", passport.IssuedBy},
-                    {"@divisionCode", passport.DivisionCode != null ? passport.DivisionCode : DBNull.Value},
-                    {"@issueDate", passport.IssueDate}
+                    {"@divisionCode", passport.DivisionCode ?? (object)DBNull.Value},
+                    {"@issueDate", passport.IssueDate.ToString("yyyy-MM-dd")}
                 };
                 await _databaseService.ExecuteNonQueryAsync(insertSql, p);
             }
@@ -381,8 +360,8 @@ namespace bankrupt_piterjust.Services
                     {"@series", passport.Series},
                     {"@number", passport.Number},
                     {"@issuedBy", passport.IssuedBy},
-                    {"@divisionCode", passport.DivisionCode != null ? passport.DivisionCode : DBNull.Value},
-                    {"@issueDate", passport.IssueDate},
+                    {"@divisionCode", passport.DivisionCode ?? (object)DBNull.Value},
+                    {"@issueDate", passport.IssueDate.ToString("yyyy-MM-dd")},
                     {"@pid", passport.PersonId}
                 };
                 await _databaseService.ExecuteNonQueryAsync(updateSql, p);
@@ -394,50 +373,33 @@ namespace bankrupt_piterjust.Services
             string deleteSql = "DELETE FROM address WHERE person_id=@pid";
             await _databaseService.ExecuteNonQueryAsync(deleteSql, new Dictionary<string, object> { { "@pid", personId } });
 
-            if (addresses == null) return;
-            foreach (var address in addresses)
+            if (addresses != null)
             {
-                string insertSql = @"INSERT INTO address (
-                                        person_id,
-
-                                        postal_code,
-                                        country,
-                                        region,
-                                        district,
-                                        city,
-                                        locality,
-                                        street,
-                                        house_number,
-                                        building,
-                                        apartment)
-                                    VALUES (
-                                        @pid,
-                                        @postalCode,
-                                        @country,
-                                        @region,
-                                        @district,
-                                        @city,
-                                        @locality,
-                                        @street,
-                                        @houseNumber,
-                                        @building,
-                                        @apartment)";
-
-                var p = new Dictionary<string, object>
+                foreach (var address in addresses)
                 {
-                    {"@pid", personId},
-                    {"@postalCode", address.PostalCode ?? (object)DBNull.Value },
-                    {"@country", address.Country },
-                    {"@region", address.Region ?? (object)DBNull.Value },
-                    {"@district", address.District ?? (object)DBNull.Value },
-                    {"@city", address.City ?? (object)DBNull.Value },
-                    {"@locality", address.Locality ?? (object)DBNull.Value },
-                    {"@street", address.Street ?? (object)DBNull.Value },
-                    {"@houseNumber", address.HouseNumber ?? (object)DBNull.Value },
-                    {"@building", address.Building ?? (object)DBNull.Value },
-                    {"@apartment", address.Apartment ?? (object)DBNull.Value }
-                };
-                await _databaseService.ExecuteNonQueryAsync(insertSql, p);
+                    string insertSql = @"INSERT INTO address (
+                                        person_id, postal_code, country, region, district, city,
+                                        locality, street, house_number, building, apartment)
+                                    VALUES (
+                                        @pid, @postalCode, @country, @region, @district, @city,
+                                        @locality, @street, @houseNumber, @building, @apartment)";
+
+                    var p = new Dictionary<string, object>
+                    {
+                        {"@pid", personId},
+                        {"@postalCode", address.PostalCode ?? (object)DBNull.Value },
+                        {"@country", address.Country },
+                        {"@region", address.Region ?? (object)DBNull.Value },
+                        {"@district", address.District ?? (object)DBNull.Value },
+                        {"@city", address.City ?? (object)DBNull.Value },
+                        {"@locality", address.Locality ?? (object)DBNull.Value },
+                        {"@street", address.Street ?? (object)DBNull.Value },
+                        {"@houseNumber", address.HouseNumber ?? (object)DBNull.Value },
+                        {"@building", address.Building ?? (object)DBNull.Value },
+                        {"@apartment", address.Apartment ?? (object)DBNull.Value }
+                    };
+                    await _databaseService.ExecuteNonQueryAsync(insertSql, p);
+                }
             }
         }
     }

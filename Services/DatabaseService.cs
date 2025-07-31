@@ -1,4 +1,4 @@
-using Npgsql;
+using Microsoft.Data.Sqlite;
 using System.Data;
 using System.Windows;
 
@@ -18,8 +18,7 @@ namespace bankrupt_piterjust.Services
 
         private void UpdateConnectionString()
         {
-            var config = ConfigurationService.Instance.GetDatabaseConfiguration();
-            _connectionString = config.GetConnectionString();
+            _connectionString = SQLiteInitializationService.GetConnectionString();
         }
 
         public async Task<bool> TestConnectionAsync()
@@ -34,13 +33,15 @@ namespace bankrupt_piterjust.Services
 
             try
             {
-                using var connection = new NpgsqlConnection(_connectionString);
+                // Инициализируем базу данных, если необходимо
+                await SQLiteInitializationService.InitializeDatabaseAsync();
+
+                using var connection = new SqliteConnection(_connectionString);
                 await connection.OpenAsync();
 
-                await using var cmd = new NpgsqlCommand("SELECT 1", connection);
-                await cmd.ExecuteScalarAsync();
-                await using var cryptoCmd = new NpgsqlCommand("SELECT crypt('test', gen_salt('bf'))", connection);
-                await cryptoCmd.ExecuteScalarAsync();
+                // Test simple query
+                using var testCmd = new SqliteCommand("SELECT 1", connection);
+                await testCmd.ExecuteScalarAsync();
 
                 lock (_connectionLock)
                 {
@@ -57,15 +58,11 @@ namespace bankrupt_piterjust.Services
                     _connectionTested = true;
                 }
 
-                Application.Current.Dispatcher.Invoke(() =>
+                System.Diagnostics.Debug.WriteLine($"Database connection error: {ex.Message}");
+
+                Application.Current?.Dispatcher?.Invoke(() =>
                 {
-                    string errorMessage = "Не удалось подключиться к базе данных. Программа будет работать в автономном режиме.";
-
-                    if (ex.Message.Contains("pgcrypto"))
-                    {
-                        errorMessage += "\n\nРасширение pgcrypto недоступно. Убедитесь, что оно установлено:\nCREATE EXTENSION IF NOT EXISTS pgcrypto;";
-                    }
-
+                    string errorMessage = "Не удалось подключиться к базе данных SQLite.";
                     errorMessage += $"\n\nПодробности: {ex.Message}";
 
                     MessageBox.Show(
@@ -86,16 +83,17 @@ namespace bankrupt_piterjust.Services
 
             try
             {
-                await using var connection = new NpgsqlConnection(_connectionString);
+                using var connection = new SqliteConnection(_connectionString);
                 await connection.OpenAsync();
 
-                await using var command = new NpgsqlCommand(sql, connection);
+                using var command = new SqliteCommand(sql, connection);
 
                 if (parameters != null)
                 {
                     foreach (var param in parameters)
                     {
-                        command.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                        var value = param.Value ?? DBNull.Value;
+                        command.Parameters.AddWithValue(param.Key, value);
                     }
                 }
 
@@ -110,7 +108,7 @@ namespace bankrupt_piterjust.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
-                return 0;
+                throw; // Re-throw so calling code can handle
             }
         }
 
@@ -121,16 +119,17 @@ namespace bankrupt_piterjust.Services
 
             try
             {
-                await using var connection = new NpgsqlConnection(_connectionString);
+                using var connection = new SqliteConnection(_connectionString);
                 await connection.OpenAsync();
 
-                await using var command = new NpgsqlCommand(sql, connection);
+                using var command = new SqliteCommand(sql, connection);
 
                 if (parameters != null)
                 {
                     foreach (var param in parameters)
                     {
-                        command.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                        var value = param.Value ?? DBNull.Value;
+                        command.Parameters.AddWithValue(param.Key, value);
                     }
                 }
 
@@ -139,7 +138,7 @@ namespace bankrupt_piterjust.Services
                 if (result == DBNull.Value)
                     return default;
 
-                if (typeof(T) == typeof(int) && result is Int64 longValue)
+                if (typeof(T) == typeof(int) && result is long longValue)
                     return (T)(object)(int)longValue;
 
                 return (T?)Convert.ChangeType(result, typeof(T));
@@ -153,7 +152,7 @@ namespace bankrupt_piterjust.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
-                return default;
+                throw; // Re-throw so calling code can handle
             }
         }
 
@@ -164,20 +163,21 @@ namespace bankrupt_piterjust.Services
 
             try
             {
-                await using var connection = new NpgsqlConnection(_connectionString);
+                using var connection = new SqliteConnection(_connectionString);
                 await connection.OpenAsync();
 
-                await using var command = new NpgsqlCommand(sql, connection);
+                using var command = new SqliteCommand(sql, connection);
 
                 if (parameters != null)
                 {
                     foreach (var param in parameters)
                     {
-                        command.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                        var value = param.Value ?? DBNull.Value;
+                        command.Parameters.AddWithValue(param.Key, value);
                     }
                 }
 
-                await using var reader = await command.ExecuteReaderAsync();
+                using var reader = await command.ExecuteReaderAsync();
                 var dataTable = new DataTable();
                 dataTable.Load(reader);
 
@@ -192,7 +192,7 @@ namespace bankrupt_piterjust.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
-                return new DataTable();
+                throw; // Re-throw so calling code can handle
             }
         }
 
@@ -203,31 +203,28 @@ namespace bankrupt_piterjust.Services
                 _connectionTested = false;
                 _connectionAvailable = false;
             }
+
+            // Clear connection pools to release any locks
+            SqliteConnection.ClearAllPools();
+            await Task.Delay(50); // Give it a moment
+
             return await TestConnectionAsync();
         }
+
         public async Task<string> GetConnectionInfoAsync()
         {
             try
             {
-                using var connection = new NpgsqlConnection(_connectionString);
+                using var connection = new SqliteConnection(_connectionString);
                 await connection.OpenAsync();
 
-                await using var cmd = new NpgsqlCommand(@"
-                    SELECT 
-                        version() as postgres_version,
-                        current_database() as database_name,
-                        current_user as username,
-                        inet_server_addr() as server_address,
-                        inet_server_port() as server_port
-                ", connection);
+                using var cmd = new SqliteCommand("SELECT sqlite_version() as sqlite_version", connection);
 
                 using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
-                    return $"PostgreSQL Version: {reader["postgres_version"]}\n" +
-                           $"Database: {reader["database_name"]}\n" +
-                           $"User: {reader["username"]}\n" +
-                           $"Server: {reader["server_address"]}:{reader["server_port"]}";
+                    return $"SQLite Version: {reader["sqlite_version"]}\n" +
+                           $"Database: {SQLiteInitializationService.GetDatabasePath()}";
                 }
 
                 return "Подключение установлено, но информация недоступна";
