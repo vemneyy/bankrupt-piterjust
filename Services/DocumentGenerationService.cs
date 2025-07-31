@@ -39,7 +39,9 @@ namespace bankrupt_piterjust.Services
                     throw new Exception("Шаблон договора не найден по пути: Documents/Договор_Юридических_Услуг.docx");
 
                 // Create Generated directory if it doesn't exist
-                var documentsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Generated");
+                var documentsDir = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+    "ПитерЮст", "Созданные договора");
                 if (!Directory.Exists(documentsDir))
                 {
                     Directory.CreateDirectory(documentsDir);

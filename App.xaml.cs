@@ -60,15 +60,10 @@ namespace bankrupt_piterjust
         {
             try
             {
-                // Create Documents directory for templates if it doesn't exist
-                string documentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents");
-                if (!Directory.Exists(documentsPath))
-                {
-                    Directory.CreateDirectory(documentsPath);
-                }
-
                 // Create Generated directory for output files if it doesn't exist
-                string generatedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Generated");
+                string generatedPath = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+    "ПитерЮст", "Созданные договора");
                 if (!Directory.Exists(generatedPath))
                 {
                     Directory.CreateDirectory(generatedPath);
